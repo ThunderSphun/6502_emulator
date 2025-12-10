@@ -23,6 +23,7 @@ struct busAddr {
 };
 
 bool bus_init(bus_t* bus);
+bool bus_add(bus_t* bus, busReadFunc readFunc, busWriteFunc writeFunc, uint16_t begin, uint16_t end);
 bool bus_destroy(bus_t* bus);
 
 void bus_print(bus_t* bus);

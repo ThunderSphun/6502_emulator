@@ -1,19 +1,54 @@
 #include "bus.h"
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 bool bus_init(bus_t* bus) {
-	bus->addresses = malloc(sizeof(busAddr_t));
+	bus->addresses = malloc(sizeof(busAddr_t) * 4);
 	if (bus->addresses == NULL)
 		return false;
-	bus->size = 1;
+	bus->size = 4;
 
 	bus->addresses[0].begin = 0x0000;
-	bus->addresses[0].end = 0xFFFF;
+	bus->addresses[0].end = 0x3FFF;
 	bus->addresses[0].read = NULL;
 	bus->addresses[0].write = NULL;
 
+	bus->addresses[1].begin = 0x4000;
+	bus->addresses[1].end = 0x7FFF;
+	bus->addresses[1].read = NULL;
+	bus->addresses[1].write = NULL;
+
+	bus->addresses[2].begin = 0x8000;
+	bus->addresses[2].end = 0xBFFF;
+	bus->addresses[2].read = NULL;
+	bus->addresses[2].write = NULL;
+
+	bus->addresses[3].begin = 0xC000;
+	bus->addresses[3].end = 0xFFFF;
+	bus->addresses[3].read = NULL;
+	bus->addresses[3].write = NULL;
+
 	return true;
+}
+
+bool bus_add(bus_t* bus, busReadFunc readFunc, busWriteFunc writeFunc, uint16_t begin, uint16_t end) {
+	if (bus->addresses == NULL)
+		return false;
+
+	for (size_t i = 0; i < bus->size; i++) {
+		busAddr_t* current = bus->addresses + i;
+
+		if (current->begin == begin && current->end == end) {
+			current->read = readFunc;
+			current->write = writeFunc;
+
+			return true;
+		}
+	}
+
+	return false;
 }
 
 bool bus_destroy(bus_t* bus) {
