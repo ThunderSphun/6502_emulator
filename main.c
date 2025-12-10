@@ -1,9 +1,14 @@
+#include "bus.h"
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 int main() {
-	printf("Hello, World!\n");
+	bus_t bus;
+	bus_init(&bus);
+	printf("%p\n", bus.addresses);
+	bus_destroy(&bus);
 	return 0;
 }
