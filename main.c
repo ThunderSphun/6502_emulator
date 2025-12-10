@@ -15,13 +15,15 @@ int main() {
 	bus_t bus;
 	bus_init(&bus);
 	bus_print(&bus);
-	printf("\n-------------------------------------\n");
+	printf("-------------------------------------\n");
 	bus_add(&bus, read, write, 0x8000, 0xBFFF);
 	bus_print(&bus);
-	printf("\n-------------------------------------\n");
+	printf("-------------------------------------\n");
 	bus_add(&bus, NULL, NULL, 0x4000, 0x4FFF);
 	bus_print(&bus);
-	printf("%p\n", bus.addresses);
+	printf("-------------------------------------\n");
+	bus_add(&bus, NULL, NULL, 0x7000, 0x7FFF);
+	bus_print(&bus);
 	bus_destroy(&bus);
 	return 0;
 }
