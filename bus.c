@@ -75,14 +75,14 @@ bool bus_add(bus_t* bus, busReadFunc readFunc, busWriteFunc writeFunc, uint16_t 
 				bus->addresses = nextList;
 			}
 
-			current = bus->addresses + i; // reset current ptr because data might have moved
-			memmove(current + 1, current, sizeof(busAddr_t) * (bus->size - i));
+			current = bus->addresses + i + 1; // reset current ptr because data might have moved
+			memmove(current, current - 1, sizeof(busAddr_t) * (bus->size - i));
 
-			current++->end = begin - 1;
 			current->begin = begin;
 			current->end = end;
 			current->read = readFunc;
 			current->write = writeFunc;
+			(current - 1)->end = begin - 1;
 
 			bus->size++;
 
