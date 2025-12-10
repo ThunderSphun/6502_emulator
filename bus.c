@@ -67,7 +67,7 @@ void bus_print(bus_t* bus) {
 
 		printf("%016b\t%04X\n", current->begin, current->begin);
 		if (current->begin != current->end) {
-			printf("................\t....\n");
+			printf("................\t....\tr%p w%p\n", current->read, current->write);
 			printf("%016b\t%04X\n", current->end, current->end);
 		}
 	}
