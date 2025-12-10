@@ -22,3 +22,18 @@ bool bus_destroy(bus_t* bus) {
 
 	return true;
 }
+
+void bus_print(bus_t* bus) {
+	for (size_t i = 0; i < bus->size; i++) {
+		busAddr_t* current = bus->addresses + i;
+
+		if (i != 0)
+			printf("\n");
+
+		printf("%016b\t%04X\n", current->begin, current->begin);
+		if (current->begin != current->end) {
+			printf("................\t....\n");
+			printf("%016b\t%04X\n", current->end, current->end);
+		}
+	}
+}

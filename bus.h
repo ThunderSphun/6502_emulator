@@ -24,3 +24,8 @@ struct busAddr {
 
 bool bus_init(bus_t* bus);
 bool bus_destroy(bus_t* bus);
+
+void bus_print(bus_t* bus);
+
+uint8_t busRead(bus_t* bus, uint16_t addr);
+void busWrite(bus_t* bus, uint16_t addr, uint8_t data);

@@ -8,6 +8,7 @@
 int main() {
 	bus_t bus;
 	bus_init(&bus);
+	bus_print(&bus);
 	printf("%p\n", bus.addresses);
 	bus_destroy(&bus);
 	return 0;
