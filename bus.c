@@ -46,6 +46,27 @@ bool bus_add(bus_t* bus, busReadFunc readFunc, busWriteFunc writeFunc, uint16_t 
 
 			return true;
 		}
+		if (current->begin == begin && current->end > end) {
+			{
+				busAddr_t* nextList = realloc(bus->addresses, sizeof(busAddr_t) * (bus->size + 1));
+				if (nextList == NULL)
+					return false;
+				bus->addresses = nextList;
+			}
+
+			current = bus->addresses + i; // reset current ptr because data might have moved
+			memmove(current + 1, current, sizeof(busAddr_t) * (bus->size - i));
+
+			current->begin = begin;
+			current->end = end;
+			current->read = readFunc;
+			current->write = writeFunc;
+			(current + 1)->begin = end + 1;
+
+			bus->size++;
+
+			return true;
+		}
 	}
 
 	return false;

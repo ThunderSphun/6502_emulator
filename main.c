@@ -18,6 +18,9 @@ int main() {
 	printf("\n-------------------------------------\n");
 	bus_add(&bus, read, write, 0x8000, 0xBFFF);
 	bus_print(&bus);
+	printf("\n-------------------------------------\n");
+	bus_add(&bus, NULL, NULL, 0x4000, 0x4FFF);
+	bus_print(&bus);
 	printf("%p\n", bus.addresses);
 	bus_destroy(&bus);
 	return 0;
