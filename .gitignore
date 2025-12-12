@@ -1,1 +1,8 @@
 6502
+
+/.vs
+/6502 emulator
+/Debug
+/Release
+/x64
+6502 emulator.*
