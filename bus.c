@@ -100,6 +100,17 @@ bool bus_destroy(bus_t* bus) {
 	return true;
 }
 
+#ifdef __GNUC__
+void printBin(uint16_t val) {
+	printf("%016b");
+}
+#else
+void printBin(uint16_t val) {
+	for (int i = 15; i >= 0; i--)
+		printf("%c", (val & (1 << i)) ? '1' : '0');
+}
+#endif
+
 void bus_print(bus_t* bus) {
 	for (size_t i = 0; i < bus->size; i++) {
 		busAddr_t* current = bus->addresses + i;
@@ -107,10 +118,14 @@ void bus_print(bus_t* bus) {
 		if (i != 0)
 			printf("\n");
 
-		printf("%016b\t%04X\n", current->begin, current->begin);
+		printBin(current->begin);
+		printf("\t%04X", current->begin);
 		if (current->begin != current->end) {
+			printf("\n");
 			printf("................\t....\tr%p w%p\n", current->read, current->write);
-			printf("%016b\t%04X\n", current->end, current->end);
-		}
+			printBin(current->end);
+			printf("\t%04X", current->end);
+		} else
+			printf("\tr%p w%p\n", current->read, current->write);
 	}
 }
