@@ -12,18 +12,20 @@ void write(uint16_t addr, uint8_t data) {
 }
 
 int main() {
-	bus_t bus;
-	bus_init(&bus);
-	bus_print(&bus);
+	bus_init();
+	bus_print();
 	printf("-------------------------------------\n");
-	bus_add(&bus, read, write, 0x8000, 0xBFFF);
-	bus_print(&bus);
+	bus_add(read, write, 0x8000, 0xBFFF);
+	bus_print();
 	printf("-------------------------------------\n");
-	bus_add(&bus, NULL, NULL, 0x4000, 0x4FFF);
-	bus_print(&bus);
+	bus_add(NULL, write, 0x0000, 0x0000);
+	bus_print();
 	printf("-------------------------------------\n");
-	bus_add(&bus, NULL, NULL, 0x7000, 0x7FFF);
-	bus_print(&bus);
-	bus_destroy(&bus);
+	bus_add(NULL, NULL, 0x4000, 0x4FFF);
+	bus_print();
+	printf("-------------------------------------\n");
+	bus_add(NULL, NULL, 0x7000, 0x7FFF);
+	bus_print();
+	bus_destroy();
 	return 0;
 }
