@@ -11,21 +11,38 @@ uint8_t read(uint16_t addr) {
 void write(uint16_t addr, uint8_t data) {
 }
 
+#define TEST(from, to, read, write) \
+	bus_init(); \
+	printf("- " #from "-" #to "\t(%c %c) returned ", read ? 'R' : '_', write ? 'W' : '_'); \
+	if (bus_add(read, write, from, to)) { \
+		printf("true\n"); \
+		bus_print(); \
+		printf("\n\n"); \
+	} else \
+		printf("false\n"); \
+	bus_destroy()
+
 int main() {
 	bus_init();
-	bus_print();
-	printf("-------------------------------------\n");
-	bus_add(read, write, 0x8000, 0xBFFF);
-	bus_print();
-	printf("-------------------------------------\n");
-	bus_add(NULL, write, 0x0000, 0x0000);
-	bus_print();
-	printf("-------------------------------------\n");
-	bus_add(NULL, NULL, 0x4000, 0x4FFF);
-	bus_print();
-	printf("-------------------------------------\n");
-	bus_add(NULL, NULL, 0x7000, 0x7FFF);
+	printf("- initial state\n");
 	bus_print();
 	bus_destroy();
+	printf("\n\n");
+
+	printf("whole block\n\n");
+	TEST(0x0000, 0x00FF, read, write);
+	TEST(0x0100, 0xFEFF, read, write);
+	TEST(0xFF00, 0xFFFF, read, write);
+
+	printf("front edge of block\n\n");
+	TEST(0x0000, 0x007F, read, write);
+	TEST(0x0100, 0x7FFF, read, write);
+	TEST(0xFF00, 0xFF7F, read, write);
+
+	printf("back edge of block\n\n");
+	TEST(0x0080, 0x00FF, read, write);
+	TEST(0x8000, 0xFEFF, read, write);
+	TEST(0xFF80, 0xFFFF, read, write);
+
 	return 0;
 }
