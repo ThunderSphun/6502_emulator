@@ -44,5 +44,10 @@ int main() {
 	TEST(0x8000, 0xFEFF, read, write);
 	TEST(0xFF80, 0xFFFF, read, write);
 
+	printf("middle of block\n\n");
+	TEST(0x0040, 0x00BF, read, write);
+	TEST(0x4000, 0xBFFF, read, write);
+	TEST(0xFF40, 0xFFBF, read, write);
+
 	return 0;
 }
