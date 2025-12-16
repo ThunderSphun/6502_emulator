@@ -132,12 +132,15 @@ bool bus_destroy() {
 
 #ifdef __GNUC__
 void printBin(uint16_t val) {
-	printf("%016b");
+	printf("%08b %08b", (val >> 8) & 0xFF, val & 0xFF);
 }
 #else
 void printBin(uint16_t val) {
-	for (int i = 15; i >= 0; i--)
+	for (int i = 15; i >= 0; i--) {
 		printf("%c", (val & (1 << i)) ? '1' : '0');
+		if (i == 8)
+			printf(" ");
+	}
 }
 #endif
 
@@ -157,7 +160,7 @@ void bus_print() {
 		printf("\t%04X", current->start);
 		if (current->start != current->stop) {
 			printf("\n");
-			printf("................\t....\tr%p w%p\n", current->read, current->write);
+			printf("........ ........\t....\tr%p w%p\n", current->read, current->write);
 			printBin(current->stop);
 			printf("\t%04X\n", current->stop);
 		} else
