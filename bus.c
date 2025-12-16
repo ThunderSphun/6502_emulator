@@ -51,7 +51,6 @@ bool bus_init() {
 }
 
 bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint16_t stop) {
-	bus_t* localBusPurelyForDebug = &bus;
 	if (!bus.initialized)
 		return false;
 
@@ -76,141 +75,47 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 
 	if (startAddr == NULL || stopAddr == NULL)
 		return false;	// shouldn't be possible, bus should always at least have a range of 0x0000-0xFFFF
-						// keep this check for a sanity check
+						// keep this for a sanity check
 
 	if (startAddr == stopAddr) {
+		// early return for simple change
 		if (startAddr->start == start && startAddr->stop == stop) {
 			startAddr->read = readFunc;
 			startAddr->write = writeFunc;
 
 			return true;
 		}
-		if (start == startAddr->start && stop < startAddr->stop) {
-			size_t index;
-			{
-				busAddr_t* nextList = realloc(bus.addresses, sizeof(busAddr_t) * (bus.size + 1));
-				if (nextList == NULL)
-					return false;
 
-				index = startAddr - bus.addresses;
-				bus.addresses = nextList;
-			}
+		size_t index = startAddr - bus.addresses;
+		bool addBefore = start != startAddr->start;
+		bool addAfter = stop != startAddr->stop;
 
-			startAddr = bus.addresses + index; // reset current ptr because data might have moved
-			memmove(startAddr + 1, startAddr, sizeof(busAddr_t) * (bus.size - index));
+		// allocate new memory
+		{
+			busAddr_t* nextList = realloc(bus.addresses, sizeof(busAddr_t) * (bus.size + addBefore + addAfter));
+			if (nextList == NULL)
+				return false;
 
-			startAddr->start = start;
-			startAddr->stop = stop;
-			startAddr->read = readFunc;
-			startAddr->write = writeFunc;
+			bus.addresses = nextList;
+		}
+
+		startAddr = bus.addresses + index + addBefore; // reset startAddr ptr because data might have moved
+		memmove(startAddr + addAfter, startAddr - addBefore, sizeof(busAddr_t) * (bus.size - index));
+
+		// update altered bus ranges
+		startAddr->start = start;
+		startAddr->stop = stop;
+		startAddr->read = readFunc;
+		startAddr->write = writeFunc;
+		if (addBefore)
+			(startAddr - 1)->stop = start - 1;
+		if (addAfter)
 			(startAddr + 1)->start = stop + 1;
 
-			bus.size++;
+		bus.size += addBefore + addAfter;
 
-			return true;
-		}
-
-		if (start > startAddr->start && stop == startAddr->stop) {
-			size_t index;
-			{
-				busAddr_t* nextList = realloc(bus.addresses, sizeof(busAddr_t) * (bus.size + 1));
-				if (nextList == NULL)
-					return false;
-
-				index = startAddr - bus.addresses;
-				bus.addresses = nextList;
-			}
-
-			startAddr = bus.addresses + index + 1; // reset current ptr because data might have moved
-			memmove(startAddr, startAddr - 1, sizeof(busAddr_t) * (bus.size - index));
-
-			startAddr->start = start;
-			startAddr->stop = stop;
-			startAddr->read = readFunc;
-			startAddr->write = writeFunc;
-			(startAddr - 1)->stop = start - 1;
-
-			bus.size++;
-
-			return true;
-		}
-
-		if (start > startAddr->start && stop < startAddr->stop) {
-			size_t index;
-			{
-				busAddr_t* nextList = realloc(bus.addresses, sizeof(busAddr_t) * (bus.size + 2));
-				if (nextList == NULL)
-					return false;
-
-				index = startAddr - bus.addresses;
-				bus.addresses = nextList;
-			}
-
-			startAddr = bus.addresses + index + 1; // reset current ptr because data might have moved
-			memmove(startAddr + 1, startAddr - 1, sizeof(busAddr_t)* (bus.size - index));
-
-			startAddr->start = start;
-			startAddr->stop = stop;
-			startAddr->read = readFunc;
-			startAddr->write = writeFunc;
-			(startAddr - 1)->stop = start - 1;
-			(startAddr + 1)->start = stop + 1;
-
-			bus.size += 2;
-
-			return true;
-		}
+		return true;
 	}
-
-	//	if (current->start == start && current->stop == stop) {
-	//		current->read = readFunc;
-	//		current->write = writeFunc;
-	//
-	//		return true;
-	//	}
-	//	if (current->start == start && current->stop > stop) {
-	//		{
-	//			busAddr_t* nextList = realloc(bus.addresses, sizeof(busAddr_t) * (bus.size + 1));
-	//			if (nextList == NULL)
-	//				return false;
-	//			bus.addresses = nextList;
-	//		}
-	//
-	//		current = bus.addresses + i; // reset current ptr because data might have moved
-	//		memmove(current + 1, current, sizeof(busAddr_t) * (bus.size - i));
-	//
-	//		current->start = start;
-	//		current->stop = stop;
-	//		current->read = readFunc;
-	//		current->write = writeFunc;
-	//		(current + 1)->start = stop + 1;
-	//
-	//		bus.size++;
-	//
-	//		return true;
-	//	}
-	//	if (current->start < start && current->stop == stop) {
-	//		{
-	//			busAddr_t* nextList = realloc(bus.addresses, sizeof(busAddr_t) * (bus.size + 1));
-	//			if (nextList == NULL)
-	//				return false;
-	//			bus.addresses = nextList;
-	//		}
-	//
-	//		current = bus.addresses + i + 1; // reset current ptr because data might have moved
-	//		memmove(current, current - 1, sizeof(busAddr_t) * (bus.size - i));
-	//
-	//		current->start = start;
-	//		current->stop = stop;
-	//		current->read = readFunc;
-	//		current->write = writeFunc;
-	//		(current - 1)->stop = start - 1;
-	//
-	//		bus.size++;
-	//
-	//		return true;
-	//	}
-	//}
 
 	return false;
 }
