@@ -76,6 +76,11 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 	if (startAddr == NULL || stopAddr == NULL)
 		return false;	// shouldn't be possible, bus should always at least have a range of 0x0000-0xFFFF
 						// keep this for a sanity check
+	if (startAddr > stopAddr)
+		return false;	// if hit it would indicate that either stop is before end
+						// (which shouldn't be possible with earlier check)
+						// or the bus is not in order, which shouldnt be possible either
+						// keep this for a sanity check
 
 	if (startAddr == stopAddr) {
 		// early return for simple change
@@ -99,7 +104,8 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 			bus.addresses = nextList;
 		}
 
-		startAddr = bus.addresses + index + addBefore; // reset startAddr ptr because data might have moved
+		// reset startAddr ptr because data might have moved
+		startAddr = bus.addresses + index + addBefore;
 		memmove(startAddr + addAfter, startAddr - addBefore, sizeof(busAddr_t) * (bus.size - index));
 
 		// update altered bus ranges

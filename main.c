@@ -13,7 +13,7 @@ void write(uint16_t addr, uint8_t data) {
 
 #define TEST(from, to, read, write) \
 	bus_init(); \
-	printf("   %4s - %4s   \t(%c%c)\treturned ", #from + 2, #to + 2, read ? 'R' : '_', write ? 'W' : '_'); \
+	printf("   %4s - %4s   \t(%c%c)\treturned ", &#from[2], &#to[2], read ? 'R' : '_', write ? 'W' : '_'); \
 	if (bus_add(read, write, from, to)) { \
 		printf("true\n"); \
 		bus_print(); \
