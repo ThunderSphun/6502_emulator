@@ -67,6 +67,21 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 
 	// if start is 0x0000 and end is 0xFFFF
 	// optimize by removing the entire list, and adding a new single entry
+	if (start == 0x0000 && stop == 0xFFFF) {
+		busAddr_t* newList = malloc(sizeof(busAddr_t));
+		if (newList == NULL)
+			return false;
+
+		newList->start = 0x0000;
+		newList->stop = 0xFFFF;
+		newList->read = readFunc;
+		newList->write = writeFunc;
+
+		free(bus.addresses);
+		bus.addresses = newList;
+		bus.size = 1;
+		return true;
+	}
 
 	busAddr_t* startAddr = NULL;
 	busAddr_t* stopAddr = NULL;
@@ -210,12 +225,11 @@ void bus_print() {
 		return;
 	}
 
-	printf("bus size: %lu\n", bus.size);
+	printf("bus size: %lu", bus.size);
 	for (size_t i = 0; i < bus.size; i++) {
 		busAddr_t* current = bus.addresses + i;
 
-		if (i != 0)
-			printf("\n");
+		printf("\n");
 
 		printBin(current->start);
 		printf("\t%04X", current->start);
@@ -225,6 +239,6 @@ void bus_print() {
 			printBin(current->stop);
 			printf("\t%04X\n", current->stop);
 		} else
-			printf("\tr%p w%p", current->read, current->write);
+			printf("\tr%p w%p\n", current->read, current->write);
 	}
 }

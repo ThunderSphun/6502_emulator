@@ -25,11 +25,11 @@ void write(uint16_t addr, uint8_t data) {
 	bus_destroy()
 
 int main() {
-	// bus_init();
-	// printf("- initial state\n");
-	// bus_print();
-	// bus_destroy();
-	// printf("\n\n");
+	bus_init();
+	printf("- initial state\n");
+	bus_print();
+	bus_destroy();
+	printf("\n\n");
 
 	// break each edge (one edge per edit)
 	TEST(0x0000, 0x01FF, NULL, NULL); // 0x0000 - 0x01FF, 0x0200 - 0xFEFF, 0xFF00 - 0xFFFF
