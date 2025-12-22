@@ -26,10 +26,10 @@ bool bus_init() {
 	if (bus.initialized)
 		return false;
 
-	bus.addresses = malloc(sizeof(busAddr_t) * 3);
+	bus.addresses = malloc(sizeof(busAddr_t) * 4);
 	if (bus.addresses == NULL)
 		return false;
-	bus.size = 3;
+	bus.size = 4;
 
 	bus.addresses[0].start = 0x0000;
 	bus.addresses[0].stop = 0x00FF;
@@ -37,14 +37,19 @@ bool bus_init() {
 	bus.addresses[0].write = NULL;
 
 	bus.addresses[1].start = 0x0100;
-	bus.addresses[1].stop = 0xFEFF;
+	bus.addresses[1].stop = 0x7FFF;
 	bus.addresses[1].read = NULL;
 	bus.addresses[1].write = NULL;
 
-	bus.addresses[2].start = 0xFF00;
-	bus.addresses[2].stop = 0xFFFF;
+	bus.addresses[2].start = 0x8000;
+	bus.addresses[2].stop = 0xFEFF;
 	bus.addresses[2].read = NULL;
 	bus.addresses[2].write = NULL;
+
+	bus.addresses[3].start = 0xFF00;
+	bus.addresses[3].stop = 0xFFFF;
+	bus.addresses[3].read = NULL;
+	bus.addresses[3].write = NULL;
 
 	bus.initialized = true;
 	return true;
@@ -60,6 +65,9 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 		stop = tmp;
 	}
 
+	// if start is 0x0000 and end is 0xFFFF
+	// optimize by removing the entire list, and adding a new single entry
+
 	busAddr_t* startAddr = NULL;
 	busAddr_t* stopAddr = NULL;
 
@@ -73,14 +81,14 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 			stopAddr = current;
 	}
 
-	if (startAddr == NULL || stopAddr == NULL)
-		return false;	// shouldn't be possible, bus should always at least have a range of 0x0000-0xFFFF
-						// keep this for a sanity check
-	if (startAddr > stopAddr)
-		return false;	// if hit it would indicate that either stop is before end
-						// (which shouldn't be possible with earlier check)
-						// or the bus is not in order, which shouldnt be possible either
-						// keep this for a sanity check
+	if (startAddr == NULL || stopAddr == NULL)	// shouldn't be possible, bus should always at least have a range of 0x0000-0xFFFF
+		return false;							// keep this for a sanity check
+
+	if (startAddr > stopAddr)	// if hit it would indicate that either stop is before end
+		return false;			//   (which shouldn't be possible with earlier check)
+								// or the bus is not in order
+								//   (which shouldn't be possible either with proper use of this function)
+								// keep this for a sanity check
 
 	if (startAddr == stopAddr) {
 		// early return for simple change
@@ -123,7 +131,53 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 		return true;
 	}
 
-	return false;
+	// if distance between start and end is 2 AND they both need to be split
+	// optimize by altering size of start, end and the one between
+	// including changing the functions of the center one
+
+	// if distance between start and end is 1 AND either one BUT NOT both need to be split
+	// optimize by altering size of start and end
+	// including changing the functions of the one which was aligned to an edge
+
+	bool addBefore = start != startAddr->start;
+	bool addAfter = stop != stopAddr->stop;
+	size_t startIndex = startAddr - bus.addresses;
+	size_t stopIndex = stopAddr - bus.addresses;
+
+	size_t newSize = bus.size + (addBefore + addAfter) - (stopIndex - startIndex);
+	size_t newIndex = startIndex + addBefore;
+	busAddr_t* newList = malloc(newSize * sizeof(busAddr_t));
+
+	if (newList == NULL)
+		return false;
+
+	if (startIndex != 0 || addBefore)
+		memmove(
+			newList,
+			bus.addresses,
+			(startIndex + addBefore) * sizeof(busAddr_t)
+		);
+	if (stopIndex != bus.size - 1 || addAfter)
+		memmove(
+			newList + startIndex + 1 + addBefore,
+			stopAddr + 1 - addAfter,
+			(bus.size - stopIndex - 1 + addAfter) * sizeof(busAddr_t)
+		);
+
+	newList[newIndex].start = start;
+	newList[newIndex].stop = stop;
+	newList[newIndex].read = readFunc;
+	newList[newIndex].write = writeFunc;
+	if (newIndex != 0)
+		newList[newIndex - 1].stop = start - 1;
+	if (newIndex != newSize - 1)
+		newList[newIndex + 1].start = stop + 1;
+
+	free(bus.addresses);
+	bus.addresses = newList;
+	bus.size = newSize;
+
+	return true;
 }
 
 bool bus_destroy() {
@@ -156,6 +210,7 @@ void bus_print() {
 		return;
 	}
 
+	printf("bus size: %lu\n", bus.size);
 	for (size_t i = 0; i < bus.size; i++) {
 		busAddr_t* current = bus.addresses + i;
 
@@ -170,6 +225,6 @@ void bus_print() {
 			printBin(current->stop);
 			printf("\t%04X\n", current->stop);
 		} else
-			printf("\tr%p w%p\n", current->read, current->write);
+			printf("\tr%p w%p", current->read, current->write);
 	}
 }
