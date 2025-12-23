@@ -105,31 +105,33 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 								//   (which shouldn't be possible either with proper use of this function)
 								// keep this for a sanity check
 
-	if (startAddr == stopAddr) {
+	bool addBefore = start != startAddr->start;
+	bool addAfter = stop != stopAddr->stop;
+	size_t startIndex = startAddr - bus.addresses;
+	size_t stopIndex = stopAddr - bus.addresses;
+	size_t distance = stopAddr - startAddr;
+
+	if (distance == 0) {
 		// early return for simple change
-		if (startAddr->start == start && startAddr->stop == stop) {
+		if (!addBefore && !addAfter) {
 			startAddr->read = readFunc;
 			startAddr->write = writeFunc;
 
 			return true;
 		}
 
-		size_t index = startAddr - bus.addresses;
-		bool addBefore = start != startAddr->start;
-		bool addAfter = stop != startAddr->stop;
-
 		// allocate new memory
 		{
-			busAddr_t* nextList = realloc(bus.addresses, sizeof(busAddr_t) * (bus.size + addBefore + addAfter));
-			if (nextList == NULL)
+			busAddr_t* newList = realloc(bus.addresses, sizeof(busAddr_t) * (bus.size + addBefore + addAfter));
+			if (newList == NULL)
 				return false;
 
-			bus.addresses = nextList;
+			bus.addresses = newList;
 		}
 
 		// reset startAddr ptr because data might have moved
-		startAddr = bus.addresses + index + addBefore;
-		memmove(startAddr + addAfter, startAddr - addBefore, sizeof(busAddr_t) * (bus.size - index));
+		startAddr = bus.addresses + startIndex + addBefore;
+		memmove(startAddr + addAfter, startAddr - addBefore, sizeof(busAddr_t) * (bus.size - startIndex));
 
 		// update altered bus ranges
 		startAddr->start = start;
@@ -145,19 +147,47 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 
 		return true;
 	}
+	if (distance == 1) {
+		if (addBefore ^ addAfter) {
+			// if distance between start and end is 1 AND either one BUT NOT both need to be split
+			// optimize by altering size of start and end
+			// including changing the functions of the one which was aligned to an edge
+			if (addBefore) {
+				startAddr->stop = start - 1;
 
-	// if distance between start and end is 2 AND they both need to be split
-	// optimize by altering size of start, end and the one between
-	// including changing the functions of the center one
+				stopAddr->start = start;
+				stopAddr->read = readFunc;
+				stopAddr->write = writeFunc;
+			}
+			if (addAfter) {
+				stopAddr->start = stop + 1;
 
-	// if distance between start and end is 1 AND either one BUT NOT both need to be split
-	// optimize by altering size of start and end
-	// including changing the functions of the one which was aligned to an edge
+				startAddr->stop = stop;
+				startAddr->read = readFunc;
+				startAddr->write = writeFunc;
+			}
+			return true;
+		}
+	}
+	if (distance == 2) {
+		if (addBefore && addAfter) {
+			// if distance between start and end is 2 AND they both need to be split
+			// optimize by altering size of start, end and the one between
+			// including changing the functions of the center one
+			busAddr_t* center = startAddr + 1;
 
-	bool addBefore = start != startAddr->start;
-	bool addAfter = stop != stopAddr->stop;
-	size_t startIndex = startAddr - bus.addresses;
-	size_t stopIndex = stopAddr - bus.addresses;
+			startAddr->stop = start - 1;
+
+			center->start = start;
+			center->stop = stop;
+			center->read = readFunc;
+			center->write = writeFunc;
+
+			stopAddr->start = stop + 1;
+
+			return true;
+		}
+	}
 
 	size_t newSize = bus.size + (addBefore + addAfter) - (stopIndex - startIndex);
 	size_t newIndex = startIndex + addBefore;
