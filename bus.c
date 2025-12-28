@@ -1,17 +1,14 @@
 #include "bus.h"
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-typedef struct bus bus_t;
 typedef struct busAddr busAddr_t;
 
-struct bus {
+static struct bus {
 	busAddr_t* addresses;
 	size_t size;
 	bool initialized;
-};
+} bus = { 0 };
 
 struct busAddr {
 	uint16_t start;
@@ -20,38 +17,31 @@ struct busAddr {
 	busWriteFunc write;
 };
 
-bus_t bus = { 0 };
-
 bool bus_init() {
 	if (bus.initialized)
 		return false;
 
-	bus.addresses = malloc(sizeof(busAddr_t) * 4);
+	bus.addresses = malloc(sizeof(busAddr_t));
 	if (bus.addresses == NULL)
 		return false;
-	bus.size = 4;
+	bus.size = 1;
 
-	bus.addresses[0].start = 0x0000;
-	bus.addresses[0].stop = 0x00FF;
-	bus.addresses[0].read = NULL;
-	bus.addresses[0].write = NULL;
-
-	bus.addresses[1].start = 0x0100;
-	bus.addresses[1].stop = 0x7FFF;
-	bus.addresses[1].read = NULL;
-	bus.addresses[1].write = NULL;
-
-	bus.addresses[2].start = 0x8000;
-	bus.addresses[2].stop = 0xFEFF;
-	bus.addresses[2].read = NULL;
-	bus.addresses[2].write = NULL;
-
-	bus.addresses[3].start = 0xFF00;
-	bus.addresses[3].stop = 0xFFFF;
-	bus.addresses[3].read = NULL;
-	bus.addresses[3].write = NULL;
+	bus.addresses->start = 0x0000;
+	bus.addresses->stop = 0xFFFF;
+	bus.addresses->read = NULL;
+	bus.addresses->write = NULL;
 
 	bus.initialized = true;
+	return true;
+}
+
+bool bus_destroy() {
+	if (!bus.initialized)
+		return false;
+
+	free(bus.addresses);
+	bus.initialized = false;
+
 	return true;
 }
 
@@ -225,16 +215,6 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 	return true;
 }
 
-bool bus_destroy() {
-	if (!bus.initialized)
-		return false;
-
-	free(bus.addresses);
-	bus.initialized = false;
-
-	return true;
-}
-
 #ifdef __GNUC__
 void printBin(uint16_t val) {
 	printf("%08b %08b", (val >> 8) & 0xFF, val & 0xFF);
@@ -255,7 +235,7 @@ void bus_print() {
 		return;
 	}
 
-	printf("bus size: %lu", bus.size);
+	printf("bus size: %zu", bus.size);
 	for (size_t i = 0; i < bus.size; i++) {
 		busAddr_t* current = bus.addresses + i;
 
