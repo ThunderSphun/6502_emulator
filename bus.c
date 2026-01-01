@@ -206,6 +206,33 @@ bool bus_add(component_t* component, uint16_t start, uint16_t stop) {
 	return true;
 }
 
+uint8_t busRead(uint16_t fullAddr) {
+	for (size_t i = 0; i < bus.size; i++) {
+		busAddr_t* current = bus.addresses + i;
+
+		if (fullAddr >= current->start && fullAddr <= current->stop) {
+			if (current->component->readFunc)
+				return current->component->readFunc(current->component, (addr_t) { fullAddr, fullAddr - current->start });
+
+			return 0;
+		}
+	}
+
+	return 0;
+}
+
+void busWrite(uint16_t fullAddr, uint8_t data) {
+	for (size_t i = 0; i < bus.size; i++) {
+		busAddr_t* current = bus.addresses + i;
+
+		if (fullAddr >= current->start && fullAddr <= current->stop) {
+			if (current->component->writeFunc)
+				current->component->writeFunc(current->component, (addr_t) { fullAddr, fullAddr - current->start }, data);
+			return;
+		}
+	}
+}
+
 #ifdef __GNUC__
 void printBin(uint16_t val) {
 	printf("%08b %08b", (val >> 8) & 0xFF, val & 0xFF);
