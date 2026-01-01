@@ -13,8 +13,7 @@ static struct bus {
 struct busAddr {
 	uint16_t start;
 	uint16_t stop;
-	busReadFunc read;
-	busWriteFunc write;
+	component_t* component;
 };
 
 bool bus_init() {
@@ -28,8 +27,7 @@ bool bus_init() {
 
 	bus.addresses->start = 0x0000;
 	bus.addresses->stop = 0xFFFF;
-	bus.addresses->read = NULL;
-	bus.addresses->write = NULL;
+	bus.addresses->component = NULL;
 
 	bus.initialized = true;
 	return true;
@@ -45,7 +43,7 @@ bool bus_destroy() {
 	return true;
 }
 
-bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint16_t stop) {
+bool bus_add(component_t* component, uint16_t start, uint16_t stop) {
 	if (!bus.initialized)
 		return false;
 
@@ -64,8 +62,7 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 
 		newList->start = 0x0000;
 		newList->stop = 0xFFFF;
-		newList->read = readFunc;
-		newList->write = writeFunc;
+		newList->component = component;
 
 		free(bus.addresses);
 		bus.addresses = newList;
@@ -104,8 +101,7 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 	if (distance == 0) {
 		// early return for simple change
 		if (!addBefore && !addAfter) {
-			startAddr->read = readFunc;
-			startAddr->write = writeFunc;
+			startAddr->component = component;
 
 			return true;
 		}
@@ -126,8 +122,7 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 		// update altered bus ranges
 		startAddr->start = start;
 		startAddr->stop = stop;
-		startAddr->read = readFunc;
-		startAddr->write = writeFunc;
+		startAddr->component = component;
 		if (addBefore)
 			(startAddr - 1)->stop = start - 1;
 		if (addAfter)
@@ -146,15 +141,13 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 				startAddr->stop = start - 1;
 
 				stopAddr->start = start;
-				stopAddr->read = readFunc;
-				stopAddr->write = writeFunc;
+				startAddr->component = component;
 			}
 			if (addAfter) {
 				stopAddr->start = stop + 1;
 
 				startAddr->stop = stop;
-				startAddr->read = readFunc;
-				startAddr->write = writeFunc;
+				startAddr->component = component;
 			}
 			return true;
 		}
@@ -170,8 +163,7 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 
 			center->start = start;
 			center->stop = stop;
-			center->read = readFunc;
-			center->write = writeFunc;
+			startAddr->component = component;
 
 			stopAddr->start = stop + 1;
 
@@ -201,8 +193,7 @@ bool bus_add(busReadFunc readFunc, busWriteFunc writeFunc, uint16_t start, uint1
 
 	newList[newIndex].start = start;
 	newList[newIndex].stop = stop;
-	newList[newIndex].read = readFunc;
-	newList[newIndex].write = writeFunc;
+	newList[newIndex].component = component;
 	if (newIndex != 0)
 		newList[newIndex - 1].stop = start - 1;
 	if (newIndex != newSize - 1)
@@ -244,11 +235,10 @@ void bus_print() {
 		printBin(current->start);
 		printf("\t%04X", current->start);
 		if (current->start != current->stop) {
-			printf("\n");
-			printf("........ ........\t....\tr%p w%p\n", current->read, current->write);
+			printf("\n........ ........\t....\tr%p w%p\n", current->component->readFunc, current->component->writeFunc);
 			printBin(current->stop);
 			printf("\t%04X\n", current->stop);
 		} else
-			printf("\tr%p w%p\n", current->read, current->write);
+			printf("\tr%p w%p\n", current->component->writeFunc, current->component->writeFunc);
 	}
 }

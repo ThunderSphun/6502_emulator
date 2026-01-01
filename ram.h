@@ -1,6 +1,6 @@
 #pragma once
 
-#define COMP_NAME ram
-#define COMP_INIT_ARGS uint16_t size
 #include "component.h"
 
+component_t ram_init(uint16_t size);
+bool ram_destroy(component_t component);

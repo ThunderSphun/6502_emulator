@@ -2,43 +2,49 @@
 
 #include <stdio.h>
 
-static struct rom {
+struct rom {
 	uint8_t* data;
 	uint16_t size;
-	bool initialized;
-} rom = { 0 };
+};
 
-bool rom_init(uint16_t size) {
-	if (rom.initialized)
-		return false;
-
-	rom.data = malloc(size * sizeof(uint8_t));
-	if (rom.data == NULL)
-		return false;
-	rom.size = size;
-	rom.initialized = true;
-
-	return true;
+struct rom* getRom(component_t* component) {
+	return ((struct rom*) (component->component_data));
 }
 
-bool rom_destroy() {
-	if (!rom.initialized)
-		return false;
-
-	free(rom.data);
-	rom.initialized = false;
-	return true;
-}
-
-uint8_t rom_read(addr_t addr) {
-	if (!rom.initialized) {
-		printf("rom is not initialized");
+uint8_t rom_read(component_t* component, addr_t addr) {
+	if (getRom(component) == NULL) {
+		printf("rom is not initialized\n");
 		return 0;
 	}
 
-	if (addr.full >= 0x8000) {
-		printf("rom is disabled");
+	if (getRom(component)->size < addr.relative) {
+		printf("outside of rom range\n");
 		return 0;
 	}
-	return rom.data[addr.relative];
+
+	return getRom(component)->data[addr.relative];
+}
+
+component_t rom_init(uint16_t size) {
+	struct rom* rom = malloc(sizeof(struct rom));
+	if (rom == NULL)
+		return (component_t) { 0 };
+	rom->data = malloc(size * sizeof(uint8_t));
+	if (rom->data == NULL) {
+		free(rom);
+		return (component_t) { 0 };
+	}
+	rom->size = size;
+
+	return (component_t) { rom, rom_read, NULL };
+}
+
+bool rom_destroy(component_t component) {
+	if (getRom(&component) == NULL)
+		return false;
+
+	free(getRom(&component)->data);
+	free(getRom(&component));
+
+	return true;
 }
