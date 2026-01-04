@@ -17,6 +17,7 @@ typedef void (*componentWrite)(component_t* component, addr_t addr, uint8_t data
 
 struct component {
 	const void* const component_data;
+	const char* name;
 	const componentRead readFunc;
 	const componentWrite writeFunc;
 };

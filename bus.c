@@ -262,10 +262,10 @@ void bus_print() {
 		printBin(current->start);
 		printf("\t%04X", current->start);
 		if (current->start != current->stop) {
-			printf("\n........ ........\t....\tr%p w%p\n", current->component->readFunc, current->component->writeFunc);
+			printf("\n........ ........\t....\t%s\tr%p w%p\n", current->component->name, current->component->readFunc, current->component->writeFunc);
 			printBin(current->stop);
 			printf("\t%04X\n", current->stop);
 		} else
-			printf("\tr%p w%p\n", current->component->writeFunc, current->component->writeFunc);
+			printf("\t%s\tr%p w%p\n", current->component->name, current->component->writeFunc, current->component->writeFunc);
 	}
 }

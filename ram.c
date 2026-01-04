@@ -50,7 +50,7 @@ component_t ram_init(uint16_t size) {
 	}
 	ram->size = size;
 
-	return (component_t) { ram, ram_read, ram_write };
+	return (component_t) { ram, "ram", ram_read, ram_write };
 }
 
 bool ram_destroy(component_t component) {

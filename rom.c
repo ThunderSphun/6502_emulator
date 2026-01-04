@@ -36,7 +36,7 @@ component_t rom_init(uint16_t size) {
 	}
 	rom->size = size;
 
-	return (component_t) { rom, rom_read, NULL };
+	return (component_t) { rom, "rom", rom_read, NULL };
 }
 
 bool rom_destroy(component_t component) {

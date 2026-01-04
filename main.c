@@ -38,7 +38,7 @@ int main() {
 #define TEST(addr) \
 	printf("bus read at $%04X: %i\n", addr, busRead(addr));\
 	busWrite(addr, 41);\
-	printf("bus read at $%04X: %i\n", addr, busRead(addr));
+	printf("bus read at $%04X: %i\n\n", addr, busRead(addr))
 
 	TEST(0x0000);
 	TEST(0x1000);
@@ -49,7 +49,11 @@ int main() {
 	TEST(0xF000);
 	TEST(0xFFFF);
 
+#undef TEST
+
 	printBusRange();
+
+	bus_print();
 
 	rom_destroy(rom);
 	ram_destroy(ram);
