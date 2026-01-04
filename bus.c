@@ -206,7 +206,7 @@ bool bus_add(component_t* component, uint16_t start, uint16_t stop) {
 	return true;
 }
 
-uint8_t busRead(uint16_t fullAddr) {
+uint8_t bus_read(uint16_t fullAddr) {
 	for (size_t i = 0; i < bus.size; i++) {
 		busAddr_t* current = bus.addresses + i;
 
@@ -221,7 +221,7 @@ uint8_t busRead(uint16_t fullAddr) {
 	return 0;
 }
 
-void busWrite(uint16_t fullAddr, uint8_t data) {
+void bus_write(uint16_t fullAddr, uint8_t data) {
 	for (size_t i = 0; i < bus.size; i++) {
 		busAddr_t* current = bus.addresses + i;
 
