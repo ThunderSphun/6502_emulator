@@ -48,3 +48,18 @@ bool rom_destroy(component_t component) {
 
 	return true;
 }
+
+bool rom_set(component_t* component, uint16_t addr, uint16_t size, uint8_t* data) {
+	if (getRom(component) == NULL)
+		return false;
+
+	if (addr > getRom(component)->size)
+		return false;
+
+	if (getRom(component)->size - addr < size)
+		return false;
+
+	memcpy(getRom(component)->data + addr, data, size);
+
+	return true;
+}

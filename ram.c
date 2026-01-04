@@ -62,3 +62,18 @@ bool ram_destroy(component_t component) {
 
 	return true;
 }
+
+bool ram_set(component_t* component, uint16_t addr, uint16_t size, uint8_t* data) {
+	if (getRam(component) == NULL)
+		return false;
+
+	if (addr > getRam(component)->size)
+		return false;
+
+	if (getRam(component)->size - addr < size)
+		return false;
+
+	memcpy(getRam(component)->data + addr, data, size);
+
+	return true;
+}
