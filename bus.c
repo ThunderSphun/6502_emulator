@@ -257,15 +257,17 @@ void bus_print() {
 	for (size_t i = 0; i < bus.size; i++) {
 		busAddr_t* current = bus.addresses + i;
 
+		component_t component = current->component ? *current->component : (component_t) { 0 };
+
 		printf("\n");
 
 		printBin(current->start);
 		printf("\t%04X", current->start);
 		if (current->start != current->stop) {
-			printf("\n........ ........\t....\t%s\tr%p w%p\n", current->component->name, current->component->readFunc, current->component->writeFunc);
+			printf("\n........ ........\t....\t%s\tr%p w%p\n", component.name, component.readFunc, component.writeFunc);
 			printBin(current->stop);
 			printf("\t%04X\n", current->stop);
 		} else
-			printf("\t%s\tr%p w%p\n", current->component->name, current->component->writeFunc, current->component->writeFunc);
+			printf("\t%s\tr%p w%p\n", component.name, component.writeFunc, component.writeFunc);
 	}
 }

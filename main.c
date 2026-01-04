@@ -22,13 +22,15 @@ void printBusRange() {
 
 int main() {
 	bus_init();
+	bus_print();
+
 	component_t ram = ram_init(0x8000);
 	component_t rom = rom_init(0x8000);
 
 	bus_add(&ram, 0x0000, 0x7FFF);
 	bus_add(&rom, 0x8000, 0xFFFF);
 
-	printBusRange();
+	bus_print();
 
 	bus_print();
 
