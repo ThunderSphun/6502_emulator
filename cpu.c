@@ -37,7 +37,7 @@ void push(uint8_t data) {
 
 #pragma region addressingModes
 // the following functions all implement logic for the addressing mode
-// if they return true an additional clockcycle should be taken
+// if they return true an additional clockcycle might need to be taken depending on the opcode
 
 
 // implied addressing mode
@@ -159,6 +159,341 @@ bool am_iny() {
 	return 0;
 }
 #pragma endregion addressingModes
+
+#pragma region opcodes
+// the following functions all implement logic for the opcodes mode
+// if they return true an additional clockcycle might need to be taken depending on the opcode
+
+#if defined(WDC) || defined(ROCKWEL)
+// some macro magic to get an easier time implementing the bit instructions
+// these instrutions originated in the Rockwel chips, and were later adapted by WDC
+#define BITS_EXPANSION(funcName) \
+bool op_##funcName(uint8_t bit); \
+BIT_EXPANSION(funcName, 0) BIT_EXPANSION(funcName, 1) \
+BIT_EXPANSION(funcName, 2) BIT_EXPANSION(funcName, 3) BIT_EXPANSION(funcName, 4) \
+BIT_EXPANSION(funcName, 5) BIT_EXPANSION(funcName, 6) BIT_EXPANSION(funcName, 7)
+#define BIT_EXPANSION(funcName, bit) \
+bool op_##funcName##bit() { return op_##funcName(bit); }
+#endif
+
+
+bool op_adc() {
+	return false;
+}
+
+bool op_and() {
+	return false;
+}
+
+bool op_asl() {
+	return false;
+}
+
+#if defined(WDC) || defined(ROCKWEL)
+bool op_bbr(uint8_t bit) {
+	return false;
+}
+
+BITS_EXPANSION(bbr)
+#endif
+
+#if defined(WDC) || defined (ROCKWEL)
+bool op_bbs(uint8_t bit) {
+	return false;
+}
+
+BITS_EXPANSION(bbs)
+#endif
+
+bool op_bcc() {
+	return false;
+}
+
+bool op_bcs() {
+	return false;
+}
+
+bool op_beq() {
+	return false;
+}
+
+bool op_bit() {
+	return false;
+}
+
+bool op_bmi() {
+	return false;
+}
+
+bool op_bne() {
+	return false;
+}
+
+bool op_bpl() {
+	return false;
+}
+
+#ifdef WDC
+bool op_bra() {
+	return false;
+}
+#endif
+
+bool op_brk() {
+	return false;
+}
+
+bool op_bvc() {
+	return false;
+}
+
+bool op_bvs() {
+	return false;
+}
+
+bool op_clc() {
+	return false;
+}
+
+bool op_cld() {
+	return false;
+}
+
+bool op_cli() {
+	return false;
+}
+
+bool op_clv() {
+	return false;
+}
+
+bool op_cmp() {
+	return false;
+}
+
+bool op_cpx() {
+	return false;
+}
+
+bool op_cpy() {
+	return false;
+}
+
+bool op_dec() {
+	return false;
+}
+
+bool op_dex() {
+	return false;
+}
+
+bool op_dey() {
+	return false;
+}
+
+bool op_eor() {
+	return false;
+}
+
+bool op_inc() {
+	return false;
+}
+
+bool op_inx() {
+	return false;
+}
+
+bool op_iny() {
+	return false;
+}
+
+bool op_jmp() {
+	return false;
+}
+
+bool op_jsr() {
+	return false;
+}
+
+bool op_lda() {
+	return false;
+}
+
+bool op_ldx() {
+	return false;
+}
+
+bool op_ldy() {
+	return false;
+}
+
+bool op_lsr() {
+	return false;
+}
+
+bool op_nop() {
+	return false;
+}
+
+bool op_ora() {
+	return false;
+}
+
+bool op_pha() {
+	return false;
+}
+
+bool op_php() {
+	return false;
+}
+
+#ifdef WDC
+bool op_phx() {
+	return false;
+}
+#endif
+
+#ifdef WDC
+bool op_phy() {
+	return false;
+}
+#endif
+
+bool op_pla() {
+	return false;
+}
+
+bool op_plp() {
+	return false;
+}
+
+#ifdef WDC
+bool op_plx() {
+	return false;
+}
+#endif
+
+#ifdef WDC
+bool op_ply() {
+	return false;
+}
+#endif
+
+#if defined(WDC) || defined (ROCKWEL)
+bool op_rmb(uint8_t bit) {
+	return false;
+}
+
+BITS_EXPANSION(rmb)
+#endif
+
+bool op_rol() {
+	return false;
+}
+
+bool op_ror() {
+	return false;
+}
+
+bool op_rti() {
+	return false;
+}
+
+bool op_rts() {
+	return false;
+}
+
+bool op_sbc() {
+	return false;
+}
+
+bool op_sec() {
+	return false;
+}
+
+bool op_sed() {
+	return false;
+}
+
+bool op_sei() {
+	return false;
+}
+
+#if defined(WDC) || defined (ROCKWEL)
+bool op_smb(uint8_t bit) {
+	return false;
+}
+
+BITS_EXPANSION(smb)
+#endif
+
+bool op_sta() {
+	return false;
+}
+
+#ifdef WDC
+bool op_stp() {
+	return false;
+}
+#endif
+
+bool op_stx() {
+	return false;
+}
+
+bool op_sty() {
+	return false;
+}
+
+#ifdef WDC
+bool op_stz() {
+	return false;
+}
+#endif
+
+bool op_tax() {
+	return false;
+}
+
+bool op_tay() {
+	return false;
+}
+
+#ifdef WDC
+bool op_trb() {
+	return false;
+}
+#endif
+
+#ifdef WDC
+bool op_tsb() {
+	return false;
+}
+#endif
+
+bool op_tsx() {
+	return false;
+}
+
+bool op_txa() {
+	return false;
+}
+
+bool op_txs() {
+	return false;
+}
+
+bool op_tya() {
+	return false;
+}
+
+#ifdef WDC
+bool op_wai() {
+	return false;
+}
+#endif
+
+#pragma endregion opcodes
 
 void cpu_irq() {
 	if (!registers.I)
