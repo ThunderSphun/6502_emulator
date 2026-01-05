@@ -7,11 +7,11 @@ struct ram {
 	uint16_t size;
 };
 
-struct ram* getRam(component_t* component) {
+struct ram* getRam(const component_t* const component) {
 	return ((struct ram*) (component->component_data));
 }
 
-uint8_t ram_read(component_t* component, addr_t addr) {
+uint8_t ram_read(const component_t* const component, const addr_t addr) {
 	if (getRam(component) == NULL) {
 		printf("ram is not initialized\n");
 		return 0;
@@ -25,7 +25,7 @@ uint8_t ram_read(component_t* component, addr_t addr) {
 	return getRam(component)->data[addr.relative];
 }
 
-void ram_write(component_t* component, addr_t addr, uint8_t data) {
+void ram_write(const component_t* const component, const addr_t addr, const uint8_t data) {
 	if (getRam(component) == NULL) {
 		printf("ram is not initialized\n");
 		return;
@@ -39,7 +39,7 @@ void ram_write(component_t* component, addr_t addr, uint8_t data) {
 	getRam(component)->data[addr.relative] = data;
 }
 
-component_t ram_init(uint16_t size) {
+component_t ram_init(const uint16_t size) {
 	struct ram* ram = malloc(sizeof(struct ram));
 	if (ram == NULL)
 		return (component_t) { 0 };
@@ -59,21 +59,6 @@ bool ram_destroy(component_t component) {
 
 	free(getRam(&component)->data);
 	free(getRam(&component));
-
-	return true;
-}
-
-bool ram_set(component_t* component, uint16_t addr, uint16_t size, uint8_t* data) {
-	if (getRam(component) == NULL)
-		return false;
-
-	if (addr > getRam(component)->size)
-		return false;
-
-	if (getRam(component)->size - addr < size)
-		return false;
-
-	memcpy(getRam(component)->data + addr, data, size);
 
 	return true;
 }

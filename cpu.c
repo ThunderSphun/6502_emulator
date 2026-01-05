@@ -86,7 +86,7 @@ void cpu_clock() {
 	if (cycles-- != 0)
 		return;
 
-	uint8_t instruction = bus_read(registers.PC++);
+	const uint8_t instruction = bus_read(registers.PC++);
 	// use instruction
 
 	// set cycles from instruction
@@ -95,7 +95,7 @@ void cpu_clock() {
 
 // runs instruction and all clockcycles required
 void cpu_runInstruction() {
-	// make sure last instruction is 'finished'
+	// make sure previous instruction is 'finished'
 	while (cycles > 0)
 		cpu_clock();
 

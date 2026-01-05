@@ -13,7 +13,7 @@ static struct bus {
 struct busAddr {
 	uint16_t start;
 	uint16_t stop;
-	component_t* component;
+	const component_t* component;
 };
 
 bool bus_init() {
@@ -38,20 +38,18 @@ bool bus_destroy() {
 		return false;
 
 	free(bus.addresses);
+	bus.addresses = NULL;
 	bus.initialized = false;
 
 	return true;
 }
 
-bool bus_add(component_t* component, uint16_t start, uint16_t stop) {
+bool bus_add(const component_t* component, const uint16_t start, const uint16_t stop) {
 	if (!bus.initialized)
 		return false;
 
-	if (start > stop) {
-		uint16_t tmp = start;
-		start = stop;
-		stop = tmp;
-	}
+	if (start > stop)
+		return bus_add(component, stop, start);
 
 	// if start is 0x0000 and end is 0xFFFF
 	// optimize by removing the entire list, and adding a new single entry
@@ -74,7 +72,7 @@ bool bus_add(component_t* component, uint16_t start, uint16_t stop) {
 	busAddr_t* stopAddr = NULL;
 
 	for (size_t i = 0; i < bus.size; i++) {
-		busAddr_t* current = bus.addresses + i;
+		const busAddr_t* current = bus.addresses + i;
 
 		if (start >= current->start && start <= current->stop)
 			startAddr = current;
@@ -92,11 +90,11 @@ bool bus_add(component_t* component, uint16_t start, uint16_t stop) {
 								//   (which shouldn't be possible either with proper use of this function)
 								// keep this for a sanity check
 
-	bool addBefore = start != startAddr->start;
-	bool addAfter = stop != stopAddr->stop;
-	size_t startIndex = startAddr - bus.addresses;
-	size_t stopIndex = stopAddr - bus.addresses;
-	size_t distance = stopAddr - startAddr;
+	const bool addBefore = start != startAddr->start;
+	const bool addAfter = stop != stopAddr->stop;
+	const size_t startIndex = startAddr - bus.addresses;
+	const size_t stopIndex = stopAddr - bus.addresses;
+	const size_t distance = stopAddr - startAddr;
 
 	if (distance == 0) {
 		// early return for simple change
@@ -108,7 +106,7 @@ bool bus_add(component_t* component, uint16_t start, uint16_t stop) {
 
 		// allocate new memory
 		{
-			busAddr_t* newList = realloc(bus.addresses, sizeof(busAddr_t) * (bus.size + addBefore + addAfter));
+			const busAddr_t* newList = realloc(bus.addresses, sizeof(busAddr_t) * (bus.size + addBefore + addAfter));
 			if (newList == NULL)
 				return false;
 
@@ -171,8 +169,8 @@ bool bus_add(component_t* component, uint16_t start, uint16_t stop) {
 		}
 	}
 
-	size_t newSize = bus.size + (addBefore + addAfter) - (stopIndex - startIndex);
-	size_t newIndex = startIndex + addBefore;
+	const size_t newSize = bus.size + (addBefore + addAfter) - (stopIndex - startIndex);
+	const size_t newIndex = startIndex + addBefore;
 	busAddr_t* newList = malloc(newSize * sizeof(busAddr_t));
 
 	if (newList == NULL)
@@ -206,9 +204,9 @@ bool bus_add(component_t* component, uint16_t start, uint16_t stop) {
 	return true;
 }
 
-uint8_t bus_read(uint16_t fullAddr) {
+uint8_t bus_read(const uint16_t fullAddr) {
 	for (size_t i = 0; i < bus.size; i++) {
-		busAddr_t* current = bus.addresses + i;
+		const busAddr_t* current = bus.addresses + i;
 
 		if (fullAddr >= current->start && fullAddr <= current->stop) {
 			if (current->component->readFunc)
@@ -221,9 +219,9 @@ uint8_t bus_read(uint16_t fullAddr) {
 	return 0;
 }
 
-void bus_write(uint16_t fullAddr, uint8_t data) {
+void bus_write(const uint16_t fullAddr, const uint8_t data) {
 	for (size_t i = 0; i < bus.size; i++) {
-		busAddr_t* current = bus.addresses + i;
+		const busAddr_t* current = bus.addresses + i;
 
 		if (fullAddr >= current->start && fullAddr <= current->stop) {
 			if (current->component->writeFunc)
@@ -255,9 +253,9 @@ void bus_print() {
 
 	printf("bus size: %zu", bus.size);
 	for (size_t i = 0; i < bus.size; i++) {
-		busAddr_t* current = bus.addresses + i;
+		const busAddr_t* current = bus.addresses + i;
 
-		component_t component = current->component ? *current->component : (component_t) { 0 };
+		const component_t component = current->component ? *current->component : (component_t) { 0 };
 
 		printf("\n");
 

@@ -7,11 +7,11 @@ struct rom {
 	uint16_t size;
 };
 
-struct rom* getRom(component_t* component) {
+struct rom* getRom(const component_t* const component) {
 	return ((struct rom*) (component->component_data));
 }
 
-uint8_t rom_read(component_t* component, addr_t addr) {
+uint8_t rom_read(const component_t* const component, const addr_t addr) {
 	if (getRom(component) == NULL) {
 		printf("rom is not initialized\n");
 		return 0;
@@ -25,7 +25,7 @@ uint8_t rom_read(component_t* component, addr_t addr) {
 	return getRom(component)->data[addr.relative];
 }
 
-component_t rom_init(uint16_t size) {
+component_t rom_init(const uint16_t size) {
 	struct rom* rom = malloc(sizeof(struct rom));
 	if (rom == NULL)
 		return (component_t) { 0 };
@@ -49,7 +49,7 @@ bool rom_destroy(component_t component) {
 	return true;
 }
 
-bool rom_set(component_t* component, uint16_t addr, uint16_t size, uint8_t* data) {
+bool rom_set(const component_t* const component, const uint16_t addr, const uint16_t size, const uint8_t* data) {
 	if (getRom(component) == NULL)
 		return false;
 

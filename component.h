@@ -12,8 +12,8 @@ typedef struct addr {
 	const uint16_t relative;
 } addr_t;
 
-typedef uint8_t (*componentRead)(component_t* component, addr_t addr);
-typedef void (*componentWrite)(component_t* component, addr_t addr, uint8_t data);
+typedef uint8_t (*componentRead)(const component_t* const component, const addr_t addr);
+typedef void (*componentWrite)(const component_t* const component, const addr_t addr, const uint8_t data);
 
 struct component {
 	const void* const component_data;

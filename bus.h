@@ -10,9 +10,9 @@
 bool bus_init();
 bool bus_destroy();
 
-bool bus_add(component_t* component, uint16_t start, uint16_t stop);
+bool bus_add(const component_t* const component, const uint16_t start, const uint16_t stop);
 
-uint8_t bus_read(uint16_t fullAddr);
-void bus_write(uint16_t fullAddr, uint8_t data);
+uint8_t bus_read(const uint16_t fullAddr);
+void bus_write(const uint16_t fullAddr, const uint8_t data);
 
 void bus_print();
