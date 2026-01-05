@@ -44,7 +44,7 @@ bool bus_destroy() {
 	return true;
 }
 
-bool bus_add(const component_t* component, const uint16_t start, const uint16_t stop) {
+bool bus_add(const component_t* const component, const uint16_t start, const uint16_t stop) {
 	if (!bus.initialized)
 		return false;
 
@@ -72,7 +72,7 @@ bool bus_add(const component_t* component, const uint16_t start, const uint16_t 
 	busAddr_t* stopAddr = NULL;
 
 	for (size_t i = 0; i < bus.size; i++) {
-		const busAddr_t* current = bus.addresses + i;
+		busAddr_t* const current = bus.addresses + i;
 
 		if (start >= current->start && start <= current->stop)
 			startAddr = current;
@@ -106,7 +106,7 @@ bool bus_add(const component_t* component, const uint16_t start, const uint16_t 
 
 		// allocate new memory
 		{
-			const busAddr_t* newList = realloc(bus.addresses, sizeof(busAddr_t) * (bus.size + addBefore + addAfter));
+			busAddr_t* const newList = realloc(bus.addresses, sizeof(busAddr_t) * (bus.size + addBefore + addAfter));
 			if (newList == NULL)
 				return false;
 
