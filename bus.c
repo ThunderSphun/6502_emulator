@@ -209,7 +209,7 @@ uint8_t bus_read(const uint16_t fullAddr) {
 		const busAddr_t* current = bus.addresses + i;
 
 		if (fullAddr >= current->start && fullAddr <= current->stop) {
-			if (current->component->readFunc)
+			if (current->component && current->component->readFunc)
 				return current->component->readFunc(current->component, (addr_t) { fullAddr, fullAddr - current->start });
 
 			return 0;
@@ -224,7 +224,7 @@ void bus_write(const uint16_t fullAddr, const uint8_t data) {
 		const busAddr_t* current = bus.addresses + i;
 
 		if (fullAddr >= current->start && fullAddr <= current->stop) {
-			if (current->component->writeFunc)
+			if (current->component && current->component->writeFunc)
 				current->component->writeFunc(current->component, (addr_t) { fullAddr, fullAddr - current->start }, data);
 			return;
 		}

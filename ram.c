@@ -62,3 +62,13 @@ bool ram_destroy(component_t component) {
 
 	return true;
 }
+
+bool ram_randomize(const component_t* const component) {
+	if (getRam(component) == NULL)
+		return false;
+
+	for (uint16_t i = 0; i < getRam(component)->size; i++)
+		getRam(component)->data[i] = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
+
+	return true;
+}
