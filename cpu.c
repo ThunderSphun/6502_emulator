@@ -35,6 +35,82 @@ void push(uint8_t data) {
 	bus_write(0x0100 | registers.SP--, data);
 }
 
+uint8_t pull() {
+	return bus_read(0x0100 | registers.SP++);
+}
+
+void cpu_irq() {
+	if (!registers.I)
+		return;
+
+	push(registers.PC >> 8);
+	push(registers.PC & 0xFF);
+	push(registers.flags);
+
+	registers.PC_LO = bus_read(0xFFFE);
+	registers.PC_HI = bus_read(0xFFFF);
+
+	registers.I = true;
+
+	cycles = 7;
+}
+
+void cpu_reset() {
+	registers.PC_LO = bus_read(0xFFFC);
+	registers.PC_HI = bus_read(0xFFFD);
+
+	registers.SP = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
+
+	registers._ = 1;
+	registers.B = 1;
+	registers.D = 0;
+	registers.I = 1;
+
+	cycles = 7;
+}
+
+void cpu_nmi() {
+	push(registers.PC >> 8);
+	push(registers.PC & 0xFF);
+	push(registers.flags);
+
+	registers.PC_LO = bus_read(0xFFFA);
+	registers.PC_HI = bus_read(0xFFFB);
+
+	registers.I = true;
+
+	cycles = 7;
+}
+
+// run single instruction
+// waits to run the instruction until no more cycles need to be consumed
+// afterwards runs entire instruction in a single clockcycle
+// if a cycle needs to be consumed, this function returns early and consumes a single cycle
+void cpu_clock() {
+	if (cycles-- != 0)
+		return;
+
+	const uint8_t instruction = bus_read(registers.PC++);
+	// use instruction
+
+	// set cycles from instruction
+	cycles = 1;
+}
+
+// runs instruction and all clockcycles required
+void cpu_runInstruction() {
+	// make sure previous instruction is 'finished'
+	while (cycles > 0)
+		cpu_clock();
+
+	// execute instruction
+	cpu_clock();
+
+	// make sure current instruction is 'finished'
+	while (cycles > 0)
+		cpu_clock();
+}
+
 #pragma region addressingModes
 // the following functions all implement logic for the addressing mode
 // if they return true an additional clockcycle might need to be taken depending on the instruction
@@ -568,8 +644,8 @@ bool in_sta() {
 
 #ifdef WDC
 // SToP
-// stops the clock from affecting the 6502
-// the 6502 is faster to respond to the reset pin/function
+// stops the clock from affecting the 65c02
+// the 65c02 is faster to respond to the reset pin/function
 bool in_stp() {
 	return false;
 }
@@ -642,83 +718,11 @@ bool in_tya() {
 
 #ifdef WDC
 // WAIt for interupt
-// stops the clock from affecting the 6502
-// the 6502 is faster to respond to the IRQ/NMI pins/functions
+// stops the clock from affecting the 65c02
+// the 65c02 is faster to respond to the IRQ/NMI pins/functions
 bool in_wai() {
 	return false;
 }
 #endif
 
 #pragma endregion instructions
-
-void cpu_irq() {
-	if (!registers.I)
-		return;
-
-	push(registers.PC >> 8);
-	push(registers.PC & 0xFF);
-	push(registers.flags);
-
-	registers.PC_LO = bus_read(0xFFFE);
-	registers.PC_HI = bus_read(0xFFFF);
-
-	registers.I = true;
-
-	cycles = 7;
-}
-
-void cpu_reset() {
-	registers.PC_LO = bus_read(0xFFFC);
-	registers.PC_HI = bus_read(0xFFFD);
-
-	registers.SP = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
-
-	registers._ = 1;
-	registers.B = 1;
-	registers.D = 0;
-	registers.I = 1;
-
-	cycles = 7;
-}
-
-void cpu_nmi() {
-	push(registers.PC >> 8);
-	push(registers.PC & 0xFF);
-	push(registers.flags);
-
-	registers.PC_LO = bus_read(0xFFFA);
-	registers.PC_HI = bus_read(0xFFFB);
-
-	registers.I = true;
-
-	cycles = 7;
-}
-
-// run single instruction
-// waits to run the instruction until no more cycles need to be consumed
-// afterwards runs entire instruction in a single clockcycle
-// if a cycle needs to be consumed, this function returns early and consumes a single cycle
-void cpu_clock() {
-	if (cycles-- != 0)
-		return;
-
-	const uint8_t instruction = bus_read(registers.PC++);
-	// use instruction
-
-	// set cycles from instruction
-	cycles = 1;
-}
-
-// runs instruction and all clockcycles required
-void cpu_runInstruction() {
-	// make sure previous instruction is 'finished'
-	while (cycles > 0)
-		cpu_clock();
-
-	// execute instruction
-	cpu_clock();
-
-	// make sure current instruction is 'finished'
-	while (cycles > 0)
-		cpu_clock();
-}
