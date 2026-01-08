@@ -40,16 +40,76 @@ void push(uint8_t data) {
 // if they return true an additional clockcycle might need to be taken depending on the instruction
 
 
-// implied addressing mode
-// operand is implied by the instruction
-bool am_imp() {
-	return 0;
+// absolute addressing mode
+// an absolute memory location is provided
+// the value at this memory location is used as operand
+bool am_abs() {
+	return false;
+}
+
+#ifdef WDC
+// absolute indexed indirect addressing mode
+// an absolute memory location is provided
+// this memory location is incremented by X, this memory location provides 2 bytes to actually use, in the format $LLHH
+// this mode is generally only used for JMP
+bool am_absi() {
+	return false;
+}
+#endif
+
+// absolute addressing mode offset by X
+// an absolute memory location is provided
+// this memory location is incremented by X, and the value at that memory location is used as operand
+// this can be used to loop through a set of data, aka an array
+bool am_absx() {
+	return false;
+}
+
+// absolute addressing mode offset by Y
+// an absolute memory location is provided
+// this memory location is incremented by Y, and the value at that memory location is used as operand
+// this can be used to loop through a set of data, aka an array
+bool am_absy() {
+	return false;
 }
 
 // immediate addressing mode
 // operand is provided directly after the instruction
 bool am_imm() {
-	return 0;
+	return false;
+}
+
+// implied addressing mode
+// operand is implied by the instruction
+//   this also includes accumulator addressing mode, as accumulator is the implied operand
+//   this also includes stack addressing mode documented in the WDC data sheets, as stack pointer is the implied operand
+bool am_imp() {
+	return false;
+}
+
+// indirect addressing mode
+// an absolute memory location is provided
+// this memory location provides 2 byte to actually use, in the format $LLHH
+// this mode is generally only used for JMP
+bool am_ind() {
+	return false;
+}
+
+// pre-indexed indirect addressing mode
+// a byte is provided, which describes the offset in the zero-page
+// from this zero-page address two bytes are read ($LLHH), which gets incremented by X
+// this increased memory address points to the memory address ($LLHH) where the actual data is stored
+bool am_indx() {
+	return false;
+}
+
+// post-indexed indirect addressing mode
+// a byte is provided, which describes the offset in the zero-page
+// from this zero-page address two bytes are read ($LLHH)
+// this memory address points to the memory address ($LLHH), which gets incremented with Y
+// this address is where the actual data is stored
+bool am_indy() {
+	return false;
 }
 
 // relative addressing mode
@@ -57,7 +117,7 @@ bool am_imm() {
 // this byte is added to PC to get the address to branch to
 // this mode is only allowed for the branch instructions
 bool am_rel() {
-	return 0;
+	return false;
 }
 
 // zero-page addressing mode
@@ -65,9 +125,18 @@ bool am_rel() {
 // the absolute address would be $00XX
 // this makes the operation faster, and shorter
 // the instruction takes only 2 bytes, instead of 3 for a full address
-bool am_zp0() {
-	return 0;
+bool am_zpg() {
+	return false;
 }
+
+#ifdef WDC
+// zero-page indirect addressing mode
+// a byte is provided directly after the instruction which contains an offset in the zero-page
+// this memory location provides 2 byte to actually use, in the format $LLHH
+bool am_zpgi() {
+	return false;
+}
+#endif
 
 // zero-page addressing mode offset by X
 // a byte is provided directly after the instruction which contains an offset in the zero-page
@@ -76,8 +145,8 @@ bool am_zp0() {
 // this makes the operation faster, and shorter
 // the instruction takes only 2 bytes, instead of 3 for a full address
 // the result of the addition wraps around, so the byte read will always be inside the zero-page
-bool am_zpx() {
-	return 0;
+bool am_zpgx() {
+	return false;
 }
 
 // zero-page addressing mode offset by Y
@@ -88,75 +157,8 @@ bool am_zpx() {
 // the instruction takes only 2 bytes, instead of 3 for a full address
 // the result of the addition wraps around, so the byte read will always be inside the zero-page
 // this addressing mode is only used if the register used is X (LDX, STX), so X cannot be used
-bool am_zpy() {
-	return 0;
-}
-
-#ifdef WDC
-// zero-page indirect addressing mode
-// a byte is provided directly after the instruction which contains an offset in the zero-page
-// this memory location provides 2 byte to actually use, in the format $LLHH
-bool am_zpi() {
-	return 0;
-}
-#endif
-
-// absolute addressing mode
-// an absolute memory location is provided
-// the value at this memory location is used as operand
-bool am_abs() {
-	return 0;
-}
-
-#ifdef WDC
-// absolute indexed indirect addressing mode
-// an absolute memory location is provided
-// this memory location is incremented by X, this memory location provides 2 bytes to actually use, in the format $LLHH
-// this mode is generally only used for JMP
-bool am_abi() {
-	return 0;
-}
-#endif
-
-// absolute addressing mode offset by X
-// an absolute memory location is provided
-// this memory location is incremented by X, and the value at that memory location is used as operand
-// this can be used to loop through a set of data, aka an array
-bool am_abx() {
-	return 0;
-}
-
-// absolute addressing mode offset by Y
-// an absolute memory location is provided
-// this memory location is incremented by Y, and the value at that memory location is used as operand
-// this can be used to loop through a set of data, aka an array
-bool am_aby() {
-	return 0;
-}
-
-// indirect addressing mode
-// an absolute memory location is provided
-// this memory location provides 2 byte to actually use, in the format $LLHH
-// this mode is generally only used for JMP
-bool am_ind() {
-	return 0;
-}
-
-// pre-indexed indirect addressing mode
-// a byte is provided, which describes the offset in the zero-page
-// from this zero-page address two bytes are read ($LLHH), which gets incremented by X
-// this increased memory address points to the memory address ($LLHH) where the actual data is stored
-bool am_inx() {
-	return 0;
-}
-
-// post-indexed indirect addressing mode
-// a byte is provided, which describes the offset in the zero-page
-// from this zero-page address two bytes are read ($LLHH)
-// this memory address points to the memory address ($LLHH), which gets incremented with Y
-// this address is where the actual data is stored
-bool am_iny() {
-	return 0;
+bool am_zpgy() {
+	return false;
 }
 
 #pragma endregion addressingModes
