@@ -16,6 +16,12 @@
 
 // addressing modes
 enum {
+#ifndef WDC
+	// addressing mode for illegal opcode
+	//   the WDC version of the 6502 has all illegal opcodes as implemented as nops
+	AM_XXX,
+#endif
+
 #ifdef WDC
 	AM_ABS, AM_ABSI, AM_ABSX, AM_ABSY,
 #else
@@ -36,6 +42,12 @@ enum {
 
 // instructions
 enum {
+#ifndef WDC
+	// instruction for illegal opcode
+	//   the WDC version of the 6502 has all illegal opcodes as implemented as nops
+	IN_XXX,
+#endif
+
 	IN_NOP,
 	// alu
 	IN_ADC, IN_SBC,
@@ -333,6 +345,16 @@ bool am_zpgx() {
 bool am_zpgy() {
 	return false;
 }
+
+#ifndef WDC
+// addressing mode for illegal opcodes
+// shouldn't be used in normal programs
+//   the 6502 has a couple of opcodes that gave somewhat reliable results
+//   the WDC version of the 6502 has all illegal opcodes as implemented as nops
+bool am_xxx() {
+	return false;
+}
+#endif
 
 #pragma endregion addressingModes
 
@@ -814,12 +836,27 @@ bool in_tya() {
 }
 
 #ifdef WDC
-// WAIt for interupt
+// WAt for Interupt
 // stops the clock from affecting the 65c02
 // the 65c02 is faster to respond to the IRQ/NMI pins/functions
 bool in_wai() {
 	return false;
 }
+#endif
+
+#ifndef WDC
+// instruction for illegal opcodes
+// shouldn't be used in normal programs
+//   the 6502 has a couple of opcodes that gave somewhat reliable results
+//   the WDC version of the 6502 has all illegal opcodes as implemented as nops
+bool in_xxx() {
+	return false;
+}
+#endif
+
+#ifdef ROCKWEL
+#undef BITS_EXPANSION
+#undef BIT_EXPANSION
 #endif
 
 #pragma endregion instructions
@@ -845,6 +882,10 @@ struct addressModeEntry addressModes[] = {
 #endif
 	[AM_ZPGX] = {"zpgx",  am_zpgx},
 	[AM_ZPGY] = {"zpgy",  am_zpgy},
+
+#ifndef WDC
+	[AM_XXX] = {"",     am_xxx },
+#endif
 };
 
 struct instructionEntry instructions[] = {
@@ -973,6 +1014,10 @@ struct instructionEntry instructions[] = {
 	[IN_TYA] = {"tya",  in_tya },
 #ifdef WDC
 	[IN_WAI] = {"wai",  in_wai },
+#endif
+
+#ifndef WDC
+	[IN_XXX] = { "",     in_xxx },
 #endif
 };
 
