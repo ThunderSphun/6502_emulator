@@ -7,6 +7,88 @@
 #define ROCKWEL
 #endif
 
+#ifdef ROCKWEL
+// account for bit number in some newer instructions
+#define INSTRUCTION_NAME_LENGTH 5
+#else
+#define INSTRUCTION_NAME_LENGTH 4
+#endif
+
+// addressing modes
+enum {
+#ifdef WDC
+	AM_ABS, AM_ABSI, AM_ABSX, AM_ABSY,
+#else
+	AM_ABS, AM_ABSX, AM_ABSY,
+#endif
+	AM_IMM,
+	AM_IMP,
+	AM_IND, AM_INDX, AM_INDY,
+	AM_REL,
+#ifdef WDC
+	AM_ZPG, AM_ZPGI, AM_ZPGX, AM_ZPGY,
+#else
+	AM_ZPG, AM_ZPGX, AM_ZPGY,
+#endif
+
+	ADDRESS_MODE_COUNT
+};
+
+// instructions
+enum {
+	IN_NOP,
+	// alu
+	IN_ADC, IN_SBC,
+	IN_INC, IN_INX, IN_INY,
+	IN_DEC, IN_DEX, IN_DEY,
+	IN_AND, IN_EOR, IN_ORA,
+	IN_ASL, IN_LSR, IN_ROL, IN_ROR,
+	// PC altering
+#ifdef ROCKWEL
+	IN_BBR0, IN_BBR1, IN_BBR2, IN_BBR3, IN_BBR4, IN_BBR5, IN_BBR6, IN_BBR7,
+	IN_BBS0, IN_BBS1, IN_BBS2, IN_BBS3, IN_BBS4, IN_BBS5, IN_BBS6, IN_BBS7,
+#endif
+	IN_BCC, IN_BNE, IN_BMI, IN_BVC,
+	IN_BCS, IN_BEQ, IN_BPL, IN_BVS,
+#ifdef WDC
+	IN_BRA,
+#endif
+	IN_BRK, IN_JSR, IN_JMP,
+	IN_RTI, IN_RTS,
+	// flags altering
+	IN_BIT, IN_CMP, IN_CPX, IN_CPY,
+	IN_CLC, IN_CLD, IN_CLI, IN_CLV,
+	IN_SEC, IN_SED, IN_SEI,
+	// load
+	IN_LDA, IN_LDX, IN_LDY,
+	IN_TAX, IN_TAY, IN_TSX,
+	IN_TXA, IN_TYA, IN_TXS,
+#ifdef WDC
+	IN_PLA, IN_PLX, IN_PLY, IN_PLP,
+	IN_TRB, IN_TSB,
+#else
+	IN_PLA, IN_PLP,
+#endif
+	// store
+	IN_STA, IN_STX, IN_STY,
+#ifdef ROCKWEL
+	IN_RMB0, IN_RMB1, IN_RMB2, IN_RMB3, IN_RMB4, IN_RMB5, IN_RMB6, IN_RMB7,
+	IN_SMB0, IN_SMB1, IN_SMB2, IN_SMB3, IN_SMB4, IN_SMB5, IN_SMB6, IN_SMB7,
+#endif
+#ifdef WDC
+	IN_PHA, IN_PHX, IN_PHY, IN_PHP,
+	IN_STZ,
+#else
+	IN_PHA, IN_PHP,
+#endif
+	// processor halting
+#ifdef WDC
+	IN_STP, IN_WAI,
+#endif
+
+	INSTRUCTION_COUNT
+};
+
 struct registers {
 	union {
 		struct {
@@ -33,6 +115,16 @@ struct registers {
 	};
 	uint8_t SP; // stack pointer
 } registers;
+
+struct addressModeEntry {
+	const char name[5];
+	bool (* const addressMode)();
+} addressModes[ADDRESS_MODE_COUNT];
+
+struct instructionEntry {
+	const char name[INSTRUCTION_NAME_LENGTH];
+	bool (* const instruction)();
+} instructions[INSTRUCTION_COUNT];
 
 size_t cycles = 0;
 
@@ -731,3 +823,157 @@ bool in_wai() {
 #endif
 
 #pragma endregion instructions
+
+#pragma region data
+
+struct addressModeEntry addressModes[] = {
+	[AM_ABS] = {"abs",  am_abs },
+#ifdef WDC
+	[AM_ABSI] = {"absi",  am_absi},
+#endif
+	[AM_ABSX] = {"absx",  am_absx},
+	[AM_ABSY] = {"absy",  am_absy},
+	[AM_IMM] = {"imm",  am_imm },
+	[AM_IMP] = {"imp",  am_imp },
+	[AM_IND] = {"ind",  am_ind },
+	[AM_INDX] = {"indx",  am_indx},
+	[AM_INDY] = {"indy",  am_indy},
+	[AM_REL] = {"rel",  am_rel },
+	[AM_ZPG] = {"zpg",  am_zpg },
+#ifdef WDC
+	[AM_ZPGI] = {"zpgi",  am_zpgi},
+#endif
+	[AM_ZPGX] = {"zpgx",  am_zpgx},
+	[AM_ZPGY] = {"zpgy",  am_zpgy},
+};
+
+struct instructionEntry instructions[] = {
+	[IN_ADC] = {"adc",  in_adc },
+	[IN_AND] = {"and",  in_and },
+	[IN_ASL] = {"asl",  in_asl },
+#ifdef ROCKWEL
+	[IN_BBR0] = {"bbr0", in_bbr0},
+	[IN_BBR1] = {"bbr1", in_bbr1},
+	[IN_BBR2] = {"bbr2", in_bbr2},
+	[IN_BBR3] = {"bbr3", in_bbr3},
+	[IN_BBR4] = {"bbr4", in_bbr4},
+	[IN_BBR5] = {"bbr5", in_bbr5},
+	[IN_BBR6] = {"bbr6", in_bbr6},
+	[IN_BBR7] = {"bbr7", in_bbr7},
+#endif
+#ifdef ROCKWEL
+	[IN_BBS0] = {"bbs0", in_bbs0},
+	[IN_BBS1] = {"bbs1", in_bbs1},
+	[IN_BBS2] = {"bbs2", in_bbs2},
+	[IN_BBS3] = {"bbs3", in_bbs3},
+	[IN_BBS4] = {"bbs4", in_bbs4},
+	[IN_BBS5] = {"bbs5", in_bbs5},
+	[IN_BBS6] = {"bbs6", in_bbs6},
+	[IN_BBS7] = {"bbs7", in_bbs7},
+#endif
+	[IN_BCC] = {"bcc",  in_bcc },
+	[IN_BCS] = {"bcs",  in_bcs },
+	[IN_BEQ] = {"beq",  in_beq },
+	[IN_BIT] = {"bit",  in_bit },
+	[IN_BMI] = {"bmi",  in_bmi },
+	[IN_BNE] = {"bne",  in_bne },
+	[IN_BPL] = {"bpl",  in_bpl },
+#ifdef WDC
+	[IN_BRA] = {"bra",  in_bra },
+#endif
+	[IN_BRK] = {"brk",  in_brk },
+	[IN_BVC] = {"bvc",  in_bvc },
+	[IN_BVS] = {"bvs",  in_bvs },
+	[IN_CLC] = {"clc",  in_clc },
+	[IN_CLD] = {"cld",  in_cld },
+	[IN_CLI] = {"cli",  in_cli },
+	[IN_CLV] = {"clv",  in_clv },
+	[IN_CMP] = {"cmp",  in_cmp },
+	[IN_CPX] = {"cpx",  in_cpx },
+	[IN_CPY] = {"cpy",  in_cpy },
+	[IN_DEC] = {"dec",  in_dec },
+	[IN_DEX] = {"dex",  in_dex },
+	[IN_DEY] = {"dey",  in_dey },
+	[IN_EOR] = {"eor",  in_eor },
+	[IN_INC] = {"inc",  in_inc },
+	[IN_INX] = {"inx",  in_inx },
+	[IN_INY] = {"iny",  in_iny },
+	[IN_JMP] = {"jmp",  in_jmp },
+	[IN_JSR] = {"jsr",  in_jsr },
+	[IN_LDA] = {"lda",  in_lda },
+	[IN_LDX] = {"ldx",  in_ldx },
+	[IN_LDY] = {"ldy",  in_ldy },
+	[IN_LSR] = {"lsr",  in_lsr },
+	[IN_NOP] = {"nop",  in_nop },
+	[IN_ORA] = {"ora",  in_ora },
+	[IN_PHA] = {"pha",  in_pha },
+	[IN_PHP] = {"php",  in_php },
+#ifdef WDC
+	[IN_PHX] = {"phx",  in_phx },
+#endif
+#ifdef WDC
+	[IN_PHY] = {"phy",  in_phy },
+#endif
+	[IN_PLA] = {"pla",  in_pla },
+	[IN_PLP] = {"plp",  in_plp },
+#ifdef WDC
+	[IN_PLX] = {"plx",  in_plx },
+#endif
+#ifdef WDC
+	[IN_PLY] = {"ply",  in_ply },
+#endif
+#ifdef ROCKWEL
+	[IN_RMB0] = {"rmb0", in_rmb0},
+	[IN_RMB1] = {"rmb1", in_rmb1},
+	[IN_RMB2] = {"rmb2", in_rmb2},
+	[IN_RMB3] = {"rmb3", in_rmb3},
+	[IN_RMB4] = {"rmb4", in_rmb4},
+	[IN_RMB5] = {"rmb5", in_rmb5},
+	[IN_RMB6] = {"rmb6", in_rmb6},
+	[IN_RMB7] = {"rmb7", in_rmb7},
+#endif
+	[IN_ROL] = {"rol",  in_rol },
+	[IN_ROR] = {"ror",  in_ror },
+	[IN_RTI] = {"rti",  in_rti },
+	[IN_RTS] = {"rts",  in_rts },
+	[IN_SBC] = {"sbc",  in_sbc },
+	[IN_SEC] = {"sec",  in_sec },
+	[IN_SED] = {"sed",  in_sed },
+	[IN_SEI] = {"sei",  in_sei },
+#ifdef ROCKWEL
+	[IN_SMB0] = {"smb0", in_smb0},
+	[IN_SMB1] = {"smb1", in_smb1},
+	[IN_SMB2] = {"smb2", in_smb2},
+	[IN_SMB3] = {"smb3", in_smb3},
+	[IN_SMB4] = {"smb4", in_smb4},
+	[IN_SMB5] = {"smb5", in_smb5},
+	[IN_SMB6] = {"smb6", in_smb6},
+	[IN_SMB7] = {"smb7", in_smb7},
+#endif
+	[IN_STA] = {"sta",  in_sta },
+#ifdef WDC
+	[IN_STP] = {"stp",  in_stp },
+#endif
+	[IN_STX] = {"stx",  in_stx },
+	[IN_STY] = {"sty",  in_sty },
+#ifdef WDC
+	[IN_STZ] = {"stz",  in_stz },
+#endif
+	[IN_TAX] = {"tax",  in_tax },
+	[IN_TAY] = {"tay",  in_tay },
+#ifdef WDC
+	[IN_TRB] = {"trb",  in_trb },
+#endif
+#ifdef WDC
+	[IN_TSB] = {"tsb",  in_tsb },
+#endif
+	[IN_TSX] = {"tsx",  in_tsx },
+	[IN_TXA] = {"txa",  in_txa },
+	[IN_TXS] = {"txs",  in_txs },
+	[IN_TYA] = {"tya",  in_tya },
+#ifdef WDC
+	[IN_WAI] = {"wai",  in_wai },
+#endif
+};
+
+#pragma endregion data
