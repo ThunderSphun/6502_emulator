@@ -27,10 +27,20 @@ enum {
 #else
 	AM_ABS, AM_ABSX, AM_ABSY,
 #endif
+	// accumulator addressing mode, same behaviour as implied, making the accumulator as the operator
+	// this mode is however officially documented as a seperate addressing mode
+	// the actual logic in this emulator will be done with implied
+	AM_ACC,
 	AM_IMM,
 	AM_IMP,
 	AM_IND, AM_INDX, AM_INDY,
 	AM_REL,
+#ifdef WDC
+	// stack addressing mode, same behaviour as implied, making the stack pointer as the operator
+	// this mode is however officially documented as a seperate addressing mode
+	// the actual logic in this emulator will be done with implied
+	AM_STK,
+#endif
 #ifdef WDC
 	AM_ZPG, AM_ZPGI, AM_ZPGX, AM_ZPGY,
 #else
@@ -128,17 +138,24 @@ struct registers {
 	uint8_t SP; // stack pointer
 } registers;
 
+struct instructionSetEntry {
+	const uint8_t instruction;
+	const uint8_t addressMode;
+	const uint8_t cycleCount;
+} instructionSet[256];
+
 struct addressModeEntry {
 	const char name[5];
-	bool (* const addressMode)();
+	bool (*const addressMode)();
 } addressModes[ADDRESS_MODE_COUNT];
 
 struct instructionEntry {
 	const char name[INSTRUCTION_NAME_LENGTH];
-	bool (* const instruction)();
+	bool (*const instruction)();
 } instructions[INSTRUCTION_COUNT];
 
 size_t cycles = 0;
+uint8_t currentOpcode = 0;
 
 void push(uint8_t data) {
 	bus_write(0x0100 | registers.SP--, data);
@@ -199,11 +216,15 @@ void cpu_clock() {
 	if (cycles-- != 0)
 		return;
 
-	const uint8_t instruction = bus_read(registers.PC++);
-	// use instruction
+	currentOpcode = bus_read(registers.PC++);
+
+	const struct instructionSetEntry instruction = instructionSet[currentOpcode];
 
 	// set cycles from instruction
-	cycles = 1;
+	cycles = instruction.cycleCount;
+
+	addressModes[instruction.addressMode].addressMode();
+	instructions[instruction.instruction].instruction();
 }
 
 // runs instruction and all clockcycles required
@@ -836,7 +857,7 @@ bool in_tya() {
 }
 
 #ifdef WDC
-// WAt for Interupt
+// WAit for Interupt
 // stops the clock from affecting the 65c02
 // the 65c02 is faster to respond to the IRQ/NMI pins/functions
 bool in_wai() {
@@ -863,35 +884,63 @@ bool in_xxx() {
 
 #pragma region data
 
+#if defined(WDC)
+#elif defined(ROCKWEL)
+#else
+struct instructionSetEntry instructionSet[] = {
+	{IN_BRK,AM_IMP ,7},{IN_ORA,AM_INDX,6},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_ORA,AM_ZPG ,3},{IN_ASL,AM_ZPG ,5},{IN_XXX,AM_XXX ,0},{IN_PHP,AM_IMP ,3},{IN_ORA,AM_IMM ,2},{IN_ASL,AM_ACC ,2},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_ORA,AM_ABS ,4},{IN_ASL,AM_ABS ,6},{IN_XXX,AM_XXX ,0},
+	{IN_BPL,AM_REL ,2},{IN_ORA,AM_INDY,5},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_ORA,AM_ZPGX,4},{IN_ASL,AM_ZPGX,6},{IN_XXX,AM_XXX ,0},{IN_CLC,AM_IMP ,2},{IN_ORA,AM_ABSY,4},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_ORA,AM_ABSX,4},{IN_ASL,AM_ABSX,7},{IN_XXX,AM_XXX ,0},
+	{IN_JSR,AM_ABS ,6},{IN_AND,AM_INDX,6},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_BIT,AM_ZPG ,3},{IN_AND,AM_ZPG ,3},{IN_ROL,AM_ZPG ,5},{IN_XXX,AM_XXX ,0},{IN_PLP,AM_IMP ,4},{IN_AND,AM_IMM ,2},{IN_ROL,AM_ACC ,2},{IN_XXX,AM_XXX ,0},{IN_BIT,AM_ABS ,4},{IN_AND,AM_ABS ,4},{IN_ROL,AM_ABS ,6},{IN_XXX,AM_XXX ,0},
+	{IN_BMI,AM_REL ,2},{IN_AND,AM_INDY,5},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_AND,AM_ZPGX,4},{IN_ROL,AM_ZPGX,6},{IN_XXX,AM_XXX ,0},{IN_SEC,AM_IMP ,2},{IN_AND,AM_ABSY,4},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_AND,AM_ABSX,4},{IN_ROL,AM_ABSX,7},{IN_XXX,AM_XXX ,0},
+	{IN_RTI,AM_IMP ,6},{IN_EOR,AM_INDX,6},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_EOR,AM_ZPG ,3},{IN_LSR,AM_ZPG ,5},{IN_XXX,AM_XXX ,0},{IN_PHA,AM_IMP ,3},{IN_EOR,AM_IMM ,2},{IN_LSR,AM_ACC ,2},{IN_XXX,AM_XXX ,0},{IN_JMP,AM_ABS ,3},{IN_EOR,AM_ABS ,4},{IN_LSR,AM_ABS ,6},{IN_XXX,AM_XXX ,0},
+	{IN_BVC,AM_REL ,2},{IN_EOR,AM_INDY,5},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_EOR,AM_ZPGX,4},{IN_LSR,AM_ZPGX,6},{IN_XXX,AM_XXX ,0},{IN_CLI,AM_IMP ,2},{IN_EOR,AM_ABSY,4},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_EOR,AM_ABSX,4},{IN_LSR,AM_ABSX,7},{IN_XXX,AM_XXX ,0},
+	{IN_RTS,AM_IMP ,6},{IN_ADC,AM_INDX,6},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_ADC,AM_ZPG ,3},{IN_ROR,AM_ZPG ,5},{IN_XXX,AM_XXX ,0},{IN_PLA,AM_IMP ,4},{IN_ADC,AM_IMM ,2},{IN_ROR,AM_ACC ,2},{IN_XXX,AM_XXX ,0},{IN_JMP,AM_IND ,5},{IN_ADC,AM_ABS ,4},{IN_ROR,AM_ABS ,6},{IN_XXX,AM_XXX ,0},
+	{IN_BVS,AM_REL ,2},{IN_ADC,AM_INDY,5},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_ADC,AM_ZPGX,4},{IN_ROR,AM_ZPGX,6},{IN_XXX,AM_XXX ,0},{IN_SEI,AM_IMP ,2},{IN_ADC,AM_ABSY,4},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_ADC,AM_ABSX,4},{IN_ROR,AM_ABSX,7},{IN_XXX,AM_XXX ,0},
+
+	{IN_XXX,AM_XXX ,0},{IN_STA,AM_INDX,6},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_STY,AM_ZPG ,3},{IN_STA,AM_ZPG ,3},{IN_STX,AM_ZPG ,3},{IN_XXX,AM_XXX ,0},{IN_DEY,AM_IMP ,2},{IN_XXX,AM_XXX ,0},{IN_TXA,AM_IMP ,2},{IN_XXX,AM_XXX ,0},{IN_STY,AM_ABS ,4},{IN_STA,AM_ABS ,4},{IN_STX,AM_ABS ,4},{IN_XXX,AM_XXX ,0},
+	{IN_BCC,AM_REL ,2},{IN_STA,AM_INDY,6},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_STY,AM_ZPGX,4},{IN_STA,AM_ZPGX,4},{IN_STX,AM_ZPGY,4},{IN_XXX,AM_XXX ,0},{IN_TYA,AM_IMP ,2},{IN_STA,AM_ABSY,5},{IN_TXS,AM_IMP ,2},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_STA,AM_ABSX,5},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},
+	{IN_LDY,AM_IMM ,2},{IN_LDA,AM_INDX,6},{IN_LDX,AM_IMM ,2},{IN_XXX,AM_XXX ,0},{IN_LDY,AM_ZPG ,3},{IN_LDA,AM_ZPG ,3},{IN_LDX,AM_ZPG ,3},{IN_XXX,AM_XXX ,0},{IN_TAY,AM_IMP ,2},{IN_LDA,AM_IMM ,2},{IN_TAX,AM_IMP ,2},{IN_XXX,AM_XXX ,0},{IN_LDY,AM_ABS ,4},{IN_LDA,AM_ABS ,4},{IN_LDX,AM_ABS ,4},{IN_XXX,AM_XXX ,0},
+	{IN_BCS,AM_REL ,2},{IN_LDA,AM_INDY,5},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_LDY,AM_ZPGX,4},{IN_LDA,AM_ZPGX,4},{IN_LDX,AM_ZPGY,4},{IN_XXX,AM_XXX ,0},{IN_CLV,AM_IMP ,2},{IN_LDA,AM_ABSY,4},{IN_TSX,AM_IMP ,2},{IN_XXX,AM_XXX ,0},{IN_LDY,AM_ABSX,4},{IN_LDA,AM_ABSX,4},{IN_LDX,AM_ABSY,4},{IN_XXX,AM_XXX ,0},
+	{IN_CPY,AM_IMM ,2},{IN_CMP,AM_INDX,6},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_CPY,AM_ZPG ,3},{IN_CMP,AM_ZPG ,3},{IN_DEC,AM_ZPG ,5},{IN_XXX,AM_XXX ,0},{IN_INY,AM_IMP ,2},{IN_CMP,AM_IMM ,2},{IN_DEX,AM_IMP ,2},{IN_XXX,AM_XXX ,0},{IN_CPY,AM_ABS ,4},{IN_CMP,AM_ABS ,4},{IN_DEC,AM_ABS ,6},{IN_XXX,AM_XXX ,0},
+	{IN_BNE,AM_REL ,2},{IN_CMP,AM_INDY,5},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_CMP,AM_ZPGX,4},{IN_DEC,AM_ZPGX,6},{IN_XXX,AM_XXX ,0},{IN_CLD,AM_IMP ,2},{IN_CMP,AM_ABSY,4},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_CMP,AM_ABSX,4},{IN_DEC,AM_ABSX,7},{IN_XXX,AM_XXX ,0},
+	{IN_CPX,AM_IMM ,2},{IN_SBC,AM_INDX,6},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_CPX,AM_ZPG ,3},{IN_SBC,AM_ZPG ,3},{IN_INC,AM_ZPG ,5},{IN_XXX,AM_XXX ,0},{IN_INX,AM_IMP ,2},{IN_SBC,AM_IMM ,2},{IN_NOP,AM_IMP ,2},{IN_XXX,AM_XXX ,0},{IN_CPX,AM_ABS ,4},{IN_SBC,AM_ABS ,4},{IN_INC,AM_ABS ,6},{IN_XXX,AM_XXX ,0},
+	{IN_BEQ,AM_REL ,2},{IN_SBC,AM_INDY,5},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_SBC,AM_ZPGX,4},{IN_INC,AM_ZPGX,6},{IN_XXX,AM_XXX ,0},{IN_SED,AM_IMP ,2},{IN_SBC,AM_ABSY,4},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_XXX,AM_XXX ,0},{IN_SBC,AM_ABSX,4},{IN_INC,AM_ABSX,7},{IN_XXX,AM_XXX ,0},
+};
+#endif
+
 struct addressModeEntry addressModes[] = {
-	[AM_ABS] = {"abs",  am_abs },
+	[AM_ABS]  = {"abs",  am_abs },
 #ifdef WDC
-	[AM_ABSI] = {"absi",  am_absi},
+	[AM_ABSI] = {"absi", am_absi},
 #endif
-	[AM_ABSX] = {"absx",  am_absx},
-	[AM_ABSY] = {"absy",  am_absy},
-	[AM_IMM] = {"imm",  am_imm },
-	[AM_IMP] = {"imp",  am_imp },
-	[AM_IND] = {"ind",  am_ind },
-	[AM_INDX] = {"indx",  am_indx},
-	[AM_INDY] = {"indy",  am_indy},
-	[AM_REL] = {"rel",  am_rel },
-	[AM_ZPG] = {"zpg",  am_zpg },
+	[AM_ABSX] = {"absx", am_absx},
+	[AM_ABSY] = {"absy", am_absy},
+	[AM_ACC]  = {"acc",  am_imp },
+	[AM_IMM]  = {"imm",  am_imm },
+	[AM_IMP]  = {"imp",  am_imp },
+	[AM_IND]  = {"ind",  am_ind },
+	[AM_INDX] = {"indx", am_indx},
+	[AM_INDY] = {"indy", am_indy},
+	[AM_REL]  = {"rel",  am_rel },
 #ifdef WDC
-	[AM_ZPGI] = {"zpgi",  am_zpgi},
+	[AM_STK]  = {"stk",  am_imp },
 #endif
-	[AM_ZPGX] = {"zpgx",  am_zpgx},
-	[AM_ZPGY] = {"zpgy",  am_zpgy},
+	[AM_ZPG]  = {"zpg",  am_zpg },
+#ifdef WDC
+	[AM_ZPGI] = {"zpgi", am_zpgi},
+#endif
+	[AM_ZPGX] = {"zpgx", am_zpgx},
+	[AM_ZPGY] = {"zpgy", am_zpgy},
 
 #ifndef WDC
-	[AM_XXX] = {"",     am_xxx },
+	[AM_XXX]  = {"",     am_xxx },
 #endif
 };
 
 struct instructionEntry instructions[] = {
-	[IN_ADC] = {"adc",  in_adc },
-	[IN_AND] = {"and",  in_and },
-	[IN_ASL] = {"asl",  in_asl },
+	[IN_ADC]  = {"adc",  in_adc },
+	[IN_AND]  = {"and",  in_and },
+	[IN_ASL]  = {"asl",  in_asl },
 #ifdef ROCKWEL
 	[IN_BBR0] = {"bbr0", in_bbr0},
 	[IN_BBR1] = {"bbr1", in_bbr1},
@@ -912,56 +961,56 @@ struct instructionEntry instructions[] = {
 	[IN_BBS6] = {"bbs6", in_bbs6},
 	[IN_BBS7] = {"bbs7", in_bbs7},
 #endif
-	[IN_BCC] = {"bcc",  in_bcc },
-	[IN_BCS] = {"bcs",  in_bcs },
-	[IN_BEQ] = {"beq",  in_beq },
-	[IN_BIT] = {"bit",  in_bit },
-	[IN_BMI] = {"bmi",  in_bmi },
-	[IN_BNE] = {"bne",  in_bne },
-	[IN_BPL] = {"bpl",  in_bpl },
+	[IN_BCC]  = {"bcc",  in_bcc },
+	[IN_BCS]  = {"bcs",  in_bcs },
+	[IN_BEQ]  = {"beq",  in_beq },
+	[IN_BIT]  = {"bit",  in_bit },
+	[IN_BMI]  = {"bmi",  in_bmi },
+	[IN_BNE]  = {"bne",  in_bne },
+	[IN_BPL]  = {"bpl",  in_bpl },
 #ifdef WDC
-	[IN_BRA] = {"bra",  in_bra },
+	[IN_BRA]  = {"bra",  in_bra },
 #endif
-	[IN_BRK] = {"brk",  in_brk },
-	[IN_BVC] = {"bvc",  in_bvc },
-	[IN_BVS] = {"bvs",  in_bvs },
-	[IN_CLC] = {"clc",  in_clc },
-	[IN_CLD] = {"cld",  in_cld },
-	[IN_CLI] = {"cli",  in_cli },
-	[IN_CLV] = {"clv",  in_clv },
-	[IN_CMP] = {"cmp",  in_cmp },
-	[IN_CPX] = {"cpx",  in_cpx },
-	[IN_CPY] = {"cpy",  in_cpy },
-	[IN_DEC] = {"dec",  in_dec },
-	[IN_DEX] = {"dex",  in_dex },
-	[IN_DEY] = {"dey",  in_dey },
-	[IN_EOR] = {"eor",  in_eor },
-	[IN_INC] = {"inc",  in_inc },
-	[IN_INX] = {"inx",  in_inx },
-	[IN_INY] = {"iny",  in_iny },
-	[IN_JMP] = {"jmp",  in_jmp },
-	[IN_JSR] = {"jsr",  in_jsr },
-	[IN_LDA] = {"lda",  in_lda },
-	[IN_LDX] = {"ldx",  in_ldx },
-	[IN_LDY] = {"ldy",  in_ldy },
-	[IN_LSR] = {"lsr",  in_lsr },
-	[IN_NOP] = {"nop",  in_nop },
-	[IN_ORA] = {"ora",  in_ora },
-	[IN_PHA] = {"pha",  in_pha },
-	[IN_PHP] = {"php",  in_php },
+	[IN_BRK]  = {"brk",  in_brk },
+	[IN_BVC]  = {"bvc",  in_bvc },
+	[IN_BVS]  = {"bvs",  in_bvs },
+	[IN_CLC]  = {"clc",  in_clc },
+	[IN_CLD]  = {"cld",  in_cld },
+	[IN_CLI]  = {"cli",  in_cli },
+	[IN_CLV]  = {"clv",  in_clv },
+	[IN_CMP]  = {"cmp",  in_cmp },
+	[IN_CPX]  = {"cpx",  in_cpx },
+	[IN_CPY]  = {"cpy",  in_cpy },
+	[IN_DEC]  = {"dec",  in_dec },
+	[IN_DEX]  = {"dex",  in_dex },
+	[IN_DEY]  = {"dey",  in_dey },
+	[IN_EOR]  = {"eor",  in_eor },
+	[IN_INC]  = {"inc",  in_inc },
+	[IN_INX]  = {"inx",  in_inx },
+	[IN_INY]  = {"iny",  in_iny },
+	[IN_JMP]  = {"jmp",  in_jmp },
+	[IN_JSR]  = {"jsr",  in_jsr },
+	[IN_LDA]  = {"lda",  in_lda },
+	[IN_LDX]  = {"ldx",  in_ldx },
+	[IN_LDY]  = {"ldy",  in_ldy },
+	[IN_LSR]  = {"lsr",  in_lsr },
+	[IN_NOP]  = {"nop",  in_nop },
+	[IN_ORA]  = {"ora",  in_ora },
+	[IN_PHA]  = {"pha",  in_pha },
+	[IN_PHP]  = {"php",  in_php },
 #ifdef WDC
-	[IN_PHX] = {"phx",  in_phx },
-#endif
-#ifdef WDC
-	[IN_PHY] = {"phy",  in_phy },
-#endif
-	[IN_PLA] = {"pla",  in_pla },
-	[IN_PLP] = {"plp",  in_plp },
-#ifdef WDC
-	[IN_PLX] = {"plx",  in_plx },
+	[IN_PHX]  = {"phx",  in_phx },
 #endif
 #ifdef WDC
-	[IN_PLY] = {"ply",  in_ply },
+	[IN_PHY]  = {"phy",  in_phy },
+#endif
+	[IN_PLA]  = {"pla",  in_pla },
+	[IN_PLP]  = {"plp",  in_plp },
+#ifdef WDC
+	[IN_PLX]  = {"plx",  in_plx },
+#endif
+#ifdef WDC
+	[IN_PLY]  = {"ply",  in_ply },
 #endif
 #ifdef ROCKWEL
 	[IN_RMB0] = {"rmb0", in_rmb0},
@@ -973,14 +1022,14 @@ struct instructionEntry instructions[] = {
 	[IN_RMB6] = {"rmb6", in_rmb6},
 	[IN_RMB7] = {"rmb7", in_rmb7},
 #endif
-	[IN_ROL] = {"rol",  in_rol },
-	[IN_ROR] = {"ror",  in_ror },
-	[IN_RTI] = {"rti",  in_rti },
-	[IN_RTS] = {"rts",  in_rts },
-	[IN_SBC] = {"sbc",  in_sbc },
-	[IN_SEC] = {"sec",  in_sec },
-	[IN_SED] = {"sed",  in_sed },
-	[IN_SEI] = {"sei",  in_sei },
+	[IN_ROL]  = {"rol",  in_rol },
+	[IN_ROR]  = {"ror",  in_ror },
+	[IN_RTI]  = {"rti",  in_rti },
+	[IN_RTS]  = {"rts",  in_rts },
+	[IN_SBC]  = {"sbc",  in_sbc },
+	[IN_SEC]  = {"sec",  in_sec },
+	[IN_SED]  = {"sed",  in_sed },
+	[IN_SEI]  = {"sei",  in_sei },
 #ifdef ROCKWEL
 	[IN_SMB0] = {"smb0", in_smb0},
 	[IN_SMB1] = {"smb1", in_smb1},
@@ -991,33 +1040,33 @@ struct instructionEntry instructions[] = {
 	[IN_SMB6] = {"smb6", in_smb6},
 	[IN_SMB7] = {"smb7", in_smb7},
 #endif
-	[IN_STA] = {"sta",  in_sta },
+	[IN_STA]  = {"sta",  in_sta },
 #ifdef WDC
-	[IN_STP] = {"stp",  in_stp },
+	[IN_STP]  = {"stp",  in_stp },
 #endif
-	[IN_STX] = {"stx",  in_stx },
-	[IN_STY] = {"sty",  in_sty },
+	[IN_STX]  = {"stx",  in_stx },
+	[IN_STY]  = {"sty",  in_sty },
 #ifdef WDC
-	[IN_STZ] = {"stz",  in_stz },
+	[IN_STZ]  = {"stz",  in_stz },
 #endif
-	[IN_TAX] = {"tax",  in_tax },
-	[IN_TAY] = {"tay",  in_tay },
+	[IN_TAX]  = {"tax",  in_tax },
+	[IN_TAY]  = {"tay",  in_tay },
 #ifdef WDC
-	[IN_TRB] = {"trb",  in_trb },
+	[IN_TRB]  = {"trb",  in_trb },
 #endif
 #ifdef WDC
-	[IN_TSB] = {"tsb",  in_tsb },
+	[IN_TSB]  = {"tsb",  in_tsb },
 #endif
-	[IN_TSX] = {"tsx",  in_tsx },
-	[IN_TXA] = {"txa",  in_txa },
-	[IN_TXS] = {"txs",  in_txs },
-	[IN_TYA] = {"tya",  in_tya },
+	[IN_TSX]  = {"tsx",  in_tsx },
+	[IN_TXA]  = {"txa",  in_txa },
+	[IN_TXS]  = {"txs",  in_txs },
+	[IN_TYA]  = {"tya",  in_tya },
 #ifdef WDC
-	[IN_WAI] = {"wai",  in_wai },
+	[IN_WAI]  = {"wai",  in_wai },
 #endif
 
 #ifndef WDC
-	[IN_XXX] = { "",     in_xxx },
+	[IN_XXX]  = {"",     in_xxx },
 #endif
 };
 

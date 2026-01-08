@@ -49,50 +49,15 @@ int main() {
 
 	ram_randomize(&ram);
 	rom_set(&rom, 0x7FFA, 6, (uint8_t[]) { 0x00, 0xA0, 0x00, 0x80, 0x00, 0xF0 });
+	rom_set(&rom, 0, 1, (uint8_t[]) { 0x00 });
 
 	bus_add(&ram, 0x0000, 0x7FFF);
 	bus_add(&rom, 0x8000, 0xFFFF);
 
-	printf("cpu_clock:\n");
 	cpu_reset();
-	printStackPage();
-	for (int i = 0; i < 20; i++) {
-		printf("%04X, %zi\n", registers.PC, cycles);
-		cpu_clock();
-	}
-	cpu_irq();
-	printStackPage();
-	for (int i = 0; i < 20; i++) {
-		printf("%04X, %zi\n", registers.PC, cycles);
-		cpu_clock();
-	}
-	cpu_nmi();
-	printStackPage();
-	for (int i = 0; i < 20; i++) {
-		printf("%04X, %zi\n", registers.PC, cycles);
-		cpu_clock();
-	}
-
-
-	printf("cpu_runInstruction:\n");
-	cpu_reset();
-	printStackPage();
-	for (int i = 0; i < 5; i++) {
-		printf("%04X, %zi\n", registers.PC, cycles);
-		cpu_runInstruction();
-	}
-	cpu_irq();
-	printStackPage();
-	for (int i = 0; i < 5; i++) {
-		printf("%04X, %zi\n", registers.PC, cycles);
-		cpu_runInstruction();
-	}
-	cpu_nmi();
-	printStackPage();
-	for (int i = 0; i < 5; i++) {
-		printf("%04X, %zi\n", registers.PC, cycles);
-		cpu_runInstruction();
-	}
+	cpu_runInstruction();
+	cpu_runInstruction();
+	cpu_runInstruction();
 
 	rom_destroy(rom);
 	ram_destroy(ram);
