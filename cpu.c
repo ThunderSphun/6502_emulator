@@ -2,6 +2,11 @@
 
 #include "bus.h"
 
+#ifdef WDC
+// Western Design Center included the bit branch/bit set instructions from the rockwel chips
+#define ROCKWEL
+#endif
+
 struct registers {
 	union {
 		struct {
@@ -243,7 +248,7 @@ bool am_zpgy() {
 // the following functions all implement logic for the instructions
 // if they return true an additional clockcycle might need to be taken depending on the addressing mode
 
-#if defined(WDC) || defined(ROCKWEL)
+#ifdef ROCKWEL
 // some macro magic to get an easier time implementing the bit instructions
 // these instrutions originated in the Rockwel chips, and were later adapted by WDC
 #define BITS_EXPANSION(funcName) \
@@ -274,7 +279,7 @@ bool in_asl() {
 	return false;
 }
 
-#if defined(WDC) || defined(ROCKWEL)
+#ifdef ROCKWEL
 // Branch on Bit Reset
 // tests bit of accumulator, and branches if it is 0
 // a branch taken takes an extra clock cycle
@@ -285,7 +290,7 @@ bool in_bbr(uint8_t bit) {
 BITS_EXPANSION(bbr)
 #endif
 
-#if defined(WDC) || defined (ROCKWEL)
+#ifdef ROCKWEL
 // Branch on Bit Set
 // tests bit of accumulator, and branches if it is 1
 // a branch taken takes an extra clock cycle
@@ -562,7 +567,7 @@ bool in_ply() {
 }
 #endif
 
-#if defined(WDC) || defined (ROCKWEL)
+#ifdef ROCKWEL
 // Reset Memory Bit
 // sets bit at operand to 0
 bool in_rmb(uint8_t bit) {
@@ -627,7 +632,7 @@ bool in_sei() {
 	return false;
 }
 
-#if defined(WDC) || defined (ROCKWEL)
+#ifdef ROCKWEL
 // Set Memory Bit
 // sets bit at operand to 1
 bool in_smb(uint8_t bit) {
