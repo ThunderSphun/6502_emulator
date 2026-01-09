@@ -4,7 +4,7 @@
 
 struct ram {
 	uint8_t* data;
-	uint16_t size;
+	size_t size;
 };
 
 struct ram* getRam(const component_t* const component) {
@@ -39,7 +39,7 @@ void ram_write(const component_t* const component, const addr_t addr, const uint
 	getRam(component)->data[addr.relative] = data;
 }
 
-component_t ram_init(const uint16_t size) {
+component_t ram_init(const size_t size) {
 	struct ram* ram = malloc(sizeof(struct ram));
 	if (ram == NULL)
 		return (component_t) { 0 };
@@ -69,6 +69,21 @@ bool ram_randomize(const component_t* const component) {
 
 	for (uint16_t i = 0; i < getRam(component)->size; i++)
 		getRam(component)->data[i] = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
+
+	return true;
+}
+
+bool ram_set(const component_t* const component, const uint16_t addr, const size_t size, const uint8_t* data) {
+	if (getRam(component) == NULL)
+		return false;
+
+	if (addr > getRam(component)->size)
+		return false;
+
+	if (getRam(component)->size - addr < size)
+		return false;
+
+	memcpy(getRam(component)->data + addr, data, size);
 
 	return true;
 }

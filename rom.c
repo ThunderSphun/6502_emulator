@@ -4,7 +4,7 @@
 
 struct rom {
 	uint8_t* data;
-	uint16_t size;
+	size_t size;
 };
 
 struct rom* getRom(const component_t* const component) {
@@ -25,7 +25,7 @@ uint8_t rom_read(const component_t* const component, const addr_t addr) {
 	return getRom(component)->data[addr.relative];
 }
 
-component_t rom_init(const uint16_t size) {
+component_t rom_init(const size_t size) {
 	struct rom* rom = malloc(sizeof(struct rom));
 	if (rom == NULL)
 		return (component_t) { 0 };
@@ -49,7 +49,7 @@ bool rom_destroy(component_t component) {
 	return true;
 }
 
-bool rom_set(const component_t* const component, const uint16_t addr, const uint16_t size, const uint8_t* data) {
+bool rom_set(const component_t* const component, const uint16_t addr, const size_t size, const uint8_t* data) {
 	if (getRom(component) == NULL)
 		return false;
 
