@@ -143,7 +143,7 @@ struct addressMode {
 #ifdef VERBOSE
 	const char name[5];
 #endif
-	bool (*const func)();
+	void (*const func)();
 } addressModes[ADDRESS_MODE_COUNT];
 
 struct instruction {
@@ -155,7 +155,7 @@ struct instruction {
 	const char name[4];
 #endif // ROCKWEL
 #endif // VERBOSE
-	bool (*const func)();
+	void (*const func)();
 } instructions[INSTRUCTION_COUNT];
 
 size_t cycles = 0;
@@ -259,14 +259,12 @@ void cpu_runInstruction() {
 
 #pragma region addressingModes
 // the following functions all implement logic for the addressing mode
-// if they return true an additional clockcycle might need to be taken depending on the instruction
 
 
 // absolute addressing mode
 // an absolute memory location is provided
 // the value at this memory location is used as operand
-bool am_abs() {
-	return false;
+void am_abs() {
 }
 
 #ifdef WDC
@@ -274,8 +272,7 @@ bool am_abs() {
 // an absolute memory location is provided
 // this memory location is incremented by X, this memory location provides 2 bytes to actually use, in the format $LLHH
 // this mode is generally only used for JMP
-bool am_absi() {
-	return false;
+void am_absi() {
 }
 #endif
 
@@ -283,46 +280,40 @@ bool am_absi() {
 // an absolute memory location is provided
 // this memory location is incremented by X, and the value at that memory location is used as operand
 // this can be used to loop through a set of data, aka an array
-bool am_absx() {
-	return false;
+void am_absx() {
 }
 
 // absolute addressing mode offset by Y
 // an absolute memory location is provided
 // this memory location is incremented by Y, and the value at that memory location is used as operand
 // this can be used to loop through a set of data, aka an array
-bool am_absy() {
-	return false;
+void am_absy() {
 }
 
 // immediate addressing mode
 // operand is provided directly after the instruction
-bool am_imm() {
-	return false;
+void am_imm() {
 }
 
 // implied addressing mode
 // operand is implied by the instruction
 //   this also includes accumulator addressing mode, as accumulator is the implied operand
 //   this also includes stack addressing mode documented in the WDC data sheets, as stack pointer is the implied operand
-bool am_imp() {
-	return false;
+void am_imp() {
 }
 
 // indirect addressing mode
 // an absolute memory location is provided
 // this memory location provides 2 byte to actually use, in the format $LLHH
 // this mode is generally only used for JMP
-bool am_ind() {
-	return false;
+void am_ind() {
 }
 
 // pre-indexed indirect addressing mode
 // a byte is provided, which describes the offset in the zero-page
 // from this zero-page address two bytes are read ($LLHH), which gets incremented by X
 // this increased memory address points to the memory address ($LLHH) where the actual data is stored
-bool am_indx() {
-	return false;
+void am_indx() {
 }
 
 // post-indexed indirect addressing mode
@@ -330,16 +321,14 @@ bool am_indx() {
 // from this zero-page address two bytes are read ($LLHH)
 // this memory address points to the memory address ($LLHH), which gets incremented with Y
 // this address is where the actual data is stored
-bool am_indy() {
-	return false;
+void am_indy() {
 }
 
 // relative addressing mode
 // operand provided is a signed byte
 // this byte is added to PC to get the address to branch to
 // this mode is only allowed for the branch instructions
-bool am_rel() {
-	return false;
+void am_rel() {
 }
 
 // zero-page addressing mode
@@ -347,16 +336,14 @@ bool am_rel() {
 // the absolute address would be $00XX
 // this makes the operation faster, and shorter
 // the instruction takes only 2 bytes, instead of 3 for a full address
-bool am_zpg() {
-	return false;
+void am_zpg() {
 }
 
 #ifdef WDC
 // zero-page indirect addressing mode
 // a byte is provided directly after the instruction which contains an offset in the zero-page
 // this memory location provides 2 byte to actually use, in the format $LLHH
-bool am_zpgi() {
-	return false;
+void am_zpgi() {
 }
 #endif
 
@@ -367,8 +354,7 @@ bool am_zpgi() {
 // this makes the operation faster, and shorter
 // the instruction takes only 2 bytes, instead of 3 for a full address
 // the result of the addition wraps around, so the byte read will always be inside the zero-page
-bool am_zpgx() {
-	return false;
+void am_zpgx() {
 }
 
 // zero-page addressing mode offset by Y
@@ -379,8 +365,7 @@ bool am_zpgx() {
 // the instruction takes only 2 bytes, instead of 3 for a full address
 // the result of the addition wraps around, so the byte read will always be inside the zero-page
 // this addressing mode is only used if the register used is X (LDX, STX), so X cannot be used
-bool am_zpgy() {
-	return false;
+void am_zpgy() {
 }
 
 #ifndef WDC
@@ -388,8 +373,7 @@ bool am_zpgy() {
 // shouldn't be used in normal programs
 //   the 6502 has a couple of opcodes that gave somewhat reliable results
 //   the WDC version of the 6502 has all illegal opcodes as implemented as nops
-bool am_xxx() {
-	return false;
+void am_xxx() {
 }
 #endif
 
@@ -397,45 +381,40 @@ bool am_xxx() {
 
 #pragma region instructions
 // the following functions all implement logic for the instructions
-// if they return true an additional clockcycle might need to be taken depending on the addressing mode
 
 #ifdef ROCKWEL
 // some macro magic to get an easier time implementing the bit instructions
 // these instrutions originated in the Rockwel chips, and were later adapted by WDC
 #define BITS_EXPANSION(funcName) \
-bool in_##funcName(uint8_t bit); \
+void in_##funcName(uint8_t bit); \
 BIT_EXPANSION(funcName, 0) BIT_EXPANSION(funcName, 1) \
 BIT_EXPANSION(funcName, 2) BIT_EXPANSION(funcName, 3) BIT_EXPANSION(funcName, 4) \
 BIT_EXPANSION(funcName, 5) BIT_EXPANSION(funcName, 6) BIT_EXPANSION(funcName, 7)
 #define BIT_EXPANSION(funcName, bit) \
-bool in_##funcName##bit() { return in_##funcName(bit); }
+void in_##funcName##bit() { in_##funcName(bit); }
 #endif
 
 // ADd with Carry
 // adds operand to accumulator with carry flag
-bool in_adc() {
-	return false;
+void in_adc() {
 }
 
 // bitwise AND
 // performs a bitwise and with operand and accumulator
-bool in_and() {
-	return false;
+void in_and() {
 }
 
 // Arithmatic Shift Left
 // shifts 0 into bit 0
 // shifts bit 7 into carry flag
-bool in_asl() {
-	return false;
+void in_asl() {
 }
 
 #ifdef ROCKWEL
 // Branch on Bit Reset
 // tests bit of accumulator, and branches if it is 0
 // a branch taken takes an extra clock cycle
-bool in_bbr(uint8_t bit) {
-	return false;
+void in_bbr(uint8_t bit) {
 }
 
 BITS_EXPANSION(bbr)
@@ -445,8 +424,7 @@ BITS_EXPANSION(bbr)
 // Branch on Bit Set
 // tests bit of accumulator, and branches if it is 1
 // a branch taken takes an extra clock cycle
-bool in_bbs(uint8_t bit) {
-	return false;
+void in_bbs(uint8_t bit) {
 }
 
 BITS_EXPANSION(bbs)
@@ -455,22 +433,19 @@ BITS_EXPANSION(bbs)
 // Branch Carry Clear
 // branches when carry flag is unset
 // a branch taken takes an extra clock cycle
-bool in_bcc() {
-	return false;
+void in_bcc() {
 }
 
 // Branch Carry Set
 // branches when carry flag is set
 // a branch taken takes an extra clock cycle
-bool in_bcs() {
-	return false;
+void in_bcs() {
 }
 
 // Branch on EQual
 // branches when zero flag is set (two values are equal if A - B == 0)
 // a branch taken takes an extra clock cycle
-bool in_beq() {
-	return false;
+void in_beq() {
 }
 
 // test BITs
@@ -478,37 +453,32 @@ bool in_beq() {
 // zero flag is set according to the operation accumulator AND operand
 // bits 6 and 7 of operand are set as negative and overflow flags respectively
 // this instruction only alters flags register
-bool in_bit() {
-	return false;
+void in_bit() {
 }
 
 // Branch on MInus
 // branches when negative flag is set
 // a branch taken takes an extra clock cycle
-bool in_bmi() {
-	return false;
+void in_bmi() {
 }
 
 // Branch on Not Equals
 // branches when zero flag is unset (two values are not equal if A - B != 0)
 // a branch taken takes an extra clock cycle
-bool in_bne() {
-	return false;
+void in_bne() {
 }
 
 // Branch on PLus
 // branches when negative flag is unset
 // a branch taken takes an extra clock cycle
-bool in_bpl() {
-	return false;
+void in_bpl() {
 }
 
 #ifdef WDC
 // Branch Always
 // a branch taken takes an extra clock cycle
 //   this is always the case
-bool in_bra() {
-	return true;
+void in_bra() {
 }
 #endif
 
@@ -517,212 +487,178 @@ bool in_bra() {
 // this starts the IRQ sequence with break flag set
 // the return address is PC + 2, making the byte following this instruction being skipped
 // this byte can be used as a break mark
-bool in_brk() {
-	return false;
+void in_brk() {
 }
 
 // Branch on oVerflow Clear
 // branches when overflow flag is unset
 // a branch taken takes an extra clock cycle
-bool in_bvc() {
-	return false;
+void in_bvc() {
 }
 
 // Branch on oVerflow Set
 // branches when overflow flag is set
 // a branch taken takes an extra clock cycle
-bool in_bvs() {
-	return false;
+void in_bvs() {
 }
 
 // CLear Carry flag
-bool in_clc() {
-	return false;
+void in_clc() {
 }
 
 // CLear Decimal flag
 // makes the 6502 perform normal binary math
-bool in_cld() {
-	return false;
+void in_cld() {
 }
 
 // CLear Interupt flag
 // this instruction enables interupts from the IRQ pin/function, as this pin is active low
-bool in_cli() {
-	return false;
+void in_cli() {
 }
 
 // CLear oVerflow
-bool in_clv() {
-	return false;
+void in_clv() {
 }
 
 // CoMPare with accumulator
 // subtract operand with accumulator, and set flags register accordingly
 // then ignore the result from the subtraction
 // this instruction only alters flags register
-bool in_cmp() {
-	return false;
+void in_cmp() {
 }
 
 // CoMpare with X register
 // subtract operand with accumulator, and set flags register accordingly
 // then ignore the result from the subtraction
 // this instruction only alters flags register
-bool in_cpx() {
-	return false;
+void in_cpx() {
 }
 
 // CoMpare with Y register
 // subtract operand with accumulator, and set flags register accordingly
 // then ignore the result from the subtraction
 // this instruction only alters flags register
-bool in_cpy() {
-	return false;
+void in_cpy() {
 }
 
 // DECrement operand
-bool in_dec() {
-	return false;
+void in_dec() {
 }
 
 // DEcrement X register
-bool in_dex() {
-	return false;
+void in_dex() {
 }
 
 // DEcrement Y register
-bool in_dey() {
-	return false;
+void in_dey() {
 }
 
 // bitwise eXclusive OR
 // performs a bitwise exclusive or with operand and accumulator
-bool in_eor() {
-	return false;
+void in_eor() {
 }
 
 // INCrement operand
-bool in_inc() {
-	return false;
+void in_inc() {
 }
 
 // INcrement X register
-bool in_inx() {
-	return false;
+void in_inx() {
 }
 
 // INcrement Y register
-bool in_iny() {
-	return false;
+void in_iny() {
 }
 
 // JuMP
 // loads PC with operand
-bool in_jmp() {
-	return false;
+void in_jmp() {
 }
 
 // Jump to SubRoutine
 // saves current PC in stack
 // loads PC with operand
-bool in_jsr() {
-	return false;
+void in_jsr() {
 }
 
 // LoaD Accumulator with operand
-bool in_lda() {
-	return false;
+void in_lda() {
 }
 
 // LoaD X register with operand
-bool in_ldx() {
-	return false;
+void in_ldx() {
 }
 
 // LoaD Y register with operand
-bool in_ldy() {
-	return false;
+void in_ldy() {
 }
 
 // Logical Shift Right
 // shifts 0 into bit 7
 // shifts bit 0 into carry flag
-bool in_lsr() {
-	return false;
+void in_lsr() {
 }
 
 // No OPeration
 // this instruction does nothing
 //   the WDC version of the 6502 has all illegal opcodes as implemented as nops
 //   these differ slightly in operand size and/or cycle counts
-bool in_nop() {
-	return false;
+void in_nop() {
 }
 
 // bitwise OR with Accumulator
 // performs a bitwise or with operand and accumulator
-bool in_ora() {
-	return false;
+void in_ora() {
 }
 
 // PusH Accumulator on stack
-bool in_pha() {
-	return false;
+void in_pha() {
 }
 
 // PusH Processor status
 // pushes flags register on stack
 // this instruction sets break flag and bit 5 (unused)
-bool in_php() {
-	return false;
+void in_php() {
 }
 
 #ifdef WDC
 // PusH X register on stack
-bool in_phx() {
-	return false;
+void in_phx() {
 }
 #endif
 
 #ifdef WDC
 // PusH Y register on stack
-bool in_phy() {
-	return false;
+void in_phy() {
 }
 #endif
 
 // PuLl Accumulator off stack
-bool in_pla() {
-	return false;
+void in_pla() {
 }
 
 // PuLl Processor status
 // pulls flags register off stack
 // this instruction ignores break flag and bit 5 (unused)
-bool in_plp() {
-	return false;
+void in_plp() {
 }
 
 #ifdef WDC
 // PuLl X register off stack
-bool in_plx() {
-	return false;
+void in_plx() {
 }
 #endif
 
 #ifdef WDC
 // PuLl Y register off stack
-bool in_ply() {
-	return false;
+void in_ply() {
 }
 #endif
 
 #ifdef ROCKWEL
 // Reset Memory Bit
 // sets bit at operand to 0
-bool in_rmb(uint8_t bit) {
-	return false;
+void in_rmb(uint8_t bit) {
 }
 
 BITS_EXPANSION(rmb)
@@ -731,8 +667,7 @@ BITS_EXPANSION(rmb)
 // ROtate Left
 // shifts carry flag into bit 0
 // shifts bit 7 into carry flag
-bool in_rol() {
-	return false;
+void in_rol() {
 }
 
 // ROtate Right
@@ -741,105 +676,89 @@ bool in_rol() {
 //   early versions of the 6502 have a bug in this instruction
 //   the instruction would instead perform as an ASL, without shifting bit 7 into carry flag
 //   this bug makes it so that carry flag would be unused during the instruction
-bool in_ror() {
-	return false;
+void in_ror() {
 }
 
 // ReTurn from Interupt
 // pulls flags register from stack, ignoring break flag and bit 5 (ignored)
 // then pulls PC from stack
-bool in_rti() {
-	return false;
+void in_rti() {
 }
 
 // ReTurn from Subroutine
 // pulls PC from stack
-bool in_rts() {
-	return false;
+void in_rts() {
 }
 
 // SuBtract with Carry
 // subtract operand from accumulator with carry flag as a borrow
 // carry flag should be set before being called
 // if carry flag is cleared after the call, a borrow was needed
-bool in_sbc() {
-	return false;
+void in_sbc() {
 }
 
 // SEt Carry flag
-bool in_sec() {
-	return false;
+void in_sec() {
 }
 
 // SEt Decimal flag
 // makes the 6502 perform binary coded decimal math
-bool in_sed() {
-	return false;
+void in_sed() {
 }
 
 // SEt Interupt flag
 // this instruction disables interupts from the IRQ pin/function, as this pin is active low
-bool in_sei() {
-	return false;
+void in_sei() {
 }
 
 #ifdef ROCKWEL
 // Set Memory Bit
 // sets bit at operand to 1
-bool in_smb(uint8_t bit) {
-	return false;
+void in_smb(uint8_t bit) {
 }
 
 BITS_EXPANSION(smb)
 #endif
 
 // STore Accumulator at operand
-bool in_sta() {
-	return false;
+void in_sta() {
 }
 
 #ifdef WDC
 // SToP
 // stops the clock from affecting the 65c02
 // the 65c02 is faster to respond to the reset pin/function
-bool in_stp() {
-	return false;
+void in_stp() {
 }
 #endif
 
 // STore X register at operand
-bool in_stx() {
-	return false;
+void in_stx() {
 }
 
 // STore Y register at operand
-bool in_sty() {
-	return false;
+void in_sty() {
 }
 
 #ifdef WDC
 // STore Zero at operand
-bool in_stz() {
-	return false;
+void in_stz() {
 }
 #endif
 
 // Transfer Accumulator to X register
-bool in_tax() {
-	return false;
+void in_tax() {
 }
 
 // Transfer Accumulator to Y register
-bool in_tay() {
-	return false;
+void in_tay() {
 }
 
 #ifdef WDC
 // Test and Reset Bit
 // clears bits set in accumulator at operand
 // sets zero flag if any bits were changed, otherwise it gets cleared
-bool in_trb() {
-	return false;
+void in_trb() {
 }
 #endif
 
@@ -847,37 +766,31 @@ bool in_trb() {
 // Test and Set Bit
 // sets bits set in accumulator at operand
 // sets zero flag if any bits were changed, otherwise it gets cleared
-bool in_tsb() {
-	return false;
+void in_tsb() {
 }
 #endif
 
 // Transfer Stack pointer to X register
-bool in_tsx() {
-	return false;
+void in_tsx() {
 }
 
 // Transfer X register to Accumulator
-bool in_txa() {
-	return false;
+void in_txa() {
 }
 
 // Transfer X register to Stack pointer
-bool in_txs() {
-	return false;
+void in_txs() {
 }
 
 // Transfer Y register to Accumulator
-bool in_tya() {
-	return false;
+void in_tya() {
 }
 
 #ifdef WDC
 // WAit for Interupt
 // stops the clock from affecting the 65c02
 // the 65c02 is faster to respond to the IRQ/NMI pins/functions
-bool in_wai() {
-	return false;
+void in_wai() {
 }
 #endif
 
@@ -886,8 +799,7 @@ bool in_wai() {
 // shouldn't be used in normal programs
 //   the 6502 has a couple of opcodes that gave somewhat reliable results
 //   the WDC version of the 6502 has all illegal opcodes as implemented as nops
-bool in_xxx() {
-	return false;
+void in_xxx() {
 }
 #endif
 
