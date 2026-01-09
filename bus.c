@@ -1,3 +1,5 @@
+// #define VERBOSE
+
 #include "bus.h"
 
 #include <stdio.h>
@@ -51,12 +53,24 @@ bool bus_add(const component_t* const component, const uint16_t start, const uin
 	if (start > stop)
 		return bus_add(component, stop, start);
 
+#ifdef VERBOSE
+	printf("adding component %p for range %04X-%04X\n", component, start, stop);
+#endif
+
 	// if start is 0x0000 and end is 0xFFFF
 	// optimize by removing the entire list, and adding a new single entry
 	if (start == 0x0000 && stop == 0xFFFF) {
 		busAddr_t* newList = malloc(sizeof(busAddr_t));
-		if (newList == NULL)
+		if (newList == NULL) {
+#ifdef VERBOSE
+			printf("couldn't be added, malloc returned null\n");
+#endif
 			return false;
+		}
+
+#ifdef VERBOSE
+		printf("replaced entire range\n");
+#endif
 
 		newList->start = 0x0000;
 		newList->stop = 0xFFFF;
@@ -101,14 +115,22 @@ bool bus_add(const component_t* const component, const uint16_t start, const uin
 		if (!addBefore && !addAfter) {
 			startAddr->component = component;
 
+#ifdef VERBOSE
+			printf("replaced component with identical range\n");
+#endif
+
 			return true;
 		}
 
 		// allocate new memory
 		{
 			busAddr_t* const newList = realloc(bus.addresses, sizeof(busAddr_t) * (bus.size + addBefore + addAfter));
-			if (newList == NULL)
+			if (newList == NULL) {
+#ifdef VERBOSE
+				printf("couldn't be added, realloc returned null\n");
+#endif
 				return false;
+			}
 
 			bus.addresses = newList;
 		}
@@ -116,6 +138,10 @@ bool bus_add(const component_t* const component, const uint16_t start, const uin
 		// reset startAddr ptr because data might have moved
 		startAddr = bus.addresses + startIndex + addBefore;
 		memmove(startAddr + addAfter, startAddr - addBefore, sizeof(busAddr_t) * (bus.size - startIndex));
+
+#ifdef VERBOSE
+		printf("split single range into %i ranges\n", addBefore + addAfter + 1);
+#endif
 
 		// update altered bus ranges
 		startAddr->start = start;
@@ -147,6 +173,11 @@ bool bus_add(const component_t* const component, const uint16_t start, const uin
 				startAddr->stop = stop;
 				startAddr->component = component;
 			}
+
+#ifdef VERBOSE
+			printf("shifted ranges around to fit new component\n");
+#endif
+
 			return true;
 		}
 	}
@@ -165,6 +196,10 @@ bool bus_add(const component_t* const component, const uint16_t start, const uin
 
 			stopAddr->start = stop + 1;
 
+#ifdef VERBOSE
+			printf("shifted ranges around to fit new component\n");
+#endif
+
 			return true;
 		}
 	}
@@ -173,8 +208,12 @@ bool bus_add(const component_t* const component, const uint16_t start, const uin
 	const size_t newIndex = startIndex + addBefore;
 	busAddr_t* newList = malloc(newSize * sizeof(busAddr_t));
 
-	if (newList == NULL)
+	if (newList == NULL) {
+#ifdef VERBOSE
+		printf("couldn't be added, malloc returned null\n");
+#endif
 		return false;
+	}
 
 	if (startIndex != 0 || addBefore)
 		memmove(
@@ -201,6 +240,10 @@ bool bus_add(const component_t* const component, const uint16_t start, const uin
 	bus.addresses = newList;
 	bus.size = newSize;
 
+#ifdef VERBOSE
+	printf("added component\n");
+#endif
+
 	return true;
 }
 
@@ -209,13 +252,21 @@ uint8_t bus_read(const uint16_t fullAddr) {
 		const busAddr_t* current = bus.addresses + i;
 
 		if (fullAddr >= current->start && fullAddr <= current->stop) {
-			if (current->component && current->component->readFunc)
-				return current->component->readFunc(current->component, (addr_t) { fullAddr, fullAddr - current->start });
-
+			if (current->component && current->component->readFunc) {
+				uint8_t read = current->component->readFunc(current->component, (addr_t) { fullAddr, fullAddr - current->start });
+#ifdef VERBOSE
+				printf("READ: found component at %zi, read value: %02X\n", i, read);
+#endif
+				return read;
+			}
+#ifdef VERBOSE
+			printf("READ: found component at %zi, but address can't be read\n", i);
+#endif
 			return 0;
 		}
 	}
 
+	// shouldn't be possible, bus should always at least have a range of 0x0000-0xFFFF
 	return 0;
 }
 
@@ -224,8 +275,15 @@ void bus_write(const uint16_t fullAddr, const uint8_t data) {
 		const busAddr_t* current = bus.addresses + i;
 
 		if (fullAddr >= current->start && fullAddr <= current->stop) {
-			if (current->component && current->component->writeFunc)
+			if (current->component && current->component->writeFunc) {
 				current->component->writeFunc(current->component, (addr_t) { fullAddr, fullAddr - current->start }, data);
+#ifdef VERBOSE
+				printf("WRITE: found component at %zi, writen value: %02X\n", i, data);
+#endif
+			}
+#ifdef VERBOSE
+			printf("WRITE: found component at %zi, but address can't be writen\n", i);
+#endif
 			return;
 		}
 	}

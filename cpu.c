@@ -280,10 +280,12 @@ static void printBin(uint8_t val) {
 #endif
 
 void cpu_printRegisters() {
+	printf("=------=----=----=----=----------=----=\n");
 	printf("|  PC  |  A |  X |  Y | CZIDB_VN | SP |\n");
 	printf("| %04X | %02X | %02X | %02X | ", registers.PC, registers.A, registers.X, registers.Y);
 	printBin(registers.flags);
 	printf(" | %02X |\n", registers.SP);
+	printf("=------=----=----=----=----------=----=\n");
 }
 
 #pragma region addressingModes
