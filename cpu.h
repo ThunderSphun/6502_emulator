@@ -11,3 +11,5 @@ void cpu_nmi();
 
 void cpu_clock();
 void cpu_runInstruction();
+
+void cpu_printRegisters();

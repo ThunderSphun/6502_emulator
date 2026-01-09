@@ -65,7 +65,9 @@ int main() {
 	ram_set(&ram, 0x000a, 0x10000 - 0x000a, buffer);
 
 	cpu_reset();
+	cpu_printRegisters();
 	registers.PC = 0x0400;
+	cpu_printRegisters();
 	while(registers.PC < 0x0410)
 		cpu_runInstruction();
 

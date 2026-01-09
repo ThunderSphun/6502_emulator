@@ -232,11 +232,11 @@ void bus_write(const uint16_t fullAddr, const uint8_t data) {
 }
 
 #ifdef __GNUC__
-void printBin(uint16_t val) {
+static void printBin(uint16_t val) {
 	printf("%08b %08b", (val >> 8) & 0xFF, val & 0xFF);
 }
 #else
-void printBin(uint16_t val) {
+static void printBin(uint16_t val) {
 	for (int i = 15; i >= 0; i--) {
 		printf("%c", (val & (1 << i)) ? '1' : '0');
 		if (i == 8)

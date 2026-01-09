@@ -161,6 +161,7 @@ struct instruction {
 } instructions[INSTRUCTION_COUNT];
 
 size_t cycles = 0;
+
 uint8_t currentOpcode = 0;
 uint8_t operand = 0;
 uint16_t effectiveAddress = 0;
@@ -265,6 +266,24 @@ void cpu_runInstruction() {
 	// make sure current instruction is 'finished'
 	while (cycles > 0)
 		cpu_clock();
+}
+
+#ifdef __GNUC__
+static void printBin(uint8_t val) {
+	printf("%08b", val);
+}
+#else
+static void printBin(uint8_t val) {
+	for (int i = 7; i >= 0; i--)
+		printf("%c", (val & (1 << i)) ? '1' : '0');
+}
+#endif
+
+void cpu_printRegisters() {
+	printf("|  PC  |  A |  X |  Y | CZIDB_VN | SP |\n");
+	printf("| %04X | %02X | %02X | %02X | ", registers.PC, registers.A, registers.X, registers.Y);
+	printBin(registers.flags);
+	printf(" | %02X |\n", registers.SP);
 }
 
 #pragma region addressingModes
