@@ -48,16 +48,21 @@ int main() {
 	component_t rom = rom_init(0x8000);
 
 	ram_randomize(&ram);
+	for (uint16_t i = 0; i < 0x8000; i++) {
+		uint8_t val = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
+		rom_set(&rom, i, 1, &val);
+	}
 	rom_set(&rom, 0x7FFA, 6, (uint8_t[]) { 0x00, 0xA0, 0x00, 0x80, 0x00, 0xF0 });
 	rom_set(&rom, 0, 1, (uint8_t[]) { 0x00 });
 
 	bus_add(&ram, 0x0000, 0x7FFF);
 	bus_add(&rom, 0x8000, 0xFFFF);
 
+	printBusRange(0x8000, 0x800F);
+
 	cpu_reset();
-	cpu_runInstruction();
-	cpu_runInstruction();
-	cpu_runInstruction();
+	for (int i = 0; i < 16; i++)
+		cpu_runInstruction();
 
 	rom_destroy(rom);
 	ram_destroy(ram);
