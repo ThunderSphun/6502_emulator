@@ -21,13 +21,16 @@ void printBusRange(const uint16_t start, const uint16_t stop) {
 		printBusRange(stop, start);
 		return;
 	}
-	for (size_t i = start; i <= stop; i += 0x0010) {
+	for (size_t i = start & 0xFFF0; i <= stop; i += 0x0010) {
 		if (i % 0x0100 == 0)
 			printf("\n");
 
 		printf("$%04X: ", (uint16_t) i);
 		for (uint8_t j = 0; j < 0x10; j++) {
-			printf("%02X ", bus_read((uint16_t) i + j));
+			if ((i + j) < start || (i + j) >= stop)
+				printf("__ ");
+			else
+				printf("%02X ", bus_read((uint16_t) i + j));
 			if (j == 7)
 				printf("\t");
 		}
@@ -52,13 +55,13 @@ int main() {
 		uint8_t val = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
 		rom_set(&rom, i, 1, &val);
 	}
-	rom_set(&rom, 0x7FFA, 6, (uint8_t[]) { 0x00, 0xA0, 0x00, 0x80, 0x00, 0xF0 });
-	rom_set(&rom, 0, 1, (uint8_t[]) { 0x00 });
+	rom_set(&rom, 0x7FFA, 6, (uint8_t[]) { 0x00, 0xA0, 0x05, 0x80, 0x00, 0xF0 });
+	rom_set(&rom, 5, 1, (uint8_t[]) { 0x00 });
 
 	bus_add(&ram, 0x0000, 0x7FFF);
 	bus_add(&rom, 0x8000, 0xFFFF);
 
-	printBusRange(0x8000, 0x800F);
+	printBusRange(0x8005, 0x8005 + 16);
 
 	cpu_reset();
 	for (int i = 0; i < 16; i++)
