@@ -27,7 +27,7 @@ void printBusRange(const uint16_t start, const uint16_t stop) {
 
 		printf("$%04X: ", (uint16_t) i);
 		for (uint8_t j = 0; j < 0x10; j++) {
-			if ((i + j) < start || (i + j) >= stop)
+			if ((i + j) < start || (i + j) > stop)
 				printf("__ ");
 			else
 				printf("%02X ", bus_read((uint16_t) i + j));
@@ -47,27 +47,28 @@ void printStackPage() {
 int main() {
 	bus_init();
 
-	component_t ram = ram_init(0x8000);
-	component_t rom = rom_init(0x8000);
+	component_t ram = ram_init(0x10000);
+	bus_add(&ram, 0x0000, 0xFFFF);
 
-	ram_randomize(&ram);
-	for (uint16_t i = 0; i < 0x8000; i++) {
-		uint8_t val = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
-		rom_set(&rom, i, 1, &val);
+	uint8_t buffer[0x10000] = { 0 };
+	{
+		FILE* file = fopen("test.bin", "rb");
+		if (file)
+			fread(buffer, sizeof(buffer), 1, file);
+		else {
+			printf("couldnt open file\n");
+			fclose(file);
+			return -1;
+		}
+		fclose(file);
 	}
-	rom_set(&rom, 0x7FFA, 6, (uint8_t[]) { 0x00, 0xA0, 0x05, 0x80, 0x00, 0xF0 });
-	rom_set(&rom, 5, 1, (uint8_t[]) { 0x00 });
-
-	bus_add(&ram, 0x0000, 0x7FFF);
-	bus_add(&rom, 0x8000, 0xFFFF);
-
-	printBusRange(0x8005, 0x8005 + 16);
+	ram_set(&ram, 0x000a, 0x10000 - 0x000a, buffer);
 
 	cpu_reset();
-	for (int i = 0; i < 16; i++)
+	registers.PC = 0x0400;
+	while(registers.PC < 0x0410)
 		cpu_runInstruction();
 
-	rom_destroy(rom);
 	ram_destroy(ram);
 	bus_destroy();
 

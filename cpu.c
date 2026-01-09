@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 
+#define VERBOSE
+
 #ifdef WDC
 // Western Design Center included the bit branch/bit set instructions from the rockwel chips
 #define ROCKWEL
@@ -160,6 +162,8 @@ struct instruction {
 
 size_t cycles = 0;
 uint8_t currentOpcode = 0;
+uint8_t operand = 0;
+uint16_t effectiveAddress = 0;
 
 void push(uint8_t data) {
 	bus_write(0x0100 | registers.SP--, data);
@@ -233,7 +237,13 @@ void cpu_clock() {
 	const struct opcode opcode = opcodes[currentOpcode];
 
 #ifdef VERBOSE
-	printf("$%04X: %s %s\n", registers.PC - 1, instructions[opcode.instruction].name, addressModes[opcode.addressMode].name);
+	printf("$%04X: %-*s %s\n", registers.PC - 1,
+#ifdef ROCKWEL
+		4,
+#else
+		3,
+#endif
+		instructions[opcode.instruction].name, addressModes[opcode.addressMode].name);
 #endif
 
 	// set cycles from instruction
@@ -265,14 +275,19 @@ void cpu_runInstruction() {
 // an absolute memory location is provided
 // the value at this memory location is used as operand
 void am_abs() {
+	uint16_t addr = bus_read(registers.PC++) | (bus_read(registers.PC++) << 8);
+	operand = bus_read(addr);
 }
 
 #ifdef WDC
 // absolute indexed indirect addressing mode
 // an absolute memory location is provided
 // this memory location is incremented by X, this memory location provides 2 bytes to actually use, in the format $LLHH
-// this mode is generally only used for JMP
+// this mode is only used for JMP
 void am_absi() {
+	uint16_t addr = bus_read(registers.PC++) | (bus_read(registers.PC++) << 8);
+	addr += registers.X;
+	effectiveAddress = bus_read(addr) | (bus_read(addr + 1) << 8);
 }
 #endif
 
@@ -281,6 +296,8 @@ void am_absi() {
 // this memory location is incremented by X, and the value at that memory location is used as operand
 // this can be used to loop through a set of data, aka an array
 void am_absx() {
+	effectiveAddress = bus_read(registers.PC++) | (bus_read(registers.PC++) << 8);
+	effectiveAddress += registers.X;
 }
 
 // absolute addressing mode offset by Y
@@ -288,11 +305,14 @@ void am_absx() {
 // this memory location is incremented by Y, and the value at that memory location is used as operand
 // this can be used to loop through a set of data, aka an array
 void am_absy() {
+	effectiveAddress = bus_read(registers.PC++) | (bus_read(registers.PC++) << 8);
+	effectiveAddress += registers.Y;
 }
 
 // immediate addressing mode
 // operand is provided directly after the instruction
 void am_imm() {
+	operand = bus_read(registers.PC++);
 }
 
 // implied addressing mode
@@ -300,6 +320,7 @@ void am_imm() {
 //   this also includes accumulator addressing mode, as accumulator is the implied operand
 //   this also includes stack addressing mode documented in the WDC data sheets, as stack pointer is the implied operand
 void am_imp() {
+	// no need to do anything, instruction will not use operand/effectiveAddress anyways
 }
 
 // indirect addressing mode
@@ -307,6 +328,8 @@ void am_imp() {
 // this memory location provides 2 byte to actually use, in the format $LLHH
 // this mode is generally only used for JMP
 void am_ind() {
+	uint16_t addr = bus_read(registers.PC++) | (bus_read(registers.PC++) << 8);
+	operand = bus_read(addr);
 }
 
 // pre-indexed indirect addressing mode
@@ -314,6 +337,10 @@ void am_ind() {
 // from this zero-page address two bytes are read ($LLHH), which gets incremented by X
 // this increased memory address points to the memory address ($LLHH) where the actual data is stored
 void am_indx() {
+	uint8_t offset = bus_read(registers.PC++);
+	offset += registers.X;
+	uint16_t addr = bus_read(offset) | (bus_read(offset + 1) << 8);
+	operand = bus_read(addr);
 }
 
 // post-indexed indirect addressing mode
@@ -322,6 +349,10 @@ void am_indx() {
 // this memory address points to the memory address ($LLHH), which gets incremented with Y
 // this address is where the actual data is stored
 void am_indy() {
+	uint8_t offset = bus_read(registers.PC++);
+	uint16_t addr = bus_read(offset) | (bus_read(offset + 1) << 8);
+	addr += registers.Y;
+	operand = bus_read(addr);
 }
 
 // relative addressing mode
@@ -329,6 +360,8 @@ void am_indy() {
 // this byte is added to PC to get the address to branch to
 // this mode is only allowed for the branch instructions
 void am_rel() {
+	int8_t offset = bus_read(registers.PC++);
+	effectiveAddress = registers.PC + offset;
 }
 
 // zero-page addressing mode
@@ -337,6 +370,7 @@ void am_rel() {
 // this makes the operation faster, and shorter
 // the instruction takes only 2 bytes, instead of 3 for a full address
 void am_zpg() {
+	operand = bus_read(registers.PC++);
 }
 
 #ifdef WDC
@@ -344,6 +378,8 @@ void am_zpg() {
 // a byte is provided directly after the instruction which contains an offset in the zero-page
 // this memory location provides 2 byte to actually use, in the format $LLHH
 void am_zpgi() {
+	uint8_t offset = bus_read(registers.PC++);
+	effectiveAddress = bus_read(offset) | (bus_read(offset + 1) << 8);
 }
 #endif
 
@@ -355,6 +391,9 @@ void am_zpgi() {
 // the instruction takes only 2 bytes, instead of 3 for a full address
 // the result of the addition wraps around, so the byte read will always be inside the zero-page
 void am_zpgx() {
+	uint8_t offset = bus_read(registers.PC++);
+	offset += registers.X;
+	operand = bus_read(offset);
 }
 
 // zero-page addressing mode offset by Y
@@ -366,6 +405,9 @@ void am_zpgx() {
 // the result of the addition wraps around, so the byte read will always be inside the zero-page
 // this addressing mode is only used if the register used is X (LDX, STX), so X cannot be used
 void am_zpgy() {
+	uint8_t offset = bus_read(registers.PC++);
+	offset += registers.Y;
+	operand = bus_read(offset);
 }
 
 #ifndef WDC
@@ -374,6 +416,9 @@ void am_zpgy() {
 //   the 6502 has a couple of opcodes that gave somewhat reliable results
 //   the WDC version of the 6502 has all illegal opcodes as implemented as nops
 void am_xxx() {
+#ifdef VERBOSE
+	printf("ILLEGAL ADDRESS MODE EXECUTED\n");
+#endif
 }
 #endif
 
@@ -477,7 +522,7 @@ void in_bpl() {
 #ifdef WDC
 // Branch Always
 // a branch taken takes an extra clock cycle
-//   this is always the case
+//   this is always the case, so don't take an extra clock cycle, it is added in the opcode table
 void in_bra() {
 }
 #endif
@@ -821,7 +866,7 @@ struct opcode opcodes[] = {
 	{IN_RTI ,AM_STK ,6},{IN_EOR ,AM_INDX,6},{IN_NOP ,AM_IMP ,2},{IN_NOP ,AM_IMP ,1},{IN_NOP ,AM_IMP ,3},{IN_EOR ,AM_ZPG ,3},{IN_LSR ,AM_ZPG ,5},{IN_RMB4,AM_ZPG ,5},{IN_PHA ,AM_STK ,3},{IN_EOR ,AM_IMM ,2},{IN_LSR ,AM_ACC ,2},{IN_NOP ,AM_IMP ,1},{IN_JMP ,AM_ABS ,3},{IN_EOR ,AM_ABS ,4},{IN_LSR ,AM_ABS ,6},{IN_BBR4,AM_REL ,5},
 	{IN_BVC ,AM_REL ,2},{IN_EOR ,AM_INDY,5},{IN_EOR ,AM_ZPG ,5},{IN_NOP ,AM_IMP ,1},{IN_NOP ,AM_IMP ,4},{IN_EOR ,AM_ZPGX,4},{IN_LSR ,AM_ZPGX,6},{IN_RMB5,AM_ZPG ,5},{IN_CLI ,AM_IMP ,2},{IN_EOR ,AM_ABSY,4},{IN_PHY ,AM_STK ,3},{IN_NOP ,AM_IMP ,1},{IN_NOP ,AM_IMP ,8},{IN_EOR ,AM_ABSX,4},{IN_LSR ,AM_ABSX,7},{IN_BBR5,AM_REL ,5},
 	{IN_RTS ,AM_STK ,6},{IN_ADC ,AM_INDX,6},{IN_NOP ,AM_IMP ,2},{IN_NOP ,AM_IMP ,1},{IN_STZ ,AM_ZPG ,3},{IN_ADC ,AM_ZPG ,3},{IN_ROR ,AM_ZPG ,5},{IN_RMB6,AM_ZPG ,5},{IN_PLA ,AM_STK ,4},{IN_ADC ,AM_IMM ,2},{IN_ROR ,AM_ACC ,2},{IN_NOP ,AM_IMP ,1},{IN_JMP ,AM_IND ,5},{IN_ADC ,AM_ABS ,4},{IN_ROR ,AM_ABS ,6},{IN_BBR6,AM_REL ,5},
-	{IN_BVS ,AM_REL ,2},{IN_ADC ,AM_INDY,5},{IN_ADC ,AM_ZPG ,5},{IN_NOP ,AM_IMP ,1},{IN_STZ ,AM_ZPGX,4},{IN_ADC ,AM_ZPGX,4},{IN_ROR ,AM_ZPGX,6},{IN_RMB7,AM_ZPG ,5},{IN_SEI ,AM_IMP ,2},{IN_ADC ,AM_ABSY,4},{IN_PLY ,AM_STK ,4},{IN_NOP ,AM_IMP ,1},{IN_JMP ,AM_ABSX,6},{IN_ADC ,AM_ABSX,4},{IN_ROR ,AM_ABSX,7},{IN_BBR7,AM_REL ,5},
+	{IN_BVS ,AM_REL ,2},{IN_ADC ,AM_INDY,5},{IN_ADC ,AM_ZPG ,5},{IN_NOP ,AM_IMP ,1},{IN_STZ ,AM_ZPGX,4},{IN_ADC ,AM_ZPGX,4},{IN_ROR ,AM_ZPGX,6},{IN_RMB7,AM_ZPG ,5},{IN_SEI ,AM_IMP ,2},{IN_ADC ,AM_ABSY,4},{IN_PLY ,AM_STK ,4},{IN_NOP ,AM_IMP ,1},{IN_JMP ,AM_ABSI,6},{IN_ADC ,AM_ABSX,4},{IN_ROR ,AM_ABSX,7},{IN_BBR7,AM_REL ,5},
 
 	{IN_BRA ,AM_REL ,3},{IN_STA ,AM_INDX,6},{IN_NOP ,AM_IMP ,2},{IN_NOP ,AM_IMP ,1},{IN_STY ,AM_ZPG ,3},{IN_STA ,AM_ZPG ,3},{IN_STX ,AM_ZPG ,3},{IN_SMB0,AM_ZPG ,5},{IN_DEY ,AM_IMP ,2},{IN_BIT ,AM_IMM ,2},{IN_TXA ,AM_IMP ,2},{IN_NOP ,AM_IMP ,1},{IN_STY ,AM_ABS ,4},{IN_STA ,AM_ABS ,4},{IN_STX ,AM_ABS ,4},{IN_BBS0,AM_REL ,5},
 	{IN_BCC ,AM_REL ,2},{IN_STA ,AM_INDY,6},{IN_STA ,AM_ZPG ,5},{IN_NOP ,AM_IMP ,1},{IN_STY ,AM_ZPGX,4},{IN_STA ,AM_ZPGX,4},{IN_STX ,AM_ZPGY,4},{IN_SMB1,AM_ZPG ,5},{IN_TYA ,AM_IMP ,2},{IN_STA ,AM_ABSY,5},{IN_TXS ,AM_IMP ,2},{IN_NOP ,AM_IMP ,1},{IN_STZ ,AM_ABS ,4},{IN_STA ,AM_ABSX,5},{IN_STZ ,AM_ABSX,5},{IN_BBS1,AM_REL ,5},
