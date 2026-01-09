@@ -63,3 +63,29 @@ bool rom_set(const component_t* const component, const uint16_t addr, const size
 
 	return true;
 }
+
+bool rom_loadFile(const component_t* const component, const char* fileName, const uint16_t addr) {
+	if (getRom(component) == NULL)
+		return false;
+
+	if (addr > getRom(component)->size)
+		return false;
+
+	FILE* file = fopen(fileName, "rb");
+	if (!file)
+		return false;
+
+	fseek(file, 0, SEEK_END);
+	size_t fileSize = (size_t) ftell(file);
+	rewind(file);
+
+	if (getRom(component)->size - addr < fileSize) {
+		fclose(file);
+		return false;
+	}
+	
+	fread(getRom(component)->data + addr, 1, fileSize, file);
+	fclose(file);
+
+	return true;
+}

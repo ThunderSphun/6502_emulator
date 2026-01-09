@@ -48,21 +48,10 @@ int main() {
 	bus_init();
 
 	component_t ram = ram_init(0x10000);
+	component_t rom = rom_init(0x10000);
 	bus_add(&ram, 0x0000, 0xFFFF);
-
-	uint8_t buffer[0x10000] = { 0 };
-	{
-		FILE* file = fopen("test.bin", "rb");
-		if (file)
-			fread(buffer, sizeof(buffer), 1, file);
-		else {
-			printf("couldnt open file\n");
-			fclose(file);
-			return -1;
-		}
-		fclose(file);
-	}
-	ram_set(&ram, 0x000a, 0x10000 - 0x000a, buffer);
+	rom_loadFile(&rom, "test.bin", 0x000a);
+	ram_loadFile(&ram, "test.bin", 0x000a);
 
 	cpu_reset();
 	cpu_printRegisters();
