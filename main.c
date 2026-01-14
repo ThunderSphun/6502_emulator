@@ -57,9 +57,14 @@ int main() {
 	cpu_printRegisters();
 	registers.PC = 0x0400;
 	cpu_printRegisters();
-	while(registers.PC < 0x0410)
-		cpu_runInstruction();
 
+	printf("running:\n");
+	for (int i = 0; i < 10; i++) {
+		cpu_runInstruction();
+		cpu_printRegisters();
+	}
+
+	rom_destroy(rom);
 	ram_destroy(ram);
 	bus_destroy();
 

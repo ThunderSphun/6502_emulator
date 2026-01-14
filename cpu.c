@@ -130,14 +130,14 @@ struct registers {
 	uint8_t Y;
 	union {
 		struct {
-			bool C : 1; // carry
-			bool Z : 1; // zero
-			bool I : 1; // interupt
-			bool D : 1; // binary coded decimal (BDC)
-			bool B : 1; // break
-			bool _ : 1; // unused
-			bool V : 1; // overflow
 			bool N : 1; // negative
+			bool V : 1; // overflow
+			bool _ : 1; // unused
+			bool B : 1; // break
+			bool D : 1; // binary coded decimal (BDC)
+			bool I : 1; // interupt
+			bool Z : 1; // zero
+			bool C : 1; // carry
 		};
 		uint8_t flags;
 	};
@@ -576,20 +576,24 @@ void in_bvs() {
 
 // CLear Carry flag
 void in_clc() {
+	registers.C = false;
 }
 
 // CLear Decimal flag
 // makes the 6502 perform normal binary math
 void in_cld() {
+	registers.D = false;
 }
 
 // CLear Interupt flag
 // this instruction enables interupts from the IRQ pin/function, as this pin is active low
 void in_cli() {
+	registers.I = false;
 }
 
 // CLear oVerflow
 void in_clv() {
+	registers.V = false;
 }
 
 // CoMPare with accumulator
@@ -772,16 +776,19 @@ void in_sbc() {
 
 // SEt Carry flag
 void in_sec() {
+	registers.C = true;
 }
 
 // SEt Decimal flag
 // makes the 6502 perform binary coded decimal math
 void in_sed() {
+	registers.D = true;
 }
 
 // SEt Interupt flag
 // this instruction disables interupts from the IRQ pin/function, as this pin is active low
 void in_sei() {
+	registers.I = true;
 }
 
 #ifdef ROCKWEL
