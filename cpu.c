@@ -296,7 +296,8 @@ void cpu_printRegisters() {
 // an absolute memory location is provided
 // the value at this memory location is used as operand
 void am_abs() {
-	uint16_t addr = bus_read(registers.PC++) | (bus_read(registers.PC++) << 8);
+	uint16_t addr = bus_read(registers.PC++);
+	addr |= (bus_read(registers.PC++) << 8);
 	operand = bus_read(addr);
 }
 
@@ -306,7 +307,8 @@ void am_abs() {
 // this memory location is incremented by X, this memory location provides 2 bytes to actually use, in the format $LLHH
 // this mode is only used for JMP
 void am_absi() {
-	uint16_t addr = bus_read(registers.PC++) | (bus_read(registers.PC++) << 8);
+	uint16_t addr = bus_read(registers.PC++);
+	addr |= (bus_read(registers.PC++) << 8);
 	addr += registers.X;
 	effectiveAddress = bus_read(addr) | (bus_read(addr + 1) << 8);
 }
@@ -317,7 +319,8 @@ void am_absi() {
 // this memory location is incremented by X, and the value at that memory location is used as operand
 // this can be used to loop through a set of data, aka an array
 void am_absx() {
-	effectiveAddress = bus_read(registers.PC++) | (bus_read(registers.PC++) << 8);
+	effectiveAddress = bus_read(registers.PC++);
+	effectiveAddress |= (bus_read(registers.PC++) << 8);
 	effectiveAddress += registers.X;
 }
 
@@ -326,7 +329,8 @@ void am_absx() {
 // this memory location is incremented by Y, and the value at that memory location is used as operand
 // this can be used to loop through a set of data, aka an array
 void am_absy() {
-	effectiveAddress = bus_read(registers.PC++) | (bus_read(registers.PC++) << 8);
+	effectiveAddress = bus_read(registers.PC++);
+	effectiveAddress |= (bus_read(registers.PC++) << 8);
 	effectiveAddress += registers.Y;
 }
 
@@ -349,7 +353,8 @@ void am_imp() {
 // this memory location provides 2 byte to actually use, in the format $LLHH
 // this mode is generally only used for JMP
 void am_ind() {
-	uint16_t addr = bus_read(registers.PC++) | (bus_read(registers.PC++) << 8);
+	uint16_t addr = bus_read(registers.PC++);
+	addr |= (bus_read(registers.PC++) << 8);
 	operand = bus_read(addr);
 }
 
@@ -481,6 +486,7 @@ void in_asl() {
 // tests bit of accumulator, and branches if it is 0
 // a branch taken takes an extra clock cycle
 void in_bbr(uint8_t bit) {
+	(void) bit;
 }
 
 BITS_EXPANSION(bbr)
@@ -491,6 +497,7 @@ BITS_EXPANSION(bbr)
 // tests bit of accumulator, and branches if it is 1
 // a branch taken takes an extra clock cycle
 void in_bbs(uint8_t bit) {
+	(void) bit;
 }
 
 BITS_EXPANSION(bbs)
@@ -725,6 +732,7 @@ void in_ply() {
 // Reset Memory Bit
 // sets bit at operand to 0
 void in_rmb(uint8_t bit) {
+	(void) bit;
 }
 
 BITS_EXPANSION(rmb)
@@ -781,6 +789,7 @@ void in_sei() {
 // Set Memory Bit
 // sets bit at operand to 1
 void in_smb(uint8_t bit) {
+	(void) bit;
 }
 
 BITS_EXPANSION(smb)
