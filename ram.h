@@ -7,3 +7,4 @@ bool ram_destroy(component_t component);
 
 bool ram_randomize(const component_t* const component);
 bool ram_set(const component_t* const component, const uint16_t addr, const size_t size, const uint8_t* data);
+bool ram_loadFile(const component_t* const component, const char* fileName, const uint16_t addr);

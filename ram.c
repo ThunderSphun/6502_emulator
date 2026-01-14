@@ -87,3 +87,30 @@ bool ram_set(const component_t* const component, const uint16_t addr, const size
 
 	return true;
 }
+
+
+bool ram_loadFile(const component_t* const component, const char* fileName, const uint16_t addr) {
+	if (getRam(component) == NULL)
+		return false;
+
+	if (addr > getRam(component)->size)
+		return false;
+
+	FILE* file = fopen(fileName, "rb");
+	if (!file)
+		return false;
+
+	fseek(file, 0, SEEK_END);
+	size_t fileSize = (size_t) ftell(file);
+	rewind(file);
+
+	if (getRam(component)->size - addr < fileSize) {
+		fclose(file);
+		return false;
+	}
+
+	fread(getRam(component)->data + addr, 1, fileSize, file);
+	fclose(file);
+
+	return true;
+}
