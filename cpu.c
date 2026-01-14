@@ -11,6 +11,15 @@
 #define ROCKWEL
 #endif
 
+#ifdef VERBOSE
+#ifdef ROCKWEL
+// account for bit number in some newer instructions
+#define INSTRUCTION_NAME_LENGTH 4
+#else
+#define INSTRUCTION_NAME_LENGTH 3
+#endif // ROCKWEL
+#endif // VERBOSE
+
 // addressing modes
 enum {
 #ifndef WDC
@@ -150,13 +159,8 @@ struct addressMode {
 
 struct instruction {
 #ifdef VERBOSE
-#ifdef ROCKWEL
-	// account for bit number in some newer instructions
-	const char name[5];
-#else
-	const char name[4];
-#endif // ROCKWEL
-#endif // VERBOSE
+	const char name[INSTRUCTION_NAME_LENGTH + 1];
+#endif
 	void (*const func)();
 } instructions[INSTRUCTION_COUNT];
 
@@ -238,12 +242,7 @@ void cpu_clock() {
 	const struct opcode opcode = opcodes[currentOpcode];
 
 #ifdef VERBOSE
-	printf("$%04X: %-*s %s\n", registers.PC - 1,
-#ifdef ROCKWEL
-		4,
-#else
-		3,
-#endif
+	printf("$%04X: %-*s %s\n", registers.PC - 1, INSTRUCTION_NAME_LENGTH,
 		instructions[opcode.instruction].name, addressModes[opcode.addressMode].name);
 #endif
 
