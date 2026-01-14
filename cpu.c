@@ -526,6 +526,8 @@ void in_beq() {
 // bits 6 and 7 of operand are set as negative and overflow flags respectively
 // this instruction only alters flags register
 void in_bit() {
+	registers.Z = (registers.A & operand) == 0;
+	registers.flags |= operand & 0xC0;
 }
 
 // Branch on MInus
@@ -601,6 +603,12 @@ void in_clv() {
 // then ignore the result from the subtraction
 // this instruction only alters flags register
 void in_cmp() {
+	registers.Z = registers.A == operand;
+	registers.C = registers.A >= operand;
+	if (registers.A == operand)
+		registers.N = 0;
+	else
+		registers.N = (int8_t)(registers.A - operand) < 0;
 }
 
 // CoMpare with X register
@@ -608,6 +616,12 @@ void in_cmp() {
 // then ignore the result from the subtraction
 // this instruction only alters flags register
 void in_cpx() {
+	registers.Z = registers.X == operand;
+	registers.C = registers.X >= operand;
+	if (registers.X == operand)
+		registers.N = 0;
+	else
+		registers.N = (int8_t)(registers.X - operand) < 0;
 }
 
 // CoMpare with Y register
@@ -615,6 +629,12 @@ void in_cpx() {
 // then ignore the result from the subtraction
 // this instruction only alters flags register
 void in_cpy() {
+	registers.Z = registers.Y == operand;
+	registers.C = registers.Y >= operand;
+	if (registers.Y == operand)
+		registers.N = 0;
+	else
+		registers.N = (int8_t)(registers.Y - operand) < 0;
 }
 
 // DECrement operand
