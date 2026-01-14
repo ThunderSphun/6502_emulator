@@ -680,6 +680,24 @@ void in_lsr() {
 //   the WDC version of the 6502 has all illegal opcodes as implemented as nops
 //   these differ slightly in operand size and/or cycle counts
 void in_nop() {
+#ifdef WDC
+	uint8_t nop2[] = {
+		0x02, 0x22, 0x42, 0x62, 0x82, 0xC2, 0xE2,	// 2 cycles
+		0x44,										// 3 cycles
+		0x54, 0xD4, 0xF4							// 4 cycles
+	};
+	uint8_t nop3[] = {
+		0xDC, 0xFC,									// 4 cycles
+		0x5C										// 8 cycles
+	};
+
+	for (size_t i = 0; i < sizeof(nop2) / sizeof(nop2[0]); i++)
+		if (currentOpcode == nop2[i])
+			registers.PC++;
+	for (size_t i = 0; i < sizeof(nop3) / sizeof(nop3[0]); i++)
+		if (currentOpcode == nop3[i])
+			registers.PC += 2;
+#endif
 }
 
 // bitwise OR with Accumulator
