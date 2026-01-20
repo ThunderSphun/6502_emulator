@@ -899,10 +899,16 @@ void in_stz() {
 
 // Transfer Accumulator to X register
 void in_tax() {
+	registers.X = registers.A;
+	registers.Z = registers.X == 0;
+	registers.N = registers.X & 0x80;
 }
 
 // Transfer Accumulator to Y register
 void in_tay() {
+	registers.Y = registers.A;
+	registers.Z = registers.Y == 0;
+	registers.N = registers.Y & 0x80;
 }
 
 #ifdef WDC
@@ -923,18 +929,28 @@ void in_tsb() {
 
 // Transfer Stack pointer to X register
 void in_tsx() {
+	registers.X = registers.SP;
+	registers.Z = registers.X == 0;
+	registers.N = registers.X & 0x80;
 }
 
 // Transfer X register to Accumulator
 void in_txa() {
+	registers.A = registers.X;
+	registers.Z = registers.A == 0;
+	registers.N = registers.A & 0x80;
 }
 
 // Transfer X register to Stack pointer
 void in_txs() {
+	registers.SP = registers.X;
 }
 
 // Transfer Y register to Accumulator
 void in_tya() {
+	registers.A = registers.Y;
+	registers.Z = registers.A == 0;
+	registers.N = registers.A & 0x80;
 }
 
 #ifdef WDC
