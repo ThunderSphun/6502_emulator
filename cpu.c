@@ -716,9 +716,9 @@ void in_ldx() {
 
 // LoaD Y register with operand
 void in_ldy() {
-	registers.X = operand;
-	registers.Z = registers.X == 0;
-	registers.N = registers.X & 0x80;
+	registers.Y = operand;
+	registers.Z = registers.Y == 0;
+	registers.N = registers.Y & 0x80;
 }
 
 // Logical Shift Right
