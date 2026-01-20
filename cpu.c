@@ -493,7 +493,7 @@ void in_asl() {
 // tests bit of accumulator, and branches if it is 0
 // a branch taken takes an extra clock cycle
 void in_bbr(uint8_t bit) {
-	(void) bit;
+	branch((registers.A & (1 << bit)) == 0);
 }
 
 BITS_EXPANSION(bbr)
@@ -504,7 +504,7 @@ BITS_EXPANSION(bbr)
 // tests bit of accumulator, and branches if it is 1
 // a branch taken takes an extra clock cycle
 void in_bbs(uint8_t bit) {
-	(void) bit;
+	branch((registers.A & (1 << bit)) == 1);
 }
 
 BITS_EXPANSION(bbs)
