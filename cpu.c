@@ -20,6 +20,12 @@
 #endif // ROCKWEL
 #endif // VERBOSE
 
+#ifdef VERBOSE
+#define NO_IMPL() printf("instruction %-*s is not implemented\n", INSTRUCTION_NAME_LENGTH, instructions[opcodes[currentOpcode].instruction].name)
+#else
+#define NO_IMPL()
+#endif
+
 // addressing modes
 enum {
 #ifndef WDC
@@ -249,8 +255,7 @@ void cpu_clock() {
 	const struct opcode opcode = opcodes[currentOpcode];
 
 #ifdef VERBOSE
-	printf("$%04X: %-*s %s\n", registers.PC - 1, INSTRUCTION_NAME_LENGTH,
-		instructions[opcode.instruction].name, addressModes[opcode.addressMode].name);
+	printf("$%04X: %-*s %s\n", registers.PC - 1, INSTRUCTION_NAME_LENGTH, instructions[opcode.instruction].name, addressModes[opcode.addressMode].name);
 #endif
 
 	// set cycles from instruction
@@ -475,17 +480,20 @@ void in_##funcName##bit() { in_##funcName(bit); }
 // ADd with Carry
 // adds operand to accumulator with carry flag
 void in_adc() {
+	NO_IMPL();
 }
 
 // bitwise AND
 // performs a bitwise and with operand and accumulator
 void in_and() {
+	NO_IMPL();
 }
 
 // Arithmatic Shift Left
 // shifts 0 into bit 0
 // shifts bit 7 into carry flag
 void in_asl() {
+	NO_IMPL();
 }
 
 #ifdef ROCKWEL
@@ -578,6 +586,7 @@ void in_bra() {
 // the return address is PC + 2, making the byte following this instruction being skipped
 // this byte can be used as a break mark
 void in_brk() {
+	NO_IMPL();
 }
 
 // Branch on oVerflow Clear
@@ -680,6 +689,7 @@ void in_dey() {
 // bitwise eXclusive OR
 // performs a bitwise exclusive or with operand and accumulator
 void in_eor() {
+	NO_IMPL();
 }
 
 // INCrement operand
@@ -745,6 +755,7 @@ void in_ldy() {
 // shifts 0 into bit 7
 // shifts bit 0 into carry flag
 void in_lsr() {
+	NO_IMPL();
 }
 
 // No OPeration
@@ -775,49 +786,64 @@ void in_nop() {
 // bitwise OR with Accumulator
 // performs a bitwise or with operand and accumulator
 void in_ora() {
+	NO_IMPL();
 }
 
 // PusH Accumulator on stack
 void in_pha() {
+	push(registers.A);
 }
 
 // PusH Processor status
 // pushes flags register on stack
 // this instruction sets break flag and bit 5 (unused)
 void in_php() {
+	push(registers.flags | 0x60);
 }
 
 #ifdef WDC
 // PusH X register on stack
 void in_phx() {
+	push(registers.X);
 }
 #endif
 
 #ifdef WDC
 // PusH Y register on stack
 void in_phy() {
+	push(registers.Y);
 }
 #endif
 
 // PuLl Accumulator off stack
 void in_pla() {
+	registers.A = pull();
+	registers.Z = registers.A == 0;
+	registers.N = registers.A & 0x80;
 }
 
 // PuLl Processor status
 // pulls flags register off stack
 // this instruction ignores break flag and bit 5 (unused)
 void in_plp() {
+	registers.flags |= pull();
 }
 
 #ifdef WDC
 // PuLl X register off stack
 void in_plx() {
+	registers.X = pull();
+	registers.Z = registers.X == 0;
+	registers.N = registers.X & 0x80;
 }
 #endif
 
 #ifdef WDC
 // PuLl Y register off stack
 void in_ply() {
+	registers.Y = pull();
+	registers.Z = registers.Y == 0;
+	registers.N = registers.Y & 0x80;
 }
 #endif
 
@@ -826,6 +852,7 @@ void in_ply() {
 // sets bit at operand to 0
 void in_rmb(uint8_t bit) {
 	(void) bit;
+	NO_IMPL();
 }
 
 BITS_EXPANSION(rmb)
@@ -835,6 +862,7 @@ BITS_EXPANSION(rmb)
 // shifts carry flag into bit 0
 // shifts bit 7 into carry flag
 void in_rol() {
+	NO_IMPL();
 }
 
 // ROtate Right
@@ -844,17 +872,20 @@ void in_rol() {
 //   the instruction would instead perform as an ASL, without shifting bit 7 into carry flag
 //   this bug makes it so that carry flag would be unused during the instruction
 void in_ror() {
+	NO_IMPL();
 }
 
 // ReTurn from Interupt
 // pulls flags register from stack, ignoring break flag and bit 5 (ignored)
 // then pulls PC from stack
 void in_rti() {
+	NO_IMPL();
 }
 
 // ReTurn from Subroutine
 // pulls PC from stack
 void in_rts() {
+	NO_IMPL();
 }
 
 // SuBtract with Carry
@@ -862,6 +893,7 @@ void in_rts() {
 // carry flag should be set before being called
 // if carry flag is cleared after the call, a borrow was needed
 void in_sbc() {
+	NO_IMPL();
 }
 
 // SEt Carry flag
@@ -886,6 +918,7 @@ void in_sei() {
 // sets bit at operand to 1
 void in_smb(uint8_t bit) {
 	(void) bit;
+	NO_IMPL();
 }
 
 BITS_EXPANSION(smb)
@@ -893,6 +926,7 @@ BITS_EXPANSION(smb)
 
 // STore Accumulator at operand
 void in_sta() {
+	NO_IMPL();
 }
 
 #ifdef WDC
@@ -900,20 +934,24 @@ void in_sta() {
 // stops the clock from affecting the 65c02
 // the 65c02 is faster to respond to the reset pin/function
 void in_stp() {
+	NO_IMPL();
 }
 #endif
 
 // STore X register at operand
 void in_stx() {
+	NO_IMPL();
 }
 
 // STore Y register at operand
 void in_sty() {
+	NO_IMPL();
 }
 
 #ifdef WDC
 // STore Zero at operand
 void in_stz() {
+	NO_IMPL();
 }
 #endif
 
@@ -936,6 +974,7 @@ void in_tay() {
 // clears bits set in accumulator at operand
 // sets zero flag if any bits were changed, otherwise it gets cleared
 void in_trb() {
+	NO_IMPL();
 }
 #endif
 
@@ -944,6 +983,7 @@ void in_trb() {
 // sets bits set in accumulator at operand
 // sets zero flag if any bits were changed, otherwise it gets cleared
 void in_tsb() {
+	NO_IMPL();
 }
 #endif
 
@@ -978,6 +1018,7 @@ void in_tya() {
 // stops the clock from affecting the 65c02
 // the 65c02 is faster to respond to the IRQ/NMI pins/functions
 void in_wai() {
+	NO_IMPL();
 }
 #endif
 

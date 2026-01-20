@@ -59,6 +59,8 @@ int main() {
 		cpu_printRegisters();
 	}
 
+	printf("ended at $%04X\n", prevProgramCounter);
+
 	rom_destroy(rom);
 	ram_destroy(ram);
 	bus_destroy();
