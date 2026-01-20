@@ -178,6 +178,13 @@ uint8_t pull() {
 	return bus_read(0x0100 | registers.SP++);
 }
 
+void branch(bool condition) {
+	if (condition) {
+		cycles++;
+		registers.PC = effectiveAddress;
+	}
+}
+
 void cpu_irq() {
 	if (!registers.I)
 		return;
@@ -294,6 +301,7 @@ void cpu_printRegisters() {
 // absolute addressing mode
 // an absolute memory location is provided
 // the value at this memory location is used as operand
+// in case of a jump instruction the memory location provided is the address to jump to
 void am_abs() {
 	effectiveAddress = bus_read(registers.PC++);
 	effectiveAddress |= (bus_read(registers.PC++) << 8);
@@ -506,18 +514,21 @@ BITS_EXPANSION(bbs)
 // branches when carry flag is unset
 // a branch taken takes an extra clock cycle
 void in_bcc() {
+	branch(!registers.C);
 }
 
 // Branch Carry Set
 // branches when carry flag is set
 // a branch taken takes an extra clock cycle
 void in_bcs() {
+	branch(registers.C);
 }
 
 // Branch on EQual
 // branches when zero flag is set (two values are equal if A - B == 0)
 // a branch taken takes an extra clock cycle
 void in_beq() {
+	branch(registers.Z);
 }
 
 // test BITs
@@ -534,18 +545,21 @@ void in_bit() {
 // branches when negative flag is set
 // a branch taken takes an extra clock cycle
 void in_bmi() {
+	branch(registers.N);
 }
 
 // Branch on Not Equals
 // branches when zero flag is unset (two values are not equal if A - B != 0)
 // a branch taken takes an extra clock cycle
 void in_bne() {
+	branch(!registers.Z);
 }
 
 // Branch on PLus
 // branches when negative flag is unset
 // a branch taken takes an extra clock cycle
 void in_bpl() {
+	branch(!registers.N);
 }
 
 #ifdef WDC
@@ -553,6 +567,8 @@ void in_bpl() {
 // a branch taken takes an extra clock cycle
 //   this is always the case, so don't take an extra clock cycle, it is added in the opcode table
 void in_bra() {
+	cycles--; // correct the cycles increment from branch
+	branch(true);
 }
 #endif
 
@@ -568,12 +584,14 @@ void in_brk() {
 // branches when overflow flag is unset
 // a branch taken takes an extra clock cycle
 void in_bvc() {
+	branch(!registers.V);
 }
 
 // Branch on oVerflow Set
 // branches when overflow flag is set
 // a branch taken takes an extra clock cycle
 void in_bvs() {
+	branch(registers.V);
 }
 
 // CLear Carry flag
