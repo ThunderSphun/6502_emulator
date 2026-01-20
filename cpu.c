@@ -657,14 +657,24 @@ void in_cpy() {
 
 // DECrement operand
 void in_dec() {
+	operand--;
+	registers.Z = operand == 0;
+	registers.N = operand & 0x80;
+	bus_write(effectiveAddress, operand);
 }
 
 // DEcrement X register
 void in_dex() {
+	registers.X--;
+	registers.Z = registers.X == 0;
+	registers.N = registers.X & 0x80;
 }
 
 // DEcrement Y register
 void in_dey() {
+	registers.Y--;
+	registers.Z = registers.Y == 0;
+	registers.N = registers.Y & 0x80;
 }
 
 // bitwise eXclusive OR
