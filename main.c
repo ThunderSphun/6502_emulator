@@ -40,6 +40,7 @@ int main() {
 	component_t ram = ram_init(0x10000);
 	component_t rom = rom_init(0x10000);
 	bus_add(&ram, 0x0000, 0xFFFF);
+	ram_randomize(&ram);
 	rom_loadFile(&rom, "test_functional.bin", 0x000a);
 	ram_loadFile(&ram, "test_functional.bin", 0x000a);
 

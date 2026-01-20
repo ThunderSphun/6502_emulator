@@ -7,7 +7,7 @@ struct rom {
 	size_t size;
 };
 
-struct rom* getRom(const component_t* const component) {
+inline struct rom* getRom(const component_t* const component) {
 	return ((struct rom*) (component->component_data));
 }
 

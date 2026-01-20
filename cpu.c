@@ -170,15 +170,15 @@ uint8_t currentOpcode = 0;
 uint8_t operand = 0;
 uint16_t effectiveAddress = 0;
 
-void push(uint8_t data) {
+inline void push(uint8_t data) {
 	bus_write(0x0100 | registers.SP--, data);
 }
 
-uint8_t pull() {
+inline uint8_t pull() {
 	return bus_read(0x0100 | registers.SP++);
 }
 
-void branch(bool condition) {
+inline void branch(bool condition) {
 	if (condition) {
 		cycles++;
 		registers.PC = effectiveAddress;
@@ -275,11 +275,11 @@ void cpu_runInstruction() {
 }
 
 #ifdef __GNUC__
-static void printBin(uint8_t val) {
+static inline void printBin(uint8_t val) {
 	printf("%08b", val);
 }
 #else
-static void printBin(uint8_t val) {
+static inline void printBin(uint8_t val) {
 	for (int i = 7; i >= 0; i--)
 		printf("%c", (val & (1 << i)) ? '1' : '0');
 }

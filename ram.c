@@ -7,7 +7,7 @@ struct ram {
 	size_t size;
 };
 
-struct ram* getRam(const component_t* const component) {
+inline struct ram* getRam(const component_t* const component) {
 	return ((struct ram*) (component->component_data));
 }
 
@@ -67,7 +67,7 @@ bool ram_randomize(const component_t* const component) {
 	if (getRam(component) == NULL)
 		return false;
 
-	for (uint16_t i = 0; i < getRam(component)->size; i++)
+	for (size_t i = 0; i < getRam(component)->size; i++)
 		getRam(component)->data[i] = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
 
 	return true;
@@ -87,7 +87,6 @@ bool ram_set(const component_t* const component, const uint16_t addr, const size
 
 	return true;
 }
-
 
 bool ram_loadFile(const component_t* const component, const char* fileName, const uint16_t addr) {
 	if (getRam(component) == NULL)
