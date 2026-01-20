@@ -295,9 +295,9 @@ void cpu_printRegisters() {
 // an absolute memory location is provided
 // the value at this memory location is used as operand
 void am_abs() {
-	uint16_t addr = bus_read(registers.PC++);
-	addr |= (bus_read(registers.PC++) << 8);
-	operand = bus_read(addr);
+	effectiveAddress = bus_read(registers.PC++);
+	effectiveAddress |= (bus_read(registers.PC++) << 8);
+	operand = bus_read(effectiveAddress);
 }
 
 #ifdef WDC
@@ -669,6 +669,7 @@ void in_iny() {
 // JuMP
 // loads PC with operand
 void in_jmp() {
+	registers.PC = effectiveAddress;
 }
 
 // Jump to SubRoutine
