@@ -695,21 +695,30 @@ void in_jmp() {
 // loads PC with operand
 void in_jsr() {
 	registers.PC--;
-	push(registers.PC_LO);
 	push(registers.PC_HI);
+	push(registers.PC_LO);
 	registers.PC = effectiveAddress;
 }
 
 // LoaD Accumulator with operand
 void in_lda() {
+	registers.A = operand;
+	registers.Z = registers.A == 0;
+	registers.N = registers.A & 0x80;
 }
 
 // LoaD X register with operand
 void in_ldx() {
+	registers.X = operand;
+	registers.Z = registers.X == 0;
+	registers.N = registers.X & 0x80;
 }
 
 // LoaD Y register with operand
 void in_ldy() {
+	registers.X = operand;
+	registers.Z = registers.X == 0;
+	registers.N = registers.X & 0x80;
 }
 
 // Logical Shift Right
