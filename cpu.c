@@ -676,6 +676,10 @@ void in_jmp() {
 // saves current PC in stack
 // loads PC with operand
 void in_jsr() {
+	registers.PC--;
+	push(registers.PC_LO);
+	push(registers.PC_HI);
+	registers.PC = effectiveAddress;
 }
 
 // LoaD Accumulator with operand
