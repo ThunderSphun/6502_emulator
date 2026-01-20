@@ -684,14 +684,24 @@ void in_eor() {
 
 // INCrement operand
 void in_inc() {
+	operand++;
+	registers.Z = operand == 0;
+	registers.N = operand & 0x80;
+	bus_write(effectiveAddress, operand);
 }
 
 // INcrement X register
 void in_inx() {
+	registers.X++;
+	registers.Z = registers.X == 0;
+	registers.N = registers.X & 0x80;
 }
 
 // INcrement Y register
 void in_iny() {
+	registers.Y++;
+	registers.Z = registers.Y == 0;
+	registers.N = registers.Y & 0x80;
 }
 
 // JuMP
