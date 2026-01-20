@@ -5,17 +5,6 @@
 
 #include <stdio.h>
 
-extern struct registers {
-	uint16_t PC;
-	uint8_t A;
-	uint8_t X;
-	uint8_t Y;
-	uint8_t P;
-	uint8_t SP;
-} registers;
-
-extern size_t cycles;
-
 void printBusRange(const uint16_t start, const uint16_t stop) {
 	if (start > stop) {
 		printBusRange(stop, start);
@@ -40,7 +29,8 @@ void printBusRange(const uint16_t start, const uint16_t stop) {
 }
 
 void printStackPage() {
-	printf("%02X", registers.SP);
+	extern uint8_t registers;
+	printf("%02X", (&registers)[6]); // stack pointer
 	printBusRange(0x0100, 0x01FF);
 }
 
@@ -54,12 +44,16 @@ int main() {
 	ram_loadFile(&ram, "test_functional.bin", 0x000a);
 
 	cpu_reset();
-	cpu_printRegisters();
-	registers.PC = 0x0400;
-	cpu_printRegisters();
+	extern uint16_t registers; // program counter
+	registers = 0x0400;
 
 	printf("running:\n");
-	for (int i = 0; i < 10; i++) {
+	// stops program execution when there was a jump/branch to the exact same position
+	// this is how the test program indicates an incorrect instruction
+	uint16_t prevProgramCounter = 0;
+	while (registers != prevProgramCounter) {
+		prevProgramCounter = registers;
+
 		cpu_runInstruction();
 		cpu_printRegisters();
 	}
