@@ -1,8 +1,8 @@
-// #define VERBOSE
-
 #include "bus.h"
 
 #include <stdio.h>
+
+#define VERBOSE
 
 typedef struct busAddr busAddr_t;
 
@@ -255,12 +255,12 @@ uint8_t bus_read(const uint16_t fullAddr) {
 			if (current->component && current->component->readFunc) {
 				uint8_t read = current->component->readFunc(current->component, (addr_t) { fullAddr, fullAddr - current->start });
 #ifdef VERBOSE
-				printf("READ: found component at %zi, read value: %02X\n", i, read);
+				printf("READ $%04X: found component at %zi, read value: %02X\n", fullAddr, i, read);
 #endif
 				return read;
 			}
 #ifdef VERBOSE
-			printf("READ: found component at %zi, but address can't be read\n", i);
+			printf("READ $%04X: found component at %zi, but address can't be read\n", fullAddr, i);
 #endif
 			return 0;
 		}
@@ -278,11 +278,12 @@ void bus_write(const uint16_t fullAddr, const uint8_t data) {
 			if (current->component && current->component->writeFunc) {
 				current->component->writeFunc(current->component, (addr_t) { fullAddr, fullAddr - current->start }, data);
 #ifdef VERBOSE
-				printf("WRITE: found component at %zi, writen value: %02X\n", i, data);
+				printf("WRITE $%04X: found component at %zi, writen value: %02X\n", fullAddr, i, data);
 #endif
+				return;
 			}
 #ifdef VERBOSE
-			printf("WRITE: found component at %zi, but address can't be writen\n", i);
+			printf("WRITE $%04X: found component at %zi, but address can't be writen\n", fullAddr, i);
 #endif
 			return;
 		}

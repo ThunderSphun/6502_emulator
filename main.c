@@ -53,13 +53,16 @@ int main() {
 	// this is how the test program indicates an incorrect instruction
 	uint16_t prevProgramCounter = 0;
 	while (registers != prevProgramCounter) {
+	//for (int i = 0; i < 20; i++) {
 		prevProgramCounter = registers;
 
 		cpu_runInstruction();
 		cpu_printRegisters();
+		printf("\n");
 	}
 
 	printf("ended at $%04X\n", prevProgramCounter);
+	printf("test number: #%02X\n", bus_read(0x0200));
 
 	rom_destroy(rom);
 	ram_destroy(ram);

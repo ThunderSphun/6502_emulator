@@ -926,7 +926,7 @@ BITS_EXPANSION(smb)
 
 // STore Accumulator at operand
 void in_sta() {
-	NO_IMPL();
+	bus_write(effectiveAddress, registers.A);
 }
 
 #ifdef WDC
@@ -940,18 +940,18 @@ void in_stp() {
 
 // STore X register at operand
 void in_stx() {
-	NO_IMPL();
+	bus_write(effectiveAddress, registers.X);
 }
 
 // STore Y register at operand
 void in_sty() {
-	NO_IMPL();
+	bus_write(effectiveAddress, registers.Y);
 }
 
 #ifdef WDC
 // STore Zero at operand
 void in_stz() {
-	NO_IMPL();
+	bus_write(effectiveAddress, 0);
 }
 #endif
 
