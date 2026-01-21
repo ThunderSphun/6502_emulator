@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-#define VERBOSE
+// #define VERBOSE
 
 typedef struct busAddr busAddr_t;
 

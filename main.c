@@ -66,7 +66,7 @@ int main() {
 	extern size_t totalCycles;
 	printf("ended at $%04X\n", prevProgramCounter);
 	printf("test number: #%02X\n", bus_read(0x0200));
-	printf("run %zi instruction(s) in %zi clockcycle(s)\n", instructionCount, totalCycles);
+	printf("ran %zi instruction(s) in %zi clockcycle(s)\n", instructionCount, totalCycles);
 
 	rom_destroy(rom);
 	ram_destroy(ram);
