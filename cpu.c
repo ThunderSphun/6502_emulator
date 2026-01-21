@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 
-#define VERBOSE
+// #define VERBOSE
 
 #ifdef WDC
 // Western Design Center included the bit branch/bit set instructions from the rockwel chips
@@ -136,14 +136,14 @@ struct registers {
 	uint8_t Y;
 	union {
 		struct {
-			bool N : 1; // negative
-			bool V : 1; // overflow
-			bool _ : 1; // unused
-			bool B : 1; // break
-			bool D : 1; // binary coded decimal (BDC)
-			bool I : 1; // interupt
-			bool Z : 1; // zero
 			bool C : 1; // carry
+			bool Z : 1; // zero
+			bool I : 1; // interupt
+			bool D : 1; // binary coded decimal (BDC)
+			bool B : 1; // break
+			bool _ : 1; // unused
+			bool V : 1; // overflow
+			bool N : 1; // negative
 		};
 		uint8_t flags;
 	};
@@ -184,7 +184,7 @@ static inline void push(uint8_t data) {
 }
 
 static inline uint8_t pull() {
-	return bus_read(0x0100 | registers.SP++);
+	return bus_read(0x0100 | ++registers.SP);
 }
 
 static inline void branch(bool condition) {
@@ -336,7 +336,7 @@ static inline void printBin(uint8_t val) {
 
 void cpu_printRegisters() {
 	printf("=------=----=----=----=----------=----=\n");
-	printf("|  PC  |  A |  X |  Y | CZIDB_VN | SP |\n");
+	printf("|  PC  |  A |  X |  Y | NV_BDIZC | SP |\n");
 	printf("| %04X | %02X | %02X | %02X | ", registers.PC, registers.A, registers.X, registers.Y);
 	printBin(registers.flags);
 	printf(" | %02X |\n", registers.SP);
@@ -411,7 +411,7 @@ void am_imp() {
 void am_ind() {
 	uint16_t addr = bus_read(registers.PC++);
 	addr |= (bus_read(registers.PC++) << 8);
-	operand = bus_read(addr);
+	effectiveAddress = bus_read(addr) | (bus_read(addr + 1) << 8);
 }
 
 // pre-indexed indirect addressing mode
@@ -545,7 +545,10 @@ void in_adc() {
 // bitwise AND
 // performs a bitwise and with operand and accumulator
 void in_and() {
-	NO_IMPL();
+	registers.A &= operand;
+
+	registers.Z = registers.A == 0;
+	registers.N = registers.A & 0x80;
 }
 
 // Arithmatic Shift Left
@@ -748,7 +751,10 @@ void in_dey() {
 // bitwise eXclusive OR
 // performs a bitwise exclusive or with operand and accumulator
 void in_eor() {
-	NO_IMPL();
+	registers.A ^= operand;
+
+	registers.Z = registers.A == 0;
+	registers.N = registers.A & 0x80;
 }
 
 // INCrement operand
@@ -845,7 +851,10 @@ void in_nop() {
 // bitwise OR with Accumulator
 // performs a bitwise or with operand and accumulator
 void in_ora() {
-	NO_IMPL();
+	registers.A |= operand;
+
+	registers.Z = registers.A == 0;
+	registers.N = registers.A & 0x80;
 }
 
 // PusH Accumulator on stack
@@ -857,7 +866,7 @@ void in_pha() {
 // pushes flags register on stack
 // this instruction sets break flag and bit 5 (unused)
 void in_php() {
-	push(registers.flags | 0x60);
+	push(registers.flags | 0x30);
 }
 
 #ifdef WDC
@@ -885,7 +894,7 @@ void in_pla() {
 // pulls flags register off stack
 // this instruction ignores break flag and bit 5 (unused)
 void in_plp() {
-	registers.flags |= pull();
+	registers.flags = pull() & 0xCF;
 }
 
 #ifdef WDC

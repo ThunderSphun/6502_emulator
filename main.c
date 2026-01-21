@@ -31,7 +31,7 @@ void printBusRange(const uint16_t start, const uint16_t stop) {
 }
 
 void printStackPage() {
-	printf("%02X", registers[6]); // stack pointer
+	printf("SP: %02X", registers[6]); // stack pointer
 	printBusRange(0x0100, 0x01FF);
 }
 
@@ -54,7 +54,16 @@ int main() {
 	// this is how the test program indicates an incorrect instruction
 	uint16_t prevProgramCounter = 0;
 	while (*programCounter != prevProgramCounter) {
-	//for (int i = 0; i < 20; i++) {
+		prevProgramCounter = *programCounter;
+
+		cpu_runInstruction();
+		// cpu_printRegisters();
+		// printf("\n");
+
+		if (bus_read(*programCounter) == 0)
+			break;
+	}
+	for (int i = 0; i < 0; i++) {
 		prevProgramCounter = *programCounter;
 
 		cpu_runInstruction();
