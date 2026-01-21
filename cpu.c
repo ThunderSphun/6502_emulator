@@ -176,15 +176,15 @@ uint8_t currentOpcode = 0;
 uint8_t operand = 0;
 uint16_t effectiveAddress = 0;
 
-inline void push(uint8_t data) {
+static inline void push(uint8_t data) {
 	bus_write(0x0100 | registers.SP--, data);
 }
 
-inline uint8_t pull() {
+static inline uint8_t pull() {
 	return bus_read(0x0100 | registers.SP++);
 }
 
-inline void branch(bool condition) {
+static inline void branch(bool condition) {
 	if (condition) {
 		cycles++;
 		registers.PC = effectiveAddress;

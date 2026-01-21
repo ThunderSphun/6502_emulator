@@ -7,7 +7,7 @@ struct ram {
 	size_t size;
 };
 
-inline struct ram* getRam(const component_t* const component) {
+static inline struct ram* getRam(const component_t* const component) {
 	return ((struct ram*) (component->component_data));
 }
 

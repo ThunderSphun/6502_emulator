@@ -5,6 +5,8 @@
 
 #include <stdio.h>
 
+extern uint8_t registers[];
+
 void printBusRange(const uint16_t start, const uint16_t stop) {
 	if (start > stop) {
 		printBusRange(stop, start);
@@ -29,8 +31,7 @@ void printBusRange(const uint16_t start, const uint16_t stop) {
 }
 
 void printStackPage() {
-	extern uint8_t registers;
-	printf("%02X", (&registers)[6]); // stack pointer
+	printf("%02X", registers[6]); // stack pointer
 	printBusRange(0x0100, 0x01FF);
 }
 
@@ -45,16 +46,16 @@ int main() {
 	ram_loadFile(&ram, "test_functional.bin", 0x000a);
 
 	cpu_reset();
-	extern uint16_t registers; // program counter
-	registers = 0x0400;
+	uint16_t* programCounter = (uint16_t*) registers;
+	*programCounter = 0x0400;
 
 	printf("running:\n");
 	// stops program execution when there was a jump/branch to the exact same position
 	// this is how the test program indicates an incorrect instruction
 	uint16_t prevProgramCounter = 0;
-	while (registers != prevProgramCounter) {
+	while (*programCounter != prevProgramCounter) {
 	//for (int i = 0; i < 20; i++) {
-		prevProgramCounter = registers;
+		prevProgramCounter = *programCounter;
 
 		cpu_runInstruction();
 		cpu_printRegisters();

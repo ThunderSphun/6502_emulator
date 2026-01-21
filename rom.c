@@ -7,7 +7,7 @@ struct rom {
 	size_t size;
 };
 
-inline struct rom* getRom(const component_t* const component) {
+static inline struct rom* getRom(const component_t* const component) {
 	return ((struct rom*) (component->component_data));
 }
 
@@ -83,7 +83,7 @@ bool rom_loadFile(const component_t* const component, const char* fileName, cons
 		fclose(file);
 		return false;
 	}
-	
+
 	fread(getRom(component)->data + addr, 1, fileSize, file);
 	fclose(file);
 
