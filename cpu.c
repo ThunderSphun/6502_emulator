@@ -170,11 +170,14 @@ struct instruction {
 	void (*const func)();
 } instructions[INSTRUCTION_COUNT];
 
-size_t cycles = 0;
+uint8_t cycles = 0;
+size_t totalCycles = 0;
 
 uint8_t currentOpcode = 0;
 uint8_t operand = 0;
 uint16_t effectiveAddress = 0;
+
+size_t instructionCount = 0;
 
 static inline void push(uint8_t data) {
 	bus_write(0x0100 | registers.SP--, data);
@@ -224,6 +227,13 @@ void cpu_reset() {
 	registers.I = 1;
 
 	cycles = 7;
+
+	// reset internal state
+	currentOpcode = 0;
+	operand = 0;
+	effectiveAddress = 0;
+	instructionCount = 0;
+	totalCycles = 0;
 }
 
 void cpu_nmi() {
@@ -250,6 +260,8 @@ void cpu_clock() {
 	if (cycles-- != 0)
 		return;
 
+	instructionCount++;
+
 	currentOpcode = bus_read(registers.PC++);
 
 	const struct opcode opcode = opcodes[currentOpcode];
@@ -263,6 +275,8 @@ void cpu_clock() {
 
 	addressModes[opcode.addressMode].func();
 	instructions[opcode.instruction].func();
+
+	totalCycles += cycles;
 }
 
 // runs instruction and all clockcycles required
@@ -480,7 +494,22 @@ void in_##funcName##bit() { in_##funcName(bit); }
 // ADd with Carry
 // adds operand to accumulator with carry flag
 void in_adc() {
-	NO_IMPL();
+	uint16_t tmp = operand + registers.A + registers.C;
+
+	if (registers.D) {
+		if ((tmp & 0x0F) >= 0x0A)
+			tmp += 0x06;
+		if ((tmp & 0xF0) >= 0xA0)
+			tmp += 0x60;
+	}
+
+	registers.V = ((registers.A & 0x80) == (operand & 0x80)) && ((registers.A & 0x80) != (tmp & 0x80));
+
+	registers.C = tmp > 0xFF;
+	registers.A = tmp & 0xFF;
+
+	registers.Z = registers.A == 0;
+	registers.N = registers.A & 0x80;
 }
 
 // bitwise AND
