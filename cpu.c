@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 
-#define VERBOSE
+//#define VERBOSE
 
 #ifdef WDC
 // Western Design Center included the bit branch/bit set instructions from the rockwel chips
@@ -954,7 +954,9 @@ void in_rti() {
 // ReTurn from Subroutine
 // pulls PC from stack
 void in_rts() {
-	NO_IMPL();
+	registers.PC_LO = pull();
+	registers.PC_HI = pull();
+	registers.PC++;
 }
 
 // SuBtract with Carry
