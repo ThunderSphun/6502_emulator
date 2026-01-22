@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 
-//#define VERBOSE
+#define VERBOSE
 
 #ifdef WDC
 // Western Design Center included the bit branch/bit set instructions from the rockwel chips
@@ -124,7 +124,7 @@ enum {
 	INSTRUCTION_COUNT
 };
 
-struct registers {
+struct regs { // struct name purely for debug purposes
 	union {
 		struct {
 			uint8_t PC_LO;
@@ -268,7 +268,7 @@ void cpu_clock() {
 	const struct opcode opcode = opcodes[currentOpcode];
 
 #ifdef VERBOSE
-	printf("$%04X: %-*s %s (", registers.PC - 1, INSTRUCTION_NAME_LENGTH, instructions[opcode.instruction].name, addressModes[opcode.addressMode].name);
+	printf("$%04X: %-*s %-4s(", registers.PC - 1, INSTRUCTION_NAME_LENGTH, instructions[opcode.instruction].name, addressModes[opcode.addressMode].name);
 
 	printf("%-*s ", INSTRUCTION_NAME_LENGTH, instructions[opcode.instruction].name);
 	switch(opcode.addressMode) {
@@ -379,6 +379,7 @@ void am_absx() {
 	effectiveAddress = bus_read(registers.PC++);
 	effectiveAddress |= (bus_read(registers.PC++) << 8);
 	effectiveAddress += registers.X;
+	operand = bus_read(effectiveAddress);
 }
 
 // absolute addressing mode offset by Y
@@ -389,6 +390,7 @@ void am_absy() {
 	effectiveAddress = bus_read(registers.PC++);
 	effectiveAddress |= (bus_read(registers.PC++) << 8);
 	effectiveAddress += registers.Y;
+	operand = bus_read(effectiveAddress);
 }
 
 // immediate addressing mode
@@ -649,7 +651,14 @@ void in_bra() {
 // the return address is PC + 2, making the byte following this instruction being skipped
 // this byte can be used as a break mark
 void in_brk() {
-	NO_IMPL();
+	registers.PC++;
+	push(registers.PC_HI);
+	push(registers.PC_LO);
+	push(registers.flags | 0x30); // set break bit + unused bit
+
+	registers.PC_LO = bus_read(0xFFFE);
+	registers.PC_HI = bus_read(0xFFFF);
+	registers.I = true; // run normal interupt sequence
 }
 
 // Branch on oVerflow Clear

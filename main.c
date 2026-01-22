@@ -29,7 +29,6 @@ void printBusRange(const uint16_t start, const uint16_t stop) {
 		}
 		printf("\n");
 	}
-	printf("\n");
 }
 
 void printStackPage() {
@@ -52,6 +51,10 @@ int main() {
 	*programCounter = 0x0400;
 
 	printf("running:\n");
+	// run x amount of instructions before going more in depth
+	for (int i = 0; i < 40915; i++)
+		cpu_runInstruction();
+
 	// stops program execution when there was a jump/branch to the exact same position
 	// this is how the test program indicates an incorrect instruction
 	uint16_t prevProgramCounter = 0;
@@ -69,8 +72,10 @@ int main() {
 		prevProgramCounter = *programCounter;
 
 		cpu_runInstruction();
+#ifdef VERBOSE
 		cpu_printRegisters();
 		printf("\n");
+#endif
 	}
 
 	extern size_t instructionCount;
