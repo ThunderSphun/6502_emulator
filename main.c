@@ -3,6 +3,8 @@
 #include "ram.h"
 #include "cpu.h"
 
+// #define VERBOSE
+
 #include <stdio.h>
 
 extern uint8_t registers[];
@@ -58,8 +60,10 @@ int main() {
 		prevProgramCounter = *programCounter;
 
 		cpu_runInstruction();
-		// cpu_printRegisters();
-		// printf("\n");
+#ifdef VERBOSE
+		cpu_printRegisters();
+		printf("\n");
+#endif
 	}
 	for (int i = 0; i < 0; i++) {
 		prevProgramCounter = *programCounter;
