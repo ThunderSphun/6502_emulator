@@ -53,15 +53,13 @@ int main() {
 	// stops program execution when there was a jump/branch to the exact same position
 	// this is how the test program indicates an incorrect instruction
 	uint16_t prevProgramCounter = 0;
-	while (*programCounter != prevProgramCounter) {
+	extern bool ranUnimplementedInstruction;
+	while (*programCounter != prevProgramCounter && !ranUnimplementedInstruction) {
 		prevProgramCounter = *programCounter;
 
 		cpu_runInstruction();
 		// cpu_printRegisters();
 		// printf("\n");
-
-		if (bus_read(*programCounter) == 0)
-			break;
 	}
 	for (int i = 0; i < 0; i++) {
 		prevProgramCounter = *programCounter;

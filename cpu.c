@@ -20,10 +20,11 @@
 #endif // ROCKWEL
 #endif // VERBOSE
 
+bool ranUnimplementedInstruction = false;
 #ifdef VERBOSE
-#define NO_IMPL() printf("instruction %-*s is not implemented\n", INSTRUCTION_NAME_LENGTH, instructions[opcodes[currentOpcode].instruction].name)
+#define NO_IMPL() printf("instruction %-*s is not implemented\n", INSTRUCTION_NAME_LENGTH, instructions[opcodes[currentOpcode].instruction].name); ranUnimplementedInstruction = true
 #else
-#define NO_IMPL() printf("instruction %s is not implemented\n", __func__)
+#define NO_IMPL() printf("instruction %s is not implemented\n", __func__); ranUnimplementedInstruction = true
 #endif
 
 // addressing modes
