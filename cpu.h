@@ -13,3 +13,4 @@ void cpu_clock();
 void cpu_runInstruction();
 
 void cpu_printRegisters();
+void cpu_printOpcode();

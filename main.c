@@ -52,7 +52,7 @@ int main() {
 
 	printf("running:\n");
 	// run x amount of instructions before going more in depth
-	for (int i = 0; i < 40915; i++)
+	for (int i = 0; i < 45200; i++)
 		cpu_runInstruction();
 
 	// stops program execution when there was a jump/branch to the exact same position
@@ -61,11 +61,12 @@ int main() {
 	extern bool ranUnimplementedInstruction;
 	while (*programCounter != prevProgramCounter && !ranUnimplementedInstruction) {
 		prevProgramCounter = *programCounter;
-
+		
 		cpu_runInstruction();
 #ifdef VERBOSE
-		cpu_printRegisters();
-		printf("\n");
+		cpu_printOpcode();
+		//cpu_printRegisters();
+		//printf("\n");
 #endif
 	}
 	for (int i = 0; i < 0; i++) {
@@ -73,15 +74,16 @@ int main() {
 
 		cpu_runInstruction();
 #ifdef VERBOSE
-		cpu_printRegisters();
-		printf("\n");
+		cpu_printOpcode();
+		//cpu_printRegisters();
+		//printf("\n");
 #endif
 	}
 
 	extern size_t instructionCount;
 	extern size_t totalCycles;
 	printf("ended at $%04X\n", prevProgramCounter);
-	printf("test number: #%02X\n", bus_read(0x0200));
+	printf("test number: %d\n", bus_read(0x0200));
 	printf("ran %zi instruction(s) in %zi clockcycle(s)\n", instructionCount, totalCycles);
 
 	rom_destroy(rom);

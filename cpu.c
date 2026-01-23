@@ -267,40 +267,6 @@ void cpu_clock() {
 
 	const struct opcode opcode = opcodes[currentOpcode];
 
-#ifdef VERBOSE
-	printf("$%04X: %-*s %-4s(", registers.PC - 1, INSTRUCTION_NAME_LENGTH, instructions[opcode.instruction].name, addressModes[opcode.addressMode].name);
-
-	printf("%-*s ", INSTRUCTION_NAME_LENGTH, instructions[opcode.instruction].name);
-	switch(opcode.addressMode) {
-#ifndef WDC
-		case AM_XXX: printf("         "); break;
-#endif
-		case AM_IMP: printf("         "); break;
-		case AM_ACC: printf("A        "); break;
-#ifdef WDC
-		case AM_STK: printf("         "); break;
-#endif
-		case AM_REL: printf("%c$%02X     ", (int8_t) bus_read(registers.PC) < 0 ? '-' : bus_read(registers.PC) == 0 ? ' ' : '+', abs((int8_t) bus_read(registers.PC))); break;
-		case AM_IMM: printf("#$%02X     ", bus_read(registers.PC)); break;
-		case AM_ABS: printf("$%02X%02X    ", bus_read(registers.PC + 1), bus_read(registers.PC)); break;
-#ifdef WDC
-		case AM_ABSI: printf("($%02X%02X,X)", bus_read(registers.PC + 1), bus_read(registers.PC)); break;
-#endif
-		case AM_ABSX: printf("$%02X%02X,X  ", bus_read(registers.PC + 1), bus_read(registers.PC)); break;
-		case AM_ABSY: printf("$%02X%02X,Y  ", bus_read(registers.PC + 1), bus_read(registers.PC)); break;
-		case AM_ZPG: printf("$%02X      ", bus_read(registers.PC)); break;
-#ifdef WDC
-		case AM_ZPGI: printf("($%02X)    ", bus_read(registers.PC)); break;
-#endif
-		case AM_ZPGX: printf("$%02X,X      ", bus_read(registers.PC)); break;
-		case AM_ZPGY: printf("$%02X,Y      ", bus_read(registers.PC)); break;
-		case AM_IND: printf("($%02X%02X)  ", bus_read(registers.PC + 1), bus_read(registers.PC)); break;
-		case AM_INDX: printf("($%02X%02X,X)", bus_read(registers.PC + 1), bus_read(registers.PC)); break;
-		case AM_INDY: printf("($%02X%02X),Y", bus_read(registers.PC + 1), bus_read(registers.PC)); break;
-	}
-	printf(")\n");
-#endif
-
 	// set cycles from instruction
 	cycles = opcode.cycleCount;
 
@@ -342,6 +308,74 @@ void cpu_printRegisters() {
 	printBin(registers.flags);
 	printf(" | %02X |\n", registers.SP);
 	printf("=------=----=----=----=----------=----=\n");
+}
+
+void cpu_printOpcode() {
+#ifdef VERBOSE
+	struct opcode opcode = opcodes[bus_read(registers.PC)];
+
+	printf("$%04X: %-*s %-4s(", registers.PC, INSTRUCTION_NAME_LENGTH, instructions[opcode.instruction].name, addressModes[opcode.addressMode].name);
+
+	printf("%-*s ", INSTRUCTION_NAME_LENGTH, instructions[opcode.instruction].name);
+	switch (opcode.addressMode) {
+#ifndef WDC
+	case AM_XXX:  printf("         "); break;
+#endif
+	case AM_IMP:  printf("         "); break;
+	case AM_ACC:  printf("A        "); break;
+#ifdef WDC
+	case AM_STK:  printf("         "); break;
+#endif
+	case AM_REL:  printf("%c$%02X     ", (int8_t) bus_read(registers.PC + 1) < 0 ? '-' : bus_read(registers.PC + 1) == 0 ? ' ' : '+', abs((int8_t) bus_read(registers.PC + 1))); break;
+	case AM_IMM:  printf("#$%02X     ", bus_read(registers.PC + 1)); break;
+	case AM_ABS:  printf("$%02X%02X    ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
+#ifdef WDC
+	case AM_ABSI: printf("($%02X%02X,X)", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
+#endif
+	case AM_ABSX: printf("$%02X%02X,X  ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
+	case AM_ABSY: printf("$%02X%02X,Y  ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
+	case AM_ZPG:  printf("$%02X      ", bus_read(registers.PC + 1)); break;
+#ifdef WDC
+	case AM_ZPGI: printf("($%02X)    ", bus_read(registers.PC + 1)); break;
+#endif
+	case AM_ZPGX: printf("$%02X,X      ", bus_read(registers.PC + 1)); break;
+	case AM_ZPGY: printf("$%02X,Y      ", bus_read(registers.PC + 1)); break;
+	case AM_IND:  printf("($%02X%02X)  ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
+	case AM_INDX: printf("($%02X%02X,X)", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
+	case AM_INDY: printf("($%02X%02X),Y", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
+	}
+	printf(")\n");
+#else
+	printf("$%04X: %02X", registers.PC, bus_read(registers.PC));
+	switch (opcodes[bus_read(registers.PC)].addressMode) {
+#ifndef WDC
+	case AM_XXX:  break;
+#endif
+	case AM_IMP:  break;
+	case AM_ACC:  break;
+#ifdef WDC
+	case AM_STK:  break;
+#endif
+	case AM_REL:  printf(" %02X", bus_read(registers.PC + 1)); break;
+	case AM_IMM:  printf(" %02X", bus_read(registers.PC + 1)); break;
+	case AM_ABS:  printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
+#ifdef WDC
+	case AM_ABSI: printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
+#endif
+	case AM_ABSX: printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
+	case AM_ABSY: printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
+	case AM_ZPG:  printf(" %02X", bus_read(registers.PC + 1)); break;
+#ifdef WDC
+	case AM_ZPGI: printf(" %02X", bus_read(registers.PC + 1)); break;
+#endif
+	case AM_ZPGX: printf(" %02X", bus_read(registers.PC + 1)); break;
+	case AM_ZPGY: printf(" %02X", bus_read(registers.PC + 1)); break;
+	case AM_IND:  printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
+	case AM_INDX: printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
+	case AM_INDY: printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
+	}
+	printf("\n");
+#endif
 }
 
 #pragma region addressingModes
