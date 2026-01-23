@@ -443,7 +443,9 @@ void am_imm() {
 //   this also includes accumulator addressing mode, as accumulator is the implied operand
 //   this also includes stack addressing mode documented in the WDC data sheets, as stack pointer is the implied operand
 void am_imp() {
-	// no need to do anything, instruction will not use operand/effectiveAddress anyways
+	// implied or stack addressing mode don't need anything
+	// accumulator addressing mode will set accumulator to operand, to make implementation logic a bit more clear
+	operand = registers.A;
 }
 
 // indirect addressing mode
@@ -598,11 +600,16 @@ void in_and() {
 // shifts 0 into bit 0
 // shifts bit 7 into carry flag
 void in_asl() {
-	registers.C = registers.A & 0x80;
-	registers.A <<= 1;
-	registers.A &= 0xFE; // ensure newly added bit is 0
+	registers.C = operand & 0x80;
+	operand <<= 1;
+	operand &= 0xFE; // ensure newly added bit is 0
 
-	setFlags(registers.A);
+	setFlags(operand);
+
+	if (opcodes[currentOpcode].addressMode == AM_ACC)
+		registers.A = operand;
+	else
+		bus_write(effectiveAddress, operand);
 }
 
 #ifdef ROCKWEL
@@ -874,11 +881,16 @@ void in_ldy() {
 // shifts 0 into bit 7
 // shifts bit 0 into carry flag
 void in_lsr() {
-	registers.C = registers.A & 0x01;
-	registers.A >>= 1;
-	registers.A &= 0xEF; // ensure newly added bit is 0
+	registers.C = operand & 0x01;
+	operand >>= 1;
+	operand &= 0xEF; // ensure newly added bit is 0
 
-	setFlags(registers.A); // N should always be false, we shifted a zero into it
+	setFlags(operand); // N should always be false, we shifted a zero into it
+
+	if (opcodes[currentOpcode].addressMode == AM_ACC)
+		registers.A = operand;
+	else
+		bus_write(effectiveAddress, operand);
 }
 
 // No OPeration
@@ -990,12 +1002,17 @@ BITS_EXPANSION(rmb)
 void in_rol() {
 	bool oldCarry = registers.C;
 
-	registers.C = registers.A & 0x80;
-	registers.A <<= 1;
-	registers.A &= 0xFE;
-	registers.A |= oldCarry;
+	registers.C = operand & 0x80;
+	operand <<= 1;
+	operand &= 0xFE;
+	operand |= oldCarry;
 
-	setFlags(registers.A);
+	setFlags(operand);
+
+	if (opcodes[currentOpcode].addressMode == AM_ACC)
+		registers.A = operand;
+	else
+		bus_write(effectiveAddress, operand);
 }
 
 // ROtate Right
@@ -1007,12 +1024,17 @@ void in_rol() {
 void in_ror() {
 	bool oldCarry = registers.C;
 
-	registers.C = registers.A & 0x01;
-	registers.A >>= 1;
-	registers.A &= 0xEF;
-	registers.A |= oldCarry << 7;
+	registers.C = operand & 0x01;
+	operand >>= 1;
+	operand &= 0xEF;
+	operand |= oldCarry << 7;
 
-	setFlags(registers.A);
+	setFlags(operand);
+
+	if (opcodes[currentOpcode].addressMode == AM_ACC)
+		registers.A = operand;
+	else
+		bus_write(effectiveAddress, operand);
 }
 
 // ReTurn from Interupt
