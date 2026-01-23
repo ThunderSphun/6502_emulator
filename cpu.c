@@ -479,6 +479,7 @@ void am_zpgi() {
 void am_zpgx() {
 	effectiveAddress = bus_read(registers.PC++);
 	effectiveAddress += registers.X;
+	effectiveAddress %= 0x100;
 	operand = bus_read(effectiveAddress);
 }
 
@@ -493,6 +494,7 @@ void am_zpgx() {
 void am_zpgy() {
 	effectiveAddress = bus_read(registers.PC++);
 	effectiveAddress += registers.Y;
+	effectiveAddress %= 0x100;
 	operand = bus_read(effectiveAddress);
 }
 
