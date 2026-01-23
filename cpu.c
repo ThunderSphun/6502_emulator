@@ -958,7 +958,9 @@ void in_ror() {
 // pulls flags register from stack, ignoring break flag and bit 5 (ignored)
 // then pulls PC from stack
 void in_rti() {
-	NO_IMPL();
+	registers.flags = pull();
+	registers.PC_LO = pull();
+	registers.PC_HI = pull();
 }
 
 // ReTurn from Subroutine
