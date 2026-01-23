@@ -195,6 +195,11 @@ static inline void branch(bool condition) {
 	}
 }
 
+static inline void setFlags(uint8_t data) {
+	registers.Z = data == 0;
+	registers.N = data & 0x80;
+}
+
 void cpu_irq() {
 	if (!registers.I)
 		return;
@@ -578,8 +583,7 @@ void in_adc() {
 	registers.C = tmp > 0xFF;
 	registers.A = tmp & 0xFF;
 
-	registers.Z = registers.A == 0;
-	registers.N = registers.A & 0x80;
+	setFlags(registers.A);
 }
 
 // bitwise AND
@@ -587,8 +591,7 @@ void in_adc() {
 void in_and() {
 	registers.A &= operand;
 
-	registers.Z = registers.A == 0;
-	registers.N = registers.A & 0x80;
+	setFlags(registers.A);
 }
 
 // Arithmatic Shift Left
@@ -599,8 +602,7 @@ void in_asl() {
 	registers.A <<= 1;
 	registers.A &= 0xFE; // ensure newly added bit is 0
 
-	registers.Z = registers.A == 0;
-	registers.N = registers.A & 0x80;
+	setFlags(registers.A);
 }
 
 #ifdef ROCKWEL
@@ -782,23 +784,23 @@ void in_cpy() {
 // DECrement operand
 void in_dec() {
 	operand--;
-	registers.Z = operand == 0;
-	registers.N = operand & 0x80;
 	bus_write(effectiveAddress, operand);
+
+	setFlags(operand);
 }
 
 // DEcrement X register
 void in_dex() {
 	registers.X--;
-	registers.Z = registers.X == 0;
-	registers.N = registers.X & 0x80;
+
+	setFlags(registers.X);
 }
 
 // DEcrement Y register
 void in_dey() {
 	registers.Y--;
-	registers.Z = registers.Y == 0;
-	registers.N = registers.Y & 0x80;
+
+	setFlags(registers.Y);
 }
 
 // bitwise eXclusive OR
@@ -806,30 +808,29 @@ void in_dey() {
 void in_eor() {
 	registers.A ^= operand;
 
-	registers.Z = registers.A == 0;
-	registers.N = registers.A & 0x80;
+	setFlags(registers.A);
 }
 
 // INCrement operand
 void in_inc() {
 	operand++;
-	registers.Z = operand == 0;
-	registers.N = operand & 0x80;
 	bus_write(effectiveAddress, operand);
+
+	setFlags(registers.A);
 }
 
 // INcrement X register
 void in_inx() {
 	registers.X++;
-	registers.Z = registers.X == 0;
-	registers.N = registers.X & 0x80;
+
+	setFlags(registers.X);
 }
 
 // INcrement Y register
 void in_iny() {
 	registers.Y++;
-	registers.Z = registers.Y == 0;
-	registers.N = registers.Y & 0x80;
+
+	setFlags(registers.Y);
 }
 
 // JuMP
@@ -851,22 +852,22 @@ void in_jsr() {
 // LoaD Accumulator with operand
 void in_lda() {
 	registers.A = operand;
-	registers.Z = registers.A == 0;
-	registers.N = registers.A & 0x80;
+
+	setFlags(registers.A);
 }
 
 // LoaD X register with operand
 void in_ldx() {
 	registers.X = operand;
-	registers.Z = registers.X == 0;
-	registers.N = registers.X & 0x80;
+
+	setFlags(registers.X);
 }
 
 // LoaD Y register with operand
 void in_ldy() {
 	registers.Y = operand;
-	registers.Z = registers.Y == 0;
-	registers.N = registers.Y & 0x80;
+
+	setFlags(registers.Y);
 }
 
 // Logical Shift Right
@@ -906,8 +907,7 @@ void in_nop() {
 void in_ora() {
 	registers.A |= operand;
 
-	registers.Z = registers.A == 0;
-	registers.N = registers.A & 0x80;
+	setFlags(registers.A);
 }
 
 // PusH Accumulator on stack
@@ -939,8 +939,8 @@ void in_phy() {
 // PuLl Accumulator off stack
 void in_pla() {
 	registers.A = pull();
-	registers.Z = registers.A == 0;
-	registers.N = registers.A & 0x80;
+
+	setFlags(registers.A);
 }
 
 // PuLl Processor status
@@ -954,8 +954,8 @@ void in_plp() {
 // PuLl X register off stack
 void in_plx() {
 	registers.X = pull();
-	registers.Z = registers.X == 0;
-	registers.N = registers.X & 0x80;
+
+	setFlags(registers.X);
 }
 #endif
 
@@ -963,8 +963,9 @@ void in_plx() {
 // PuLl Y register off stack
 void in_ply() {
 	registers.Y = pull();
-	registers.Z = registers.Y == 0;
-	registers.N = registers.Y & 0x80;
+
+
+	setFlags(registers.Y);
 }
 #endif
 
@@ -1083,15 +1084,15 @@ void in_stz() {
 // Transfer Accumulator to X register
 void in_tax() {
 	registers.X = registers.A;
-	registers.Z = registers.X == 0;
-	registers.N = registers.X & 0x80;
+
+	setFlags(registers.X);
 }
 
 // Transfer Accumulator to Y register
 void in_tay() {
 	registers.Y = registers.A;
-	registers.Z = registers.Y == 0;
-	registers.N = registers.Y & 0x80;
+
+	setFlags(registers.Y);
 }
 
 #ifdef WDC
@@ -1115,15 +1116,15 @@ void in_tsb() {
 // Transfer Stack pointer to X register
 void in_tsx() {
 	registers.X = registers.SP;
-	registers.Z = registers.X == 0;
-	registers.N = registers.X & 0x80;
+
+	setFlags(registers.X);
 }
 
 // Transfer X register to Accumulator
 void in_txa() {
 	registers.A = registers.X;
-	registers.Z = registers.A == 0;
-	registers.N = registers.A & 0x80;
+
+	setFlags(registers.A);
 }
 
 // Transfer X register to Stack pointer
@@ -1134,8 +1135,8 @@ void in_txs() {
 // Transfer Y register to Accumulator
 void in_tya() {
 	registers.A = registers.Y;
-	registers.Z = registers.A == 0;
-	registers.N = registers.A & 0x80;
+
+	setFlags(registers.A);
 }
 
 #ifdef WDC
