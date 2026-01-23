@@ -52,7 +52,7 @@ int main() {
 
 	printf("running:\n");
 	// run x amount of instructions before going more in depth
-	for (int i = 0; i < 45200; i++)
+	for (int i = 0; i < 46350; i++)
 		cpu_runInstruction();
 
 	// stops program execution when there was a jump/branch to the exact same position
@@ -62,9 +62,13 @@ int main() {
 	while (*programCounter != prevProgramCounter && !ranUnimplementedInstruction) {
 		prevProgramCounter = *programCounter;
 		
-		cpu_runInstruction();
 #ifdef VERBOSE
 		cpu_printOpcode();
+#endif
+
+		cpu_runInstruction();
+
+#ifdef VERBOSE
 		//cpu_printRegisters();
 		//printf("\n");
 #endif
@@ -72,9 +76,13 @@ int main() {
 	for (int i = 0; i < 0; i++) {
 		prevProgramCounter = *programCounter;
 
-		cpu_runInstruction();
 #ifdef VERBOSE
 		cpu_printOpcode();
+#endif
+
+		cpu_runInstruction();
+
+#ifdef VERBOSE
 		//cpu_printRegisters();
 		//printf("\n");
 #endif

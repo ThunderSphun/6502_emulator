@@ -338,8 +338,8 @@ void cpu_printOpcode() {
 #ifdef WDC
 	case AM_ZPGI: printf("($%02X)    ", bus_read(registers.PC + 1)); break;
 #endif
-	case AM_ZPGX: printf("$%02X,X      ", bus_read(registers.PC + 1)); break;
-	case AM_ZPGY: printf("$%02X,Y      ", bus_read(registers.PC + 1)); break;
+	case AM_ZPGX: printf("$%02X,X    ", bus_read(registers.PC + 1)); break;
+	case AM_ZPGY: printf("$%02X,Y    ", bus_read(registers.PC + 1)); break;
 	case AM_IND:  printf("($%02X%02X)  ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
 	case AM_INDX: printf("($%02X%02X,X)", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
 	case AM_INDY: printf("($%02X%02X),Y", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
@@ -595,7 +595,12 @@ void in_and() {
 // shifts 0 into bit 0
 // shifts bit 7 into carry flag
 void in_asl() {
-	NO_IMPL();
+	registers.C = registers.A & 0x80;
+	registers.A <<= 1;
+	registers.A &= 0xFE; // ensure newly added bit is 0
+
+	registers.Z = registers.A == 0;
+	registers.N = registers.A & 0x80;
 }
 
 #ifdef ROCKWEL
@@ -648,6 +653,7 @@ void in_beq() {
 // this instruction only alters flags register
 void in_bit() {
 	registers.Z = (registers.A & operand) == 0;
+	registers.flags &= 0x3F;
 	registers.flags |= operand & 0xC0;
 }
 
