@@ -424,8 +424,8 @@ void am_ind() {
 void am_indx() {
 	uint8_t offset = bus_read(registers.PC++);
 	offset += registers.X;
-	uint16_t addr = bus_read(offset) | (bus_read(offset + 1) << 8);
-	operand = bus_read(addr);
+	effectiveAddress = bus_read(offset) | (bus_read(offset + 1) << 8);
+	operand = bus_read(effectiveAddress);
 }
 
 // post-indexed indirect addressing mode
@@ -435,9 +435,9 @@ void am_indx() {
 // this address is where the actual data is stored
 void am_indy() {
 	uint8_t offset = bus_read(registers.PC++);
-	uint16_t addr = bus_read(offset) | (bus_read(offset + 1) << 8);
-	addr += registers.Y;
-	operand = bus_read(addr);
+	effectiveAddress = bus_read(offset) | (bus_read(offset + 1) << 8);
+	effectiveAddress += registers.Y;
+	operand = bus_read(effectiveAddress);
 }
 
 // relative addressing mode
@@ -455,7 +455,8 @@ void am_rel() {
 // this makes the operation faster, and shorter
 // the instruction takes only 2 bytes, instead of 3 for a full address
 void am_zpg() {
-	operand = bus_read(registers.PC++);
+	effectiveAddress = bus_read(registers.PC++);
+	operand = bus_read(effectiveAddress);
 }
 
 #ifdef WDC
@@ -476,9 +477,9 @@ void am_zpgi() {
 // the instruction takes only 2 bytes, instead of 3 for a full address
 // the result of the addition wraps around, so the byte read will always be inside the zero-page
 void am_zpgx() {
-	uint8_t offset = bus_read(registers.PC++);
-	offset += registers.X;
-	operand = bus_read(offset);
+	effectiveAddress = bus_read(registers.PC++);
+	effectiveAddress += registers.X;
+	operand = bus_read(effectiveAddress);
 }
 
 // zero-page addressing mode offset by Y
@@ -490,9 +491,9 @@ void am_zpgx() {
 // the result of the addition wraps around, so the byte read will always be inside the zero-page
 // this addressing mode is only used if the register used is X (LDX, STX), so X cannot be used
 void am_zpgy() {
-	uint8_t offset = bus_read(registers.PC++);
-	offset += registers.Y;
-	operand = bus_read(offset);
+	effectiveAddress = bus_read(registers.PC++);
+	effectiveAddress += registers.Y;
+	operand = bus_read(effectiveAddress);
 }
 
 #ifndef WDC

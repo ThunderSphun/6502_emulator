@@ -3,7 +3,7 @@
 #include "ram.h"
 #include "cpu.h"
 
-// #define VERBOSE
+#define VERBOSE
 
 #include <stdio.h>
 
