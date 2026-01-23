@@ -1005,7 +1005,14 @@ void in_rol() {
 //   the instruction would instead perform as an ASL, without shifting bit 7 into carry flag
 //   this bug makes it so that carry flag would be unused during the instruction
 void in_ror() {
-	NO_IMPL();
+	bool oldCarry = registers.C;
+
+	registers.C = registers.A & 0x01;
+	registers.A >>= 1;
+	registers.A &= 0xEF;
+	registers.A |= oldCarry << 7;
+
+	setFlags(registers.A);
 }
 
 // ReTurn from Interupt
