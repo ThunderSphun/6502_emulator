@@ -823,7 +823,7 @@ void in_inc() {
 	operand++;
 	bus_write(effectiveAddress, operand);
 
-	setFlags(registers.A);
+	setFlags(operand);
 }
 
 // INcrement X register
@@ -979,7 +979,6 @@ void in_plx() {
 // PuLl Y register off stack
 void in_ply() {
 	registers.Y = pull();
-
 
 	setFlags(registers.Y);
 }

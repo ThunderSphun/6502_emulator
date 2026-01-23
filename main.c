@@ -52,7 +52,7 @@ int main() {
 
 	printf("running:\n");
 	// run x amount of instructions before going more in depth
-	for (int i = 0; i < 46350; i++)
+	for (int i = 0; i < 52000; i++)
 		cpu_runInstruction();
 
 	// stops program execution when there was a jump/branch to the exact same position
