@@ -988,7 +988,14 @@ BITS_EXPANSION(rmb)
 // shifts carry flag into bit 0
 // shifts bit 7 into carry flag
 void in_rol() {
-	NO_IMPL();
+	bool oldCarry = registers.C;
+
+	registers.C = registers.A & 0x80;
+	registers.A <<= 1;
+	registers.A &= 0xFE;
+	registers.A |= oldCarry;
+
+	setFlags(registers.A);
 }
 
 // ROtate Right
