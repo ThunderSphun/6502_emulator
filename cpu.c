@@ -874,7 +874,11 @@ void in_ldy() {
 // shifts 0 into bit 7
 // shifts bit 0 into carry flag
 void in_lsr() {
-	NO_IMPL();
+	registers.C = registers.A & 0x01;
+	registers.A >>= 1;
+	registers.A &= 0xEF; // ensure newly added bit is 0
+
+	setFlags(registers.A); // N should always be false, we shifted a zero into it
 }
 
 // No OPeration
