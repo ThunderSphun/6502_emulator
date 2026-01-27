@@ -31,7 +31,7 @@ void printBusRange(const uint16_t start, const uint16_t stop) {
 	}
 }
 
-void printStackPage() {
+static inline void printStackPage() {
 	printf("SP: %02X", registers[6]); // stack pointer
 	printBusRange(0x0100, 0x01FF);
 }
@@ -52,7 +52,7 @@ int main() {
 
 	printf("running:\n");
 	// run x amount of instructions before going more in depth
-	for (int i = 0; i < 52000; i++)
+	for (size_t i = 0; i < 26765900; i++)
 		cpu_runInstruction();
 
 	// stops program execution when there was a jump/branch to the exact same position
@@ -69,8 +69,8 @@ int main() {
 		cpu_runInstruction();
 
 #ifdef VERBOSE
-		//cpu_printRegisters();
-		//printf("\n");
+		cpu_printRegisters();
+		printf("\n");
 #endif
 	}
 	for (int i = 0; i < 0; i++) {
