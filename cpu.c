@@ -331,20 +331,20 @@ void cpu_printOpcode() {
 #ifdef WDC
 	case AM_STK:  printf("         "); break;
 #endif
-	case AM_REL:  printf("%c$%02X     ", (int8_t) bus_read(registers.PC + 1) < 0 ? '-' : bus_read(registers.PC + 1) == 0 ? ' ' : '+', abs((int8_t) bus_read(registers.PC + 1))); break;
-	case AM_IMM:  printf("#$%02X     ", bus_read(registers.PC + 1)); break;
+	case AM_REL:  printf("%c$%02X     ",  (int8_t) bus_read(registers.PC + 1) < 0 ? '-' : bus_read(registers.PC + 1) == 0 ? ' ' : '+', abs((int8_t) bus_read(registers.PC + 1))); break;
+	case AM_IMM:  printf("#$%02X     ",   bus_read(registers.PC + 1)); break;
 	case AM_ABS:  printf("$%02X%02X    ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
 #ifdef WDC
 	case AM_ABSI: printf("($%02X%02X,X)", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
 #endif
 	case AM_ABSX: printf("$%02X%02X,X  ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
 	case AM_ABSY: printf("$%02X%02X,Y  ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
-	case AM_ZPG:  printf("$%02X      ", bus_read(registers.PC + 1)); break;
+	case AM_ZPG:  printf("$%02X      ",   bus_read(registers.PC + 1)); break;
 #ifdef WDC
-	case AM_ZPGI: printf("($%02X)    ", bus_read(registers.PC + 1)); break;
+	case AM_ZPGI: printf("($%02X)    ",   bus_read(registers.PC + 1)); break;
 #endif
-	case AM_ZPGX: printf("$%02X,X    ", bus_read(registers.PC + 1)); break;
-	case AM_ZPGY: printf("$%02X,Y    ", bus_read(registers.PC + 1)); break;
+	case AM_ZPGX: printf("$%02X,X    ",   bus_read(registers.PC + 1)); break;
+	case AM_ZPGY: printf("$%02X,Y    ",   bus_read(registers.PC + 1)); break;
 	case AM_IND:  printf("($%02X%02X)  ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
 	case AM_INDX: printf("($%02X%02X,X)", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
 	case AM_INDY: printf("($%02X%02X),Y", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
@@ -571,7 +571,7 @@ void in_##funcName##bit() { in_##funcName(bit); }
 // ADd with Carry
 // adds operand to accumulator with carry flag
 void in_adc() {
-	uint16_t tmp = operand + registers.A + registers.C;
+	uint16_t tmp = registers.A + operand + registers.C;
 
 	if (registers.D) {
 		if ((tmp & 0x0F) >= 0x0A)
@@ -1058,7 +1058,21 @@ void in_rts() {
 // carry flag should be set before being called
 // if carry flag is cleared after the call, a borrow was needed
 void in_sbc() {
-	NO_IMPL();
+	uint16_t tmp = registers.A - operand - !registers.C;
+
+	if (registers.D) {
+		if ((tmp & 0x0F) >= 0x0A)
+			tmp -= 0x06;
+		if ((tmp & 0xF0) >= 0xA0)
+			tmp -= 0x60;
+	}
+
+	registers.V = ((registers.A & 0x80) == (operand & 0x80)) && ((registers.A & 0x80) != (tmp & 0x80));
+
+	registers.C = tmp > 0xFF;
+	registers.A = tmp & 0xFF;
+
+	setFlags(registers.A);
 }
 
 // SEt Carry flag

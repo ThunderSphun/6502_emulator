@@ -5384,6 +5384,8 @@ bin_rti_ret
         success         ;if you get here everything went well
 ; -------------       
 ; S U C C E S S ************************************************
+        lda #0;
+        trap_eq
         jmp start       ;run again      
 
     if disable_decimal < 1
