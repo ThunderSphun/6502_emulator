@@ -200,6 +200,24 @@ static inline void setFlags(uint8_t data) {
 	registers.N = data & 0x80;
 }
 
+static inline void add() {
+	uint16_t tmp = registers.A + operand + registers.C;
+
+	if (registers.D) {
+		if ((tmp & 0x0F) >= 0x0A)
+			tmp += 0x06;
+		if ((tmp & 0xF0) >= 0xA0)
+			tmp += 0x60;
+	}
+
+	registers.V = ((registers.A & 0x80) == (operand & 0x80)) && ((registers.A & 0x80) != (tmp & 0x80));
+
+	registers.C = tmp > 0xFF;
+	registers.A = tmp & 0xFF;
+
+	setFlags(registers.A);
+}
+
 void cpu_irq() {
 	if (!registers.I)
 		return;
@@ -571,21 +589,7 @@ void in_##funcName##bit() { in_##funcName(bit); }
 // ADd with Carry
 // adds operand to accumulator with carry flag
 void in_adc() {
-	uint16_t tmp = registers.A + operand + registers.C;
-
-	if (registers.D) {
-		if ((tmp & 0x0F) >= 0x0A)
-			tmp += 0x06;
-		if ((tmp & 0xF0) >= 0xA0)
-			tmp += 0x60;
-	}
-
-	registers.V = ((registers.A & 0x80) == (operand & 0x80)) && ((registers.A & 0x80) != (tmp & 0x80));
-
-	registers.C = tmp > 0xFF;
-	registers.A = tmp & 0xFF;
-
-	setFlags(registers.A);
+	add();
 }
 
 // bitwise AND
@@ -1058,21 +1062,8 @@ void in_rts() {
 // carry flag should be set before being called
 // if carry flag is cleared after the call, a borrow was needed
 void in_sbc() {
-	uint16_t tmp = registers.A - operand - !registers.C;
-
-	if (registers.D) {
-		if ((tmp & 0x0F) >= 0x0A)
-			tmp -= 0x06;
-		if ((tmp & 0xF0) >= 0xA0)
-			tmp -= 0x60;
-	}
-
-	registers.V = ((registers.A & 0x80) == (operand & 0x80)) && ((registers.A & 0x80) != (tmp & 0x80));
-
-	registers.C = tmp > 0xFF;
-	registers.A = tmp & 0xFF;
-
-	setFlags(registers.A);
+	operand ^= 0xff; // invert operand to allow regular addition (same as 6502)
+	add();
 }
 
 // SEt Carry flag
