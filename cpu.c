@@ -204,10 +204,24 @@ static inline void add() {
 	uint16_t tmp = registers.A + operand + registers.C;
 
 	if (registers.D) {
-		if (tmp >= 0x0A)
-			tmp += 0x06;
-		if (tmp >= 0xA0)
-			tmp += 0x60;
+		if (opcodes[currentOpcode].instruction == IN_ADC) {
+			// carry from lower nibble
+			if (((registers.A & 0x0F) + (operand & 0x0F) + registers.C) > 0x09)
+				tmp += 0x06;
+
+			// carry from upper nibble
+			if (tmp > 0x99)
+				tmp += 0x60;
+		} else {
+			// carry from lower nibble
+			if (((registers.A & 0x0F) + (operand & 0x0F) + registers.C) < 0x10)
+				tmp -= 0x06;
+
+			// carry from upper nibble
+			if (tmp < 0x100)
+				tmp -= 0x60;
+		}
+
 	}
 
 	registers.V = ((registers.A & 0x80) == (operand & 0x80)) && ((registers.A & 0x80) != (tmp & 0x80));
