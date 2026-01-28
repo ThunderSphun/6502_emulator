@@ -204,9 +204,9 @@ static inline void add() {
 	uint16_t tmp = registers.A + operand + registers.C;
 
 	if (registers.D) {
-		if ((tmp & 0x0F) >= 0x0A)
+		if (tmp >= 0x0A)
 			tmp += 0x06;
-		if ((tmp & 0xF0) >= 0xA0)
+		if (tmp >= 0xA0)
 			tmp += 0x60;
 	}
 
