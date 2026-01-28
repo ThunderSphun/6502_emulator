@@ -493,7 +493,10 @@ void am_ind() {
 	addr |= (bus_read(registers.PC++) << 8);
 	effectiveAddress = bus_read(addr);
 #ifndef WDC
-	effectiveAddress |= (bus_read((addr + 1) & 0xFF) << 8);
+	if ((addr & 0xFF00) == ((addr + 1) & 0xFF00))
+		effectiveAddress |= (bus_read((addr + 1)) << 8);
+	else
+		effectiveAddress |= (bus_read((addr + 1 - 0x100)) << 8);
 #else
 	effectiveAddress |= (bus_read(addr + 1) << 8);
 
@@ -1228,6 +1231,9 @@ void in_wai() {
 //   the 6502 has a couple of opcodes that gave somewhat reliable results
 //   the WDC version of the 6502 has all illegal opcodes as implemented as nops
 void in_xxx() {
+#ifdef VERBOSE
+	printf("ILLEGAL INSTRUCTION EXECUTED\n");
+#endif
 }
 #endif
 
