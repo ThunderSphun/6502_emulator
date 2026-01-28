@@ -449,6 +449,8 @@ void am_absi() {
 void am_absx() {
 	effectiveAddress = bus_read(registers.PC++);
 	effectiveAddress |= (bus_read(registers.PC++) << 8);
+	if ((effectiveAddress & 0xFF00) != ((effectiveAddress + registers.X) & 0xFF00))
+		cycles++;
 	effectiveAddress += registers.X;
 	operand = bus_read(effectiveAddress);
 }
@@ -460,6 +462,8 @@ void am_absx() {
 void am_absy() {
 	effectiveAddress = bus_read(registers.PC++);
 	effectiveAddress |= (bus_read(registers.PC++) << 8);
+	if ((effectiveAddress & 0xFF00) != ((effectiveAddress + registers.Y) & 0xFF00))
+		cycles++;
 	effectiveAddress += registers.Y;
 	operand = bus_read(effectiveAddress);
 }
@@ -487,7 +491,15 @@ void am_imp() {
 void am_ind() {
 	uint16_t addr = bus_read(registers.PC++);
 	addr |= (bus_read(registers.PC++) << 8);
-	effectiveAddress = bus_read(addr) | (bus_read(addr + 1) << 8);
+	effectiveAddress = bus_read(addr);
+#ifndef WDC
+	effectiveAddress |= (bus_read((addr + 1) & 0xFF) << 8);
+#else
+	effectiveAddress |= (bus_read(addr + 1) << 8);
+
+	if (addr + 1 > 0xFF)
+		cycles++;
+#endif
 }
 
 // pre-indexed indirect addressing mode
@@ -509,6 +521,8 @@ void am_indx() {
 void am_indy() {
 	uint8_t offset = bus_read(registers.PC++);
 	effectiveAddress = bus_read(offset) | (bus_read(offset + 1) << 8);
+	if ((effectiveAddress & 0xFF00) != ((effectiveAddress + registers.Y) & 0xFF00))
+		cycles++;
 	effectiveAddress += registers.Y;
 	operand = bus_read(effectiveAddress);
 }
@@ -519,6 +533,8 @@ void am_indy() {
 // this mode is only allowed for the branch instructions
 void am_rel() {
 	int8_t offset = bus_read(registers.PC++);
+	if ((registers.PC & 0xFF00) != ((registers.PC + offset) & 0xFF00))
+		cycles++;
 	effectiveAddress = registers.PC + offset;
 }
 
@@ -552,7 +568,7 @@ void am_zpgi() {
 void am_zpgx() {
 	effectiveAddress = bus_read(registers.PC++);
 	effectiveAddress += registers.X;
-	effectiveAddress %= 0x100;
+	effectiveAddress &= 0xFF;
 	operand = bus_read(effectiveAddress);
 }
 
@@ -567,7 +583,7 @@ void am_zpgx() {
 void am_zpgy() {
 	effectiveAddress = bus_read(registers.PC++);
 	effectiveAddress += registers.Y;
-	effectiveAddress %= 0x100;
+	effectiveAddress &= 0xFF;
 	operand = bus_read(effectiveAddress);
 }
 
