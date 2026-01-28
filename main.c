@@ -3,7 +3,7 @@
 #include "ram.h"
 #include "cpu.h"
 
-#define VERBOSE
+// #define VERBOSE
 
 #include <stdio.h>
 
@@ -51,9 +51,6 @@ int main() {
 	*programCounter = 0x0400;
 
 	printf("running:\n");
-	// run x amount of instructions before going more in depth
-	for (size_t i = 0; i < 26765875; i++)
-		cpu_runInstruction();
 
 	// stops program execution when there was a jump/branch to the exact same position
 	// this is how the test program indicates an incorrect instruction
@@ -61,7 +58,7 @@ int main() {
 	extern bool ranUnimplementedInstruction;
 	while (*programCounter != prevProgramCounter && !ranUnimplementedInstruction) {
 		prevProgramCounter = *programCounter;
-		
+
 #ifdef VERBOSE
 		cpu_printOpcode();
 #endif
@@ -71,20 +68,6 @@ int main() {
 #ifdef VERBOSE
 		cpu_printRegisters();
 		printf("\n");
-#endif
-	}
-	for (int i = 0; i < 0; i++) {
-		prevProgramCounter = *programCounter;
-
-#ifdef VERBOSE
-		cpu_printOpcode();
-#endif
-
-		cpu_runInstruction();
-
-#ifdef VERBOSE
-		//cpu_printRegisters();
-		//printf("\n");
 #endif
 	}
 
