@@ -180,39 +180,24 @@ uint16_t effectiveAddress = 0;
 
 size_t instructionCount = 0;
 
-static inline void push(uint8_t data) {
-	bus_write(0x0100 | registers.SP--, data);
-}
+#define PUSH(data) bus_write(0x0100 | registers.SP--, (data))
 
-static inline uint8_t pull() {
-	return bus_read(0x0100 | ++registers.SP);
-}
+#define PULL() bus_read(0x0100 | ++registers.SP)
 
-static inline void branch(bool condition) {
-	if (condition) {
-		cycles++;
-		registers.PC = effectiveAddress;
-	}
-}
+#define BRANCH(condition) if (condition) {cycles++; registers.PC = effectiveAddress;} else cycles = cycles
 
-static inline void setFlags(uint8_t data) {
-	registers.Z = data == 0;
-	registers.N = data & 0x80;
-}
+#define SET_FLAGS(data) registers.Z = (data) == 0; registers.N = (data) & 0x80
 
-static inline void rmw() {
 #ifndef ROCKWEL
-	// in the original 6502, a read-modify-write instruction writes the original value back, before modifying it and storing it again
-	// this would cause write sensitive hardware to response twice
-	if (opcodes[currentOpcode].addressMode != AM_ACC)
-		bus_write(effectiveAddress, operand);
+// in the original 6502, a read-modify-write instruction writes the original value back, before modifying it and storing it again
+// this would cause write sensitive hardware to response twice
+#define RMW() if (opcodes[currentOpcode].addressMode != AM_ACC) bus_write(effectiveAddress, operand)
 #else
-	// later versions 'fixed' this by reading twice
-	if (opcodes[currentOpcode].addressMode != AM_ACC)
-		bus_read(effectiveAddress);
+// later versions 'fixed' this by reading twice
+#define RMW() if (opcodes[currentOpcode].addressMode != AM_ACC) bus_read(effectiveAddress)
 #endif
-}
 
+// TODO: somehow transform to macro
 static inline void add() {
 	uint16_t tmp = registers.A + operand + registers.C;
 
@@ -234,7 +219,6 @@ static inline void add() {
 			if (tmp < 0x100)
 				tmp -= 0x60;
 		}
-
 	}
 
 	registers.V = ((registers.A & 0x80) == (operand & 0x80)) && ((registers.A & 0x80) != (tmp & 0x80));
@@ -242,16 +226,16 @@ static inline void add() {
 	registers.C = tmp > 0xFF;
 	registers.A = tmp & 0xFF;
 
-	setFlags(registers.A);
+	SET_FLAGS(registers.A);
 }
 
 void cpu_irq() {
 	if (!registers.I)
 		return;
 
-	push(registers.PC >> 8);
-	push(registers.PC & 0xFF);
-	push(registers.flags);
+	PUSH(registers.PC >> 8);
+	PUSH(registers.PC & 0xFF);
+	PUSH(registers.flags);
 
 	registers.PC_LO = bus_read(0xFFFE);
 	registers.PC_HI = bus_read(0xFFFF);
@@ -288,9 +272,9 @@ void cpu_reset() {
 }
 
 void cpu_nmi() {
-	push(registers.PC >> 8);
-	push(registers.PC & 0xFF);
-	push(registers.flags);
+	PUSH(registers.PC >> 8);
+	PUSH(registers.PC & 0xFF);
+	PUSH(registers.flags);
 
 	registers.PC_LO = bus_read(0xFFFA);
 	registers.PC_HI = bus_read(0xFFFB);
@@ -643,19 +627,19 @@ void in_adc() {
 void in_and() {
 	registers.A &= operand;
 
-	setFlags(registers.A);
+	SET_FLAGS(registers.A);
 }
 
 // Arithmatic Shift Left
 // shifts 0 into bit 0
 // shifts bit 7 into carry flag
 void in_asl() {
-	rmw();
+	RMW();
 	registers.C = operand & 0x80;
 	operand <<= 1;
 	operand &= 0xFE; // ensure newly added bit is 0
 
-	setFlags(operand);
+	SET_FLAGS(operand);
 
 	if (opcodes[currentOpcode].addressMode == AM_ACC)
 		registers.A = operand;
@@ -668,7 +652,7 @@ void in_asl() {
 // tests bit of accumulator, and branches if it is 0
 // a branch taken takes an extra clock cycle
 void in_bbr(uint8_t bit) {
-	branch((registers.A & (1 << bit)) == 0);
+	BRANCH((registers.A & (1 << bit)) == 0);
 }
 
 BITS_EXPANSION(bbr)
@@ -679,7 +663,7 @@ BITS_EXPANSION(bbr)
 // tests bit of accumulator, and branches if it is 1
 // a branch taken takes an extra clock cycle
 void in_bbs(uint8_t bit) {
-	branch((registers.A & (1 << bit)) == 1);
+	BRANCH((registers.A & (1 << bit)) == 1);
 }
 
 BITS_EXPANSION(bbs)
@@ -689,21 +673,21 @@ BITS_EXPANSION(bbs)
 // branches when carry flag is unset
 // a branch taken takes an extra clock cycle
 void in_bcc() {
-	branch(!registers.C);
+	BRANCH(!registers.C);
 }
 
 // Branch Carry Set
 // branches when carry flag is set
 // a branch taken takes an extra clock cycle
 void in_bcs() {
-	branch(registers.C);
+	BRANCH(registers.C);
 }
 
 // Branch on EQual
 // branches when zero flag is set (two values are equal if A - B == 0)
 // a branch taken takes an extra clock cycle
 void in_beq() {
-	branch(registers.Z);
+	BRANCH(registers.Z);
 }
 
 // test BITs
@@ -721,21 +705,21 @@ void in_bit() {
 // branches when negative flag is set
 // a branch taken takes an extra clock cycle
 void in_bmi() {
-	branch(registers.N);
+	BRANCH(registers.N);
 }
 
 // Branch on Not Equals
 // branches when zero flag is unset (two values are not equal if A - B != 0)
 // a branch taken takes an extra clock cycle
 void in_bne() {
-	branch(!registers.Z);
+	BRANCH(!registers.Z);
 }
 
 // Branch on PLus
 // branches when negative flag is unset
 // a branch taken takes an extra clock cycle
 void in_bpl() {
-	branch(!registers.N);
+	BRANCH(!registers.N);
 }
 
 #ifdef WDC
@@ -744,7 +728,7 @@ void in_bpl() {
 //   this is always the case, so don't take an extra clock cycle, it is added in the opcode table
 void in_bra() {
 	cycles--; // correct the cycles increment from branch
-	branch(true);
+	BRANCH(true);
 }
 #endif
 
@@ -755,9 +739,9 @@ void in_bra() {
 // this byte can be used as a break mark
 void in_brk() {
 	registers.PC++;
-	push(registers.PC_HI);
-	push(registers.PC_LO);
-	push(registers.flags | 0x30); // set break bit + unused bit
+	PUSH(registers.PC_HI);
+	PUSH(registers.PC_LO);
+	PUSH(registers.flags | 0x30); // set break bit + unused bit
 
 	registers.PC_LO = bus_read(0xFFFE);
 	registers.PC_HI = bus_read(0xFFFF);
@@ -768,14 +752,14 @@ void in_brk() {
 // branches when overflow flag is unset
 // a branch taken takes an extra clock cycle
 void in_bvc() {
-	branch(!registers.V);
+	BRANCH(!registers.V);
 }
 
 // Branch on oVerflow Set
 // branches when overflow flag is set
 // a branch taken takes an extra clock cycle
 void in_bvs() {
-	branch(registers.V);
+	BRANCH(registers.V);
 }
 
 // CLear Carry flag
@@ -841,25 +825,25 @@ void in_cpy() {
 
 // DECrement operand
 void in_dec() {
-	rmw();
+	RMW();
 	operand--;
 	bus_write(effectiveAddress, operand);
 
-	setFlags(operand);
+	SET_FLAGS(operand);
 }
 
 // DEcrement X register
 void in_dex() {
 	registers.X--;
 
-	setFlags(registers.X);
+	SET_FLAGS(registers.X);
 }
 
 // DEcrement Y register
 void in_dey() {
 	registers.Y--;
 
-	setFlags(registers.Y);
+	SET_FLAGS(registers.Y);
 }
 
 // bitwise eXclusive OR
@@ -867,30 +851,30 @@ void in_dey() {
 void in_eor() {
 	registers.A ^= operand;
 
-	setFlags(registers.A);
+	SET_FLAGS(registers.A);
 }
 
 // INCrement operand
 void in_inc() {
-	rmw();
+	RMW();
 	operand++;
 	bus_write(effectiveAddress, operand);
 
-	setFlags(operand);
+	SET_FLAGS(operand);
 }
 
 // INcrement X register
 void in_inx() {
 	registers.X++;
 
-	setFlags(registers.X);
+	SET_FLAGS(registers.X);
 }
 
 // INcrement Y register
 void in_iny() {
 	registers.Y++;
 
-	setFlags(registers.Y);
+	SET_FLAGS(registers.Y);
 }
 
 // JuMP
@@ -904,8 +888,8 @@ void in_jmp() {
 // loads PC with operand
 void in_jsr() {
 	registers.PC--;
-	push(registers.PC_HI);
-	push(registers.PC_LO);
+	PUSH(registers.PC_HI);
+	PUSH(registers.PC_LO);
 	registers.PC = effectiveAddress;
 }
 
@@ -913,33 +897,33 @@ void in_jsr() {
 void in_lda() {
 	registers.A = operand;
 
-	setFlags(registers.A);
+	SET_FLAGS(registers.A);
 }
 
 // LoaD X register with operand
 void in_ldx() {
 	registers.X = operand;
 
-	setFlags(registers.X);
+	SET_FLAGS(registers.X);
 }
 
 // LoaD Y register with operand
 void in_ldy() {
 	registers.Y = operand;
 
-	setFlags(registers.Y);
+	SET_FLAGS(registers.Y);
 }
 
 // Logical Shift Right
 // shifts 0 into bit 7
 // shifts bit 0 into carry flag
 void in_lsr() {
-	rmw();
+	RMW();
 	registers.C = operand & 0x01;
 	operand >>= 1;
 	operand &= 0xEF; // ensure newly added bit is 0
 
-	setFlags(operand); // N should always be false, we shifted a zero into it
+	SET_FLAGS(operand); // N should always be false, we shifted a zero into it
 
 	if (opcodes[currentOpcode].addressMode == AM_ACC)
 		registers.A = operand;
@@ -977,64 +961,64 @@ void in_nop() {
 void in_ora() {
 	registers.A |= operand;
 
-	setFlags(registers.A);
+	SET_FLAGS(registers.A);
 }
 
 // PusH Accumulator on stack
 void in_pha() {
-	push(registers.A);
+	PUSH(registers.A);
 }
 
 // PusH Processor status
 // pushes flags register on stack
 // this instruction sets break flag and bit 5 (unused)
 void in_php() {
-	push(registers.flags | 0x30);
+	PUSH(registers.flags | 0x30);
 }
 
 #ifdef WDC
 // PusH X register on stack
 void in_phx() {
-	push(registers.X);
+	PUSH(registers.X);
 }
 #endif
 
 #ifdef WDC
 // PusH Y register on stack
 void in_phy() {
-	push(registers.Y);
+	PUSH(registers.Y);
 }
 #endif
 
 // PuLl Accumulator off stack
 void in_pla() {
-	registers.A = pull();
+	registers.A = PULL();
 
-	setFlags(registers.A);
+	SET_FLAGS(registers.A);
 }
 
 // PuLl Processor status
 // pulls flags register off stack
 // this instruction ignores break flag and bit 5 (unused)
 void in_plp() {
-	registers.flags = pull() & 0xCF;
+	registers.flags = PULL() & 0xCF;
 }
 
 #ifdef WDC
 // PuLl X register off stack
 void in_plx() {
-	registers.X = pull();
+	registers.X = PULL();
 
-	setFlags(registers.X);
+	SET_FLAGS(registers.X);
 }
 #endif
 
 #ifdef WDC
 // PuLl Y register off stack
 void in_ply() {
-	registers.Y = pull();
+	registers.Y = PULL();
 
-	setFlags(registers.Y);
+	SET_FLAGS(registers.Y);
 }
 #endif
 
@@ -1053,7 +1037,7 @@ BITS_EXPANSION(rmb)
 // shifts carry flag into bit 0
 // shifts bit 7 into carry flag
 void in_rol() {
-	rmw();
+	RMW();
 	bool oldCarry = registers.C;
 
 	registers.C = operand & 0x80;
@@ -1061,7 +1045,7 @@ void in_rol() {
 	operand &= 0xFE;
 	operand |= oldCarry;
 
-	setFlags(operand);
+	SET_FLAGS(operand);
 
 	if (opcodes[currentOpcode].addressMode == AM_ACC)
 		registers.A = operand;
@@ -1076,7 +1060,7 @@ void in_rol() {
 //   the instruction would instead perform as an ASL, without shifting bit 7 into carry flag
 //   this bug makes it so that carry flag would be unused during the instruction
 void in_ror() {
-	rmw();
+	RMW();
 	bool oldCarry = registers.C;
 
 	registers.C = operand & 0x01;
@@ -1084,7 +1068,7 @@ void in_ror() {
 	operand &= 0xEF;
 	operand |= oldCarry << 7;
 
-	setFlags(operand);
+	SET_FLAGS(operand);
 
 	if (opcodes[currentOpcode].addressMode == AM_ACC)
 		registers.A = operand;
@@ -1096,16 +1080,17 @@ void in_ror() {
 // pulls flags register from stack, ignoring break flag and bit 5 (ignored)
 // then pulls PC from stack
 void in_rti() {
-	registers.flags = pull();
-	registers.PC_LO = pull();
-	registers.PC_HI = pull();
+	registers.flags = PULL();
+	registers.PC_LO = PULL();
+	registers.PC_HI = PULL();
+
 }
 
 // ReTurn from Subroutine
 // pulls PC from stack
 void in_rts() {
-	registers.PC_LO = pull();
-	registers.PC_HI = pull();
+	registers.PC_LO = PULL();
+	registers.PC_HI = PULL();
 	registers.PC++;
 }
 
@@ -1181,14 +1166,14 @@ void in_stz() {
 void in_tax() {
 	registers.X = registers.A;
 
-	setFlags(registers.X);
+	SET_FLAGS(registers.X);
 }
 
 // Transfer Accumulator to Y register
 void in_tay() {
 	registers.Y = registers.A;
 
-	setFlags(registers.Y);
+	SET_FLAGS(registers.Y);
 }
 
 #ifdef WDC
@@ -1213,14 +1198,14 @@ void in_tsb() {
 void in_tsx() {
 	registers.X = registers.SP;
 
-	setFlags(registers.X);
+	SET_FLAGS(registers.X);
 }
 
 // Transfer X register to Accumulator
 void in_txa() {
 	registers.A = registers.X;
 
-	setFlags(registers.A);
+	SET_FLAGS(registers.A);
 }
 
 // Transfer X register to Stack pointer
@@ -1232,7 +1217,7 @@ void in_txs() {
 void in_tya() {
 	registers.A = registers.Y;
 
-	setFlags(registers.A);
+	SET_FLAGS(registers.A);
 }
 
 #ifdef WDC
