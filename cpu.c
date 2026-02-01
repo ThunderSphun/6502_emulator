@@ -31,7 +31,7 @@ bool ranUnimplementedInstruction = false;
 enum {
 #ifndef WDC
 	// addressing mode for illegal opcode
-	//   the WDC version of the 6502 has all illegal opcodes as implemented as nops
+	//   the WDC version of the 6502 has all illegal opcodes implemented as nops
 	AM_XXX,
 #endif
 
@@ -67,7 +67,7 @@ enum {
 enum {
 #ifndef WDC
 	// instruction for illegal opcode
-	//   the WDC version of the 6502 has all illegal opcodes as implemented as nops
+	//   the WDC version of the 6502 has all illegal opcodes implemented as nops
 	IN_XXX,
 #endif
 
@@ -198,6 +198,19 @@ static inline void branch(bool condition) {
 static inline void setFlags(uint8_t data) {
 	registers.Z = data == 0;
 	registers.N = data & 0x80;
+}
+
+static inline void rmw() {
+#ifndef ROCKWEL
+	// in the original 6502, a read-modify-write instruction writes the original value back, before modifying it and storing it again
+	// this would cause write sensitive hardware to response twice
+	if (opcodes[currentOpcode].addressMode != AM_ACC)
+		bus_write(effectiveAddress, operand);
+#else
+	// later versions 'fixed' this by reading twice
+	if (opcodes[currentOpcode].addressMode != AM_ACC)
+		bus_read(effectiveAddress);
+#endif
 }
 
 static inline void add() {
@@ -637,6 +650,7 @@ void in_and() {
 // shifts 0 into bit 0
 // shifts bit 7 into carry flag
 void in_asl() {
+	rmw();
 	registers.C = operand & 0x80;
 	operand <<= 1;
 	operand &= 0xFE; // ensure newly added bit is 0
@@ -827,6 +841,7 @@ void in_cpy() {
 
 // DECrement operand
 void in_dec() {
+	rmw();
 	operand--;
 	bus_write(effectiveAddress, operand);
 
@@ -857,6 +872,7 @@ void in_eor() {
 
 // INCrement operand
 void in_inc() {
+	rmw();
 	operand++;
 	bus_write(effectiveAddress, operand);
 
@@ -918,6 +934,7 @@ void in_ldy() {
 // shifts 0 into bit 7
 // shifts bit 0 into carry flag
 void in_lsr() {
+	rmw();
 	registers.C = operand & 0x01;
 	operand >>= 1;
 	operand &= 0xEF; // ensure newly added bit is 0
@@ -1036,6 +1053,7 @@ BITS_EXPANSION(rmb)
 // shifts carry flag into bit 0
 // shifts bit 7 into carry flag
 void in_rol() {
+	rmw();
 	bool oldCarry = registers.C;
 
 	registers.C = operand & 0x80;
@@ -1058,6 +1076,7 @@ void in_rol() {
 //   the instruction would instead perform as an ASL, without shifting bit 7 into carry flag
 //   this bug makes it so that carry flag would be unused during the instruction
 void in_ror() {
+	rmw();
 	bool oldCarry = registers.C;
 
 	registers.C = operand & 0x01;
