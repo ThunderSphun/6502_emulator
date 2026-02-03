@@ -351,18 +351,18 @@ void cpu_printOpcode() {
 #endif
 	case AM_REL:  printf("%c$%02X     ",  (int8_t) bus_read(registers.PC + 1) < 0 ? '-' : bus_read(registers.PC + 1) == 0 ? ' ' : '+', abs((int8_t) bus_read(registers.PC + 1))); break;
 	case AM_IMM:  printf("#$%02X     ",   bus_read(registers.PC + 1)); break;
-	case AM_ABS:  printf("$%02X%02X    ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
+	case AM_ABS:  printf(" $%02X%02X   ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
 #ifdef WDC
 	case AM_ABSI: printf("($%02X%02X,X)", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
 #endif
-	case AM_ABSX: printf("$%02X%02X,X  ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
-	case AM_ABSY: printf("$%02X%02X,Y  ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
-	case AM_ZPG:  printf("$%02X      ",   bus_read(registers.PC + 1)); break;
+	case AM_ABSX: printf(" $%02X%02X,X ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
+	case AM_ABSY: printf(" $%02X%02X,Y ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
+	case AM_ZPG:  printf(" $%02X     ",   bus_read(registers.PC + 1)); break;
 #ifdef WDC
 	case AM_ZPGI: printf("($%02X)    ",   bus_read(registers.PC + 1)); break;
 #endif
-	case AM_ZPGX: printf("$%02X,X    ",   bus_read(registers.PC + 1)); break;
-	case AM_ZPGY: printf("$%02X,Y    ",   bus_read(registers.PC + 1)); break;
+	case AM_ZPGX: printf(" $%02X,X   ",   bus_read(registers.PC + 1)); break;
+	case AM_ZPGY: printf(" $%02X,Y   ",   bus_read(registers.PC + 1)); break;
 	case AM_IND:  printf("($%02X%02X)  ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
 	case AM_INDX: printf("($%02X%02X,X)", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
 	case AM_INDY: printf("($%02X%02X),Y", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
