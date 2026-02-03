@@ -63,9 +63,6 @@ AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood       
                              ;   19-jul-2013  1st version distributed for testing
                              ;   23-jul-2013  fixed BRA out of range due to larger trap macros
                              ;                added RAM integrity check
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    2
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              ;   16-aug-2013  added error report to standard output option
                              ;   23-aug-2015  change revoked
                              ;   24-aug-2015  all self modifying immediate opcodes now execute in data RAM
@@ -128,9 +125,6 @@ AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood       
                              ;set lowest non RAM or RAM mirror address page (-1=disable, 0=64k, $40=16k)
                              ;leave disabled if a monitor, OS or background interrupt is allowed to alter RAM
 ffff =                       ram_top = -1
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    3
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
                                      noopt       ;do not take shortcuts
                                      
@@ -193,9 +187,6 @@ ffff =                       ram_top = -1
                                      endm
                              trap_ne macro
                                      beq skip\?
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    4
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                      trap            ;failed not equal (non zero)
                              skip\?
                                      endm
@@ -258,9 +249,6 @@ ffff =                       ram_top = -1
 00c0 =                       fnv     equ minus+overfl
                              
 0030 =                       fao     equ break+reserv    ;bits always on after PHP, BRK
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    5
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0034 =                       fai     equ fao+intdis      ;+ forced interrupt disable
 00ff =                       m8      equ $ff             ;8 bit mask
 00fb =                       m8i     equ $ff&~intdis     ;8 bit mask - interrupt disable
@@ -323,9 +311,6 @@ ffff =                       ram_top = -1
                                          pha         ;use stack to load status
                                          plp
                                          endm
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    6
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
                              set_a       macro       ;precharging accu & status
                                          load_flag \2
@@ -388,9 +373,6 @@ ffff =                       ram_top = -1
                              
                              set_absx    macro       ;precharging abs,x & immediate status
                                          load_flag \2
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    7
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                          pha         ;use stack to load status
                                          lda \1,x    ;load to indexed memory
                                          sta abst,x
@@ -453,9 +435,6 @@ ffff =                       ram_top = -1
                                          plp         ;restore status
                                          endm
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    8
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              tst_ax      macro       ;indexed testing result in accu & flags
                                          php         ;save flags
                                          cmp \1,x    ;test result
@@ -518,9 +497,6 @@ ffff =                       ram_top = -1
                                          eor_flag \3
                                          cmp \2,x    ;test flags
                                          trap_ne
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    9
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                          endm
                                          
                              ; RAM integrity test
@@ -583,9 +559,6 @@ ffff =                       ram_top = -1
                              
                                  if load_data_direct = 1
                                      data
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   10
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                  else
                                      bss                 ;uninitialized segment, copy of data at end of code!
                                  endif
@@ -648,9 +621,6 @@ ffff =                       ram_top = -1
 0200 =                               org data_segment
 0200 : 0000                  pg_x    ds  2               ;high JMP indirect address for page cross bug
 0202 : 00                    test_case   ds  1           ;current test number
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   11
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0203 : 0000                  ram_chksm   ds  2           ;checksum for RAM integrity test
                              ;add/subtract operand copy - abs tests write area
 0205 :                       abst                        ;5 bytes store/modify test area
@@ -713,9 +683,6 @@ ffff =                       ram_top = -1
 0404 : a900             [ 2]         lda #0          ;*** test 0 = initialize
 0406 : 8d0202           [ 4]         sta test_case
 0000 =                       test_num = 0
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   12
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
                              ;stop interrupts before initializing BSS
                                  if I_flag = 1
@@ -778,9 +745,6 @@ ffff =                       ram_top = -1
                                      ldx #hi(abs1)   ;set high byte of indirect pointer
                                      stx zpt+1
                                      ldy #lo(abs1)   ;data after write & execute test area
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   13
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              gcs5    adc (zpt),y
                                      bcc gcs4
                                      inc ram_chksm+1 ;carry to high byte
@@ -843,9 +807,6 @@ ffff =                       ram_top = -1
                              
                                      
 043e : a0a5             [ 2]         ldy #$a5
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   14
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0440 : 5a               [ 3]         phy
 0441 : a05a             [ 2]         ldy #$5a
 0443 : 5a               [ 3]         phy
@@ -908,9 +869,6 @@ ffff =                       ram_top = -1
 047b : 08               [ 3]>            php         ;save flags
 047c : e001             [ 2]>            cpx #1     ;test result
                             >            trap_ne
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   15
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 047e : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 0480 : 68               [ 4]>            pla         ;load status
@@ -973,9 +931,6 @@ ffff =                       ram_top = -1
                             >
 04ac : 28               [ 4]>            plp         ;restore status
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   16
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                      set_x 1,0
                             >            load_flag 0
 04ad : a900             [ 2]>            lda #0             ;allow test to change I-flag (no mask)
@@ -1038,9 +993,6 @@ ffff =                       ram_top = -1
                                      tst_x $ff,0
 04da : 08               [ 3]>            php         ;save flags
 04db : e0ff             [ 2]>            cpx #$ff     ;test result
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   17
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            trap_ne
 04dd : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
@@ -1103,9 +1055,6 @@ ffff =                       ram_top = -1
 0509 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 050b : 28               [ 4]>            plp         ;restore status
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   18
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
                                      set_x $fe,$ff
                             >            load_flag $ff
@@ -1168,9 +1117,6 @@ ffff =                       ram_top = -1
 0538 : fa               [ 4]         plx
                                      tst_x 0,$ff-minus
 0539 : 08               [ 3]>            php         ;save flags
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   19
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 053a : e000             [ 2]>            cpx #0     ;test result
                             >            trap_ne
 053c : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -1233,9 +1179,6 @@ ffff =                       ram_top = -1
 056a : a9ff             [ 2]>            lda #$ff                  ;allow test to change I-flag (no mask)
                             >
 056c : 48               [ 3]>            pha         ;use stack to load status
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   20
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 056d : a001             [ 2]>            ldy #1     ;precharge index y
 056f : 28               [ 4]>            plp
                              
@@ -1298,9 +1241,6 @@ ffff =                       ram_top = -1
                             >
 059c : 68               [ 4]>            pla         ;load status
 059d : 48               [ 3]>            pha
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   21
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            cmp_flag $ff
 059e : c9ff             [ 2]>            cmp #($ff|fao)&m8    ;expected flags + always on bits
                             >
@@ -1363,9 +1303,6 @@ ffff =                       ram_top = -1
                             >            load_flag 0
 05c9 : a900             [ 2]>            lda #0             ;allow test to change I-flag (no mask)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   22
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 05cb : 48               [ 3]>            pha         ;use stack to load status
 05cc : a0ff             [ 2]>            ldy #$ff     ;precharge index y
 05ce : 28               [ 4]>            plp
@@ -1428,9 +1365,6 @@ ffff =                       ram_top = -1
 05f9 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 05fb : 68               [ 4]>            pla         ;load status
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   23
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 05fc : 48               [ 3]>            pha
                             >            cmp_flag zero
 05fd : c932             [ 2]>            cmp #(zero|fao)&m8    ;expected flags + always on bits
@@ -1493,9 +1427,6 @@ ffff =                       ram_top = -1
                                      set_y $ff,$ff
                             >            load_flag $ff
 0628 : a9ff             [ 2]>            lda #$ff             ;allow test to change I-flag (no mask)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   24
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 062a : 48               [ 3]>            pha         ;use stack to load status
 062b : a0ff             [ 2]>            ldy #$ff     ;precharge index y
@@ -1558,9 +1489,6 @@ ffff =                       ram_top = -1
 065b : 8d0202           [ 4]>            sta test_case
                             >            ;check_ram       ;uncomment to find altered RAM after each test
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   25
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                               
                              ; PC modifying instructions (BRA, BBR, BBS, 1, 2, 3 byte NOPs, JMP(abs,x))
                              ; testing unconditional branch BRA
@@ -1623,9 +1551,6 @@ ffff =                       ram_top = -1
                             >            trap_ne
 068d : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   26
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 068f : 28               [ 4]>            plp         ;restore status
                              
 0690 : e081             [ 2]         cpx #$81
@@ -1688,9 +1613,6 @@ ffff =                       ram_top = -1
 06cb : c8               [ 2]         iny
 06cc : c8               [ 2]         iny
 06cd : c8               [ 2] brf2    iny
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   27
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 06ce : c8               [ 2]         iny        
 06cf : 80fe             [ 4]         bra brf3
                                      
@@ -1753,9 +1675,6 @@ ffff =                       ram_top = -1
 0709 : c000             [ 2] bra0    cpy #0
                                      trap_ne     ;long range forward
 070b : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   28
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
 070d : c8               [ 2]         iny        
 070e : 8098             [ 4]         bra bra1
@@ -1818,9 +1737,6 @@ ffff =                       ram_top = -1
                                      tst_a $cc,$ff
                                      lda zpt
                                      cmp #$ff-(1<<\1)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   29
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                      trap_ne         ;zp altered
                                      endm
                              
@@ -1883,9 +1799,6 @@ ffff =                       ram_top = -1
 0754 :                      >ok20196   
                             >        tst_a $cc,$ff
 0754 : 08               [ 3]>            php         ;save flags
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   30
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0755 : c9cc             [ 2]>            cmp #$cc     ;test result
                             >            trap_ne
 0757 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -1948,9 +1861,6 @@ ffff =                       ram_top = -1
 078a : 48               [ 3]>            pha         ;use stack to load status
 078b : a9cc             [ 2]>            lda #$cc     ;precharge accu
 078d : 28               [ 4]>            plp
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   31
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 078e : 8f0cfd           [ 6]>        bbs 0,zpt,fail40196
 0791 : 0f0cfd           [ 6]>        bbr 0,zpt,ok40196
@@ -2013,9 +1923,6 @@ ffff =                       ram_top = -1
                             >
 07c7 : 68               [ 4]>            pla         ;load status
 07c8 : 48               [ 3]>            pha
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   32
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            cmp_flag 0
 07c9 : c930             [ 2]>            cmp #(0|fao)&m8    ;expected flags + always on bits
                             >
@@ -2078,9 +1985,6 @@ ffff =                       ram_top = -1
                             >        trap            ;bbr branch not taken
 0802 : 4c0208           [ 3]>        jmp *           ;failed anyway
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   33
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0805 :                      >fail30231 
                             >        trap            ;bbs branch taken
 0805 : 4c0508           [ 3]>        jmp *           ;failed anyway
@@ -2143,9 +2047,6 @@ ffff =                       ram_top = -1
                             >
                              
                                      bbt 2
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   34
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0838 : a904             [ 2]>        lda #(1<<2)    ;testing 1 bit on
 083a : 850c             [ 3]>        sta zpt
                             >        set_a $33,0     ;with flags off
@@ -2208,9 +2109,6 @@ ffff =                       ram_top = -1
                             >
 0871 : 68               [ 4]>            pla         ;load status
 0872 : 48               [ 3]>            pha
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   35
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            cmp_flag $ff
 0873 : c9ff             [ 2]>            cmp #($ff|fao)&m8    ;expected flags + always on bits
                             >
@@ -2273,9 +2171,6 @@ ffff =                       ram_top = -1
                             >        trap            ;bbr branch not taken
 08ac : 4cac08           [ 3]>        jmp *           ;failed anyway
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   36
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 08af :                      >fail40266 
                             >        trap            ;bbs branch taken
 08af : 4caf08           [ 3]>        jmp *           ;failed anyway
@@ -2338,9 +2233,6 @@ ffff =                       ram_top = -1
                             >            trap_ne
 08e3 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   37
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 08e5 : 28               [ 4]>            plp         ;restore status
                             >
                             >        set_a $cc,$ff   ;with flags on
@@ -2403,9 +2295,6 @@ ffff =                       ram_top = -1
                             >
 0920 :                      >ok30301   
                             >        tst_a $33,0
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   38
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0920 : 08               [ 3]>            php         ;save flags
 0921 : c933             [ 2]>            cmp #$33     ;test result
                             >            trap_ne
@@ -2468,9 +2357,6 @@ ffff =                       ram_top = -1
                             >            load_flag 0     
 0954 : a900             [ 2]>            lda #0                  ;allow test to change I-flag (no mask)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   39
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0956 : 48               [ 3]>            pha         ;use stack to load status
 0957 : a933             [ 2]>            lda #$33     ;precharge accu
 0959 : 28               [ 4]>            plp
@@ -2533,9 +2419,6 @@ ffff =                       ram_top = -1
                             >            trap_ne
 098d : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   40
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 098f : 28               [ 4]>            plp         ;restore status
                             >
 0990 : a50c             [ 3]>        lda zpt
@@ -2598,9 +2481,6 @@ ffff =                       ram_top = -1
                             >
 09ca :                      >ok40336   
                             >        tst_a $cc,$ff
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   41
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 09ca : 08               [ 3]>            php         ;save flags
 09cb : c9cc             [ 2]>            cmp #$cc     ;test result
                             >            trap_ne
@@ -2663,9 +2543,6 @@ ffff =                       ram_top = -1
                             >            load_flag $ff   
 09fe : a9ff             [ 2]>            lda #$ff                ;allow test to change I-flag (no mask)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   42
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0a00 : 48               [ 3]>            pha         ;use stack to load status
 0a01 : a9cc             [ 2]>            lda #$cc     ;precharge accu
 0a03 : 28               [ 4]>            plp
@@ -2728,9 +2605,6 @@ ffff =                       ram_top = -1
 0a3b : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 0a3d : 68               [ 4]>            pla         ;load status
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   43
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0a3e : 48               [ 3]>            pha
                             >            cmp_flag 0
 0a3f : c930             [ 2]>            cmp #(0|fao)&m8    ;expected flags + always on bits
@@ -2793,9 +2667,6 @@ ffff =                       ram_top = -1
                             >
 0a72 : 6f0cfd           [ 6]>        bbr 6,zpt,fail10406
 0a75 : ef0cfd           [ 6]>        bbs 6,zpt,ok10406
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   44
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >        trap            ;bbs branch not taken
 0a78 : 4c780a           [ 3]>        jmp *           ;failed anyway
                             >
@@ -2858,9 +2729,6 @@ ffff =                       ram_top = -1
 0aaa : c940             [ 2]>        cmp #(1<<6)
                             >        trap_ne         ;zp altered
 0aac : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   45
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 0aae : a9bf             [ 2]>        lda #$ff-(1<<6) ;testing 1 bit off
 0ab0 : 850c             [ 3]>        sta zpt
@@ -2923,9 +2791,6 @@ ffff =                       ram_top = -1
 0ae5 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 0ae7 : 68               [ 4]>            pla         ;load status
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   46
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0ae8 : 48               [ 3]>            pha
                             >            cmp_flag $ff
 0ae9 : c9ff             [ 2]>            cmp #($ff|fao)&m8    ;expected flags + always on bits
@@ -2988,9 +2853,6 @@ ffff =                       ram_top = -1
                             >
 0b1c : 7f0cfd           [ 6]>        bbr 7,zpt,fail20441
 0b1f : ff0cfd           [ 6]>        bbs 7,zpt,ok20441
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   47
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >        trap            ;bbs branch not taken
 0b22 : 4c220b           [ 3]>        jmp *           ;failed anyway
                             >
@@ -3053,9 +2915,6 @@ ffff =                       ram_top = -1
                             >
                             >            trap_ne
 0b59 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   48
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 0b5b : 28               [ 4]>            plp         ;restore status
                             >
@@ -3118,9 +2977,6 @@ ffff =                       ram_top = -1
 0b91 : 8d0202           [ 4]>            sta test_case
                             >            ;check_ram       ;uncomment to find altered RAM after each test
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   49
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
                              bbrc    macro           ;\1 = bitnum
                                      bbr \1,zpt,skip\?
@@ -3183,9 +3039,6 @@ ffff =                       ram_top = -1
 0bc6 : a9ff             [ 2]         lda #$ff
                                      bbsc 0
 0bc8 : 8f0cfd           [ 6]>        bbs 0,zpt,skip0489
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   50
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0bcb : 4901             [ 2]>        eor #(1<<0)       
 0bcd :                      >skip0489
                              
@@ -3248,9 +3101,6 @@ ffff =                       ram_top = -1
                              nop_test    macro       ;\1 = opcode, \2 = # of bytes
                                          ldy #$42
                                          ldx #4-\2
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   51
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                          db  \1          ;test nop length
                                      if \2 = 1
                                          dex
@@ -3313,9 +3163,6 @@ ffff =                       ram_top = -1
                             >
 0c14 : 02                   >            db  $02          ;test nop integrity - flags off
 0c15 : ea               [ 2]>            nop
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   52
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0c16 : ea               [ 2]>            nop
                             >            tst_a $ff-$02,0
 0c17 : 08               [ 3]>            php         ;save flags
@@ -3378,9 +3225,6 @@ ffff =                       ram_top = -1
                             >            dex
                             >        endif
                             >        if 2 = 2
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   53
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0c45 : c8               [ 2]>            iny
 0c46 : ca               [ 2]>            dex
                             >        endif
@@ -3443,9 +3287,6 @@ ffff =                       ram_top = -1
                             >
                             >            trap_ne
 0c71 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   54
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 0c73 : 28               [ 4]>            plp         ;restore status
                             >
@@ -3508,9 +3349,6 @@ ffff =                       ram_top = -1
                             >            set_a $aa-$42,$ff
                             >            load_flag $ff
 0c9b : a9ff             [ 2]>            lda #$ff             ;allow test to change I-flag (no mask)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   55
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 0c9d : 48               [ 3]>            pha         ;use stack to load status
 0c9e : a968             [ 2]>            lda #$aa-$42     ;precharge accu
@@ -3573,9 +3411,6 @@ ffff =                       ram_top = -1
 0cc7 : 28               [ 4]>            plp
                             >
 0cc8 : 62                   >            db  $62          ;test nop integrity - flags off
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   56
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0cc9 : ea               [ 2]>            nop
 0cca : ea               [ 2]>            nop
                             >            tst_a $ff-$62,0
@@ -3638,9 +3473,6 @@ ffff =                       ram_top = -1
                             >            dex
                             >            dex
                             >        endif
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   57
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >        if 2 = 2
 0cf9 : c8               [ 2]>            iny
 0cfa : ca               [ 2]>            dex
@@ -3703,9 +3535,6 @@ ffff =                       ram_top = -1
 0d23 : c9ff             [ 2]>            cmp #($ff|fao)&m8    ;expected flags + always on bits
                             >
                             >            trap_ne
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   58
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0d25 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 0d27 : 28               [ 4]>            plp         ;restore status
@@ -3768,9 +3597,6 @@ ffff =                       ram_top = -1
                             >
                             >            set_a $aa-$c2,$ff
                             >            load_flag $ff
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   59
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0d4f : a9ff             [ 2]>            lda #$ff             ;allow test to change I-flag (no mask)
                             >
 0d51 : 48               [ 3]>            pha         ;use stack to load status
@@ -3833,9 +3659,6 @@ ffff =                       ram_top = -1
 0d79 : a91d             [ 2]>            lda #$ff-$e2     ;precharge accu
 0d7b : 28               [ 4]>            plp
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   60
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0d7c : e2                   >            db  $e2          ;test nop integrity - flags off
 0d7d : ea               [ 2]>            nop
 0d7e : ea               [ 2]>            nop
@@ -3898,9 +3721,6 @@ ffff =                       ram_top = -1
                             >        if 2 = 1
                             >            dex
                             >            dex
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   61
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >        endif
                             >        if 2 = 2
 0dad : c8               [ 2]>            iny
@@ -3963,9 +3783,6 @@ ffff =                       ram_top = -1
                             >            cmp_flag $ff
 0dd7 : c9ff             [ 2]>            cmp #($ff|fao)&m8    ;expected flags + always on bits
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   62
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            trap_ne
 0dd9 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
@@ -4028,9 +3845,6 @@ ffff =                       ram_top = -1
 0e02 : 28               [ 4]>            plp         ;restore status
                             >
                             >            set_a $aa-$54,$ff
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   63
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            load_flag $ff
 0e03 : a9ff             [ 2]>            lda #$ff             ;allow test to change I-flag (no mask)
                             >
@@ -4093,9 +3907,6 @@ ffff =                       ram_top = -1
 0e2c : 48               [ 3]>            pha         ;use stack to load status
 0e2d : a92b             [ 2]>            lda #$ff-$d4     ;precharge accu
 0e2f : 28               [ 4]>            plp
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   64
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 0e30 : d4                   >            db  $d4          ;test nop integrity - flags off
 0e31 : ea               [ 2]>            nop
@@ -4158,9 +3969,6 @@ ffff =                       ram_top = -1
 0e60 : f4                   >            db  $f4          ;test nop length
                             >        if 2 = 1
                             >            dex
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   65
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            dex
                             >        endif
                             >        if 2 = 2
@@ -4223,9 +4031,6 @@ ffff =                       ram_top = -1
 0e8a : 48               [ 3]>            pha
                             >            cmp_flag $ff
 0e8b : c9ff             [ 2]>            cmp #($ff|fao)&m8    ;expected flags + always on bits
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   66
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
                             >            trap_ne
 0e8d : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -4288,9 +4093,6 @@ ffff =                       ram_top = -1
                             >
 0eb6 : 28               [ 4]>            plp         ;restore status
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   67
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            set_a $aa-$5c,$ff
                             >            load_flag $ff
 0eb7 : a9ff             [ 2]>            lda #$ff             ;allow test to change I-flag (no mask)
@@ -4353,9 +4155,6 @@ ffff =                       ram_top = -1
                             >
 0ee0 : 48               [ 3]>            pha         ;use stack to load status
 0ee1 : a923             [ 2]>            lda #$ff-$dc     ;precharge accu
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   68
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0ee3 : 28               [ 4]>            plp
                             >
 0ee4 : dc                   >            db  $dc          ;test nop integrity - flags off
@@ -4418,9 +4217,6 @@ ffff =                       ram_top = -1
 0f12 : a201             [ 2]>            ldx #4-3
 0f14 : fc                   >            db  $fc          ;test nop length
                             >        if 3 = 1
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   69
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            dex
                             >            dex
                             >        endif
@@ -4483,9 +4279,6 @@ ffff =                       ram_top = -1
 0f3d : 68               [ 4]>            pla         ;load status
 0f3e : 48               [ 3]>            pha
                             >            cmp_flag $ff
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   70
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0f3f : c9ff             [ 2]>            cmp #($ff|fao)&m8    ;expected flags + always on bits
                             >
                             >            trap_ne
@@ -4548,9 +4341,6 @@ ffff =                       ram_top = -1
 0f68 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 0f6a : 28               [ 4]>            plp         ;restore status
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   71
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
                             >            set_a $aa-$03,$ff
                             >            load_flag $ff
@@ -4613,9 +4403,6 @@ ffff =                       ram_top = -1
 0f92 : a900             [ 2]>            lda #0             ;allow test to change I-flag (no mask)
                             >
 0f94 : 48               [ 3]>            pha         ;use stack to load status
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   72
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 0f95 : a9ec             [ 2]>            lda #$ff-$13     ;precharge accu
 0f97 : 28               [ 4]>            plp
                             >
@@ -4678,9 +4465,6 @@ ffff =                       ram_top = -1
 0fc4 : a042             [ 2]>            ldy #$42
 0fc6 : a203             [ 2]>            ldx #4-1
 0fc8 : 23                   >            db  $23          ;test nop length
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   73
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >        if 1 = 1
 0fc9 : ca               [ 2]>            dex
 0fca : ca               [ 2]>            dex
@@ -4743,9 +4527,6 @@ ffff =                       ram_top = -1
                             >
 0ff1 : 68               [ 4]>            pla         ;load status
 0ff2 : 48               [ 3]>            pha
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   74
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            cmp_flag $ff
 0ff3 : c9ff             [ 2]>            cmp #($ff|fao)&m8    ;expected flags + always on bits
                             >
@@ -4808,9 +4589,6 @@ ffff =                       ram_top = -1
                             >            trap_ne
 101c : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   75
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 101e : 28               [ 4]>            plp         ;restore status
                             >
                             >            set_a $aa-$33,$ff
@@ -4873,9 +4651,6 @@ ffff =                       ram_top = -1
                             >            load_flag 0
 1046 : a900             [ 2]>            lda #0             ;allow test to change I-flag (no mask)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   76
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1048 : 48               [ 3]>            pha         ;use stack to load status
 1049 : a9bc             [ 2]>            lda #$ff-$43     ;precharge accu
 104b : 28               [ 4]>            plp
@@ -4938,9 +4713,6 @@ ffff =                       ram_top = -1
                                      nop_test $53,1
 1078 : a042             [ 2]>            ldy #$42
 107a : a203             [ 2]>            ldx #4-1
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   77
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 107c : 53                   >            db  $53          ;test nop length
                             >        if 1 = 1
 107d : ca               [ 2]>            dex
@@ -5003,9 +4775,6 @@ ffff =                       ram_top = -1
 10a3 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 10a5 : 68               [ 4]>            pla         ;load status
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   78
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 10a6 : 48               [ 3]>            pha
                             >            cmp_flag $ff
 10a7 : c9ff             [ 2]>            cmp #($ff|fao)&m8    ;expected flags + always on bits
@@ -5068,9 +4837,6 @@ ffff =                       ram_top = -1
                             >
                             >            trap_ne
 10d0 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   79
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 10d2 : 28               [ 4]>            plp         ;restore status
                             >
@@ -5133,9 +4899,6 @@ ffff =                       ram_top = -1
                             >            set_a $ff-$73,0
                             >            load_flag 0
 10fa : a900             [ 2]>            lda #0             ;allow test to change I-flag (no mask)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   80
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 10fc : 48               [ 3]>            pha         ;use stack to load status
 10fd : a98c             [ 2]>            lda #$ff-$73     ;precharge accu
@@ -5198,9 +4961,6 @@ ffff =                       ram_top = -1
                              
                                      nop_test $83,1
 112c : a042             [ 2]>            ldy #$42
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   81
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 112e : a203             [ 2]>            ldx #4-1
 1130 : 83                   >            db  $83          ;test nop length
                             >        if 1 = 1
@@ -5263,9 +5023,6 @@ ffff =                       ram_top = -1
                             >            trap_ne
 1157 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   82
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1159 : 68               [ 4]>            pla         ;load status
 115a : 48               [ 3]>            pha
                             >            cmp_flag $ff
@@ -5328,9 +5085,6 @@ ffff =                       ram_top = -1
 1182 : c930             [ 2]>            cmp #(0|fao)&m8    ;expected flags + always on bits
                             >
                             >            trap_ne
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   83
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1184 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 1186 : 28               [ 4]>            plp         ;restore status
@@ -5393,9 +5147,6 @@ ffff =                       ram_top = -1
                             >
                             >            set_a $ff-$a3,0
                             >            load_flag 0
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   84
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 11ae : a900             [ 2]>            lda #0             ;allow test to change I-flag (no mask)
                             >
 11b0 : 48               [ 3]>            pha         ;use stack to load status
@@ -5458,9 +5209,6 @@ ffff =                       ram_top = -1
                             >
                              
                                      nop_test $b3,1
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   85
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 11e0 : a042             [ 2]>            ldy #$42
 11e2 : a203             [ 2]>            ldx #4-1
 11e4 : b3                   >            db  $b3          ;test nop length
@@ -5523,9 +5271,6 @@ ffff =                       ram_top = -1
 1209 : c9f7             [ 2]>            cmp #$aa-$b3     ;test result
                             >            trap_ne
 120b : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   86
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 120d : 68               [ 4]>            pla         ;load status
 120e : 48               [ 3]>            pha
@@ -5588,9 +5333,6 @@ ffff =                       ram_top = -1
                             >            cmp_flag 0
 1236 : c930             [ 2]>            cmp #(0|fao)&m8    ;expected flags + always on bits
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   87
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            trap_ne
 1238 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
@@ -5653,9 +5395,6 @@ ffff =                       ram_top = -1
 1260 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
                             >            set_a $ff-$d3,0
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   88
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            load_flag 0
 1262 : a900             [ 2]>            lda #0             ;allow test to change I-flag (no mask)
                             >
@@ -5718,9 +5457,6 @@ ffff =                       ram_top = -1
 1292 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   89
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                      nop_test $e3,1
 1294 : a042             [ 2]>            ldy #$42
 1296 : a203             [ 2]>            ldx #4-1
@@ -5783,9 +5519,6 @@ ffff =                       ram_top = -1
 12bc : 08               [ 3]>            php         ;save flags
 12bd : c9c7             [ 2]>            cmp #$aa-$e3     ;test result
                             >            trap_ne
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   90
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 12bf : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 12c1 : 68               [ 4]>            pla         ;load status
@@ -5848,9 +5581,6 @@ ffff =                       ram_top = -1
 12e9 : 48               [ 3]>            pha
                             >            cmp_flag 0
 12ea : c930             [ 2]>            cmp #(0|fao)&m8    ;expected flags + always on bits
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   91
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
                             >            trap_ne
 12ec : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -5913,9 +5643,6 @@ ffff =                       ram_top = -1
                             >            trap_ne         ;wrong number of bytes
 1314 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   92
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            set_a $ff-$0b,0
                             >            load_flag 0
 1316 : a900             [ 2]>            lda #0             ;allow test to change I-flag (no mask)
@@ -5978,9 +5705,6 @@ ffff =                       ram_top = -1
                             >            trap_ne         ;x changed
 1346 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   93
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
                                      nop_test $1b,1
 1348 : a042             [ 2]>            ldy #$42
@@ -6043,9 +5767,6 @@ ffff =                       ram_top = -1
                             >            tst_a $aa-$1b,$ff
 1370 : 08               [ 3]>            php         ;save flags
 1371 : c98f             [ 2]>            cmp #$aa-$1b     ;test result
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   94
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            trap_ne
 1373 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
@@ -6108,9 +5829,6 @@ ffff =                       ram_top = -1
 139c : 68               [ 4]>            pla         ;load status
 139d : 48               [ 3]>            pha
                             >            cmp_flag 0
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   95
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 139e : c930             [ 2]>            cmp #(0|fao)&m8    ;expected flags + always on bits
                             >
                             >            trap_ne
@@ -6173,9 +5891,6 @@ ffff =                       ram_top = -1
 13c7 : ca               [ 2]>            dex
                             >            trap_ne         ;wrong number of bytes
 13c8 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   96
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
                             >            set_a $ff-$3b,0
                             >            load_flag 0
@@ -6238,9 +5953,6 @@ ffff =                       ram_top = -1
 13f8 : e000             [ 2]>            cpx #0
                             >            trap_ne         ;x changed
 13fa : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   97
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
                              
                                      nop_test $4b,1
@@ -6303,9 +6015,6 @@ ffff =                       ram_top = -1
 1423 : ea               [ 2]>            nop
                             >            tst_a $aa-$4b,$ff
 1424 : 08               [ 3]>            php         ;save flags
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   98
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1425 : c95f             [ 2]>            cmp #$aa-$4b     ;test result
                             >            trap_ne
 1427 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -6368,9 +6077,6 @@ ffff =                       ram_top = -1
                             >
 1450 : 68               [ 4]>            pla         ;load status
 1451 : 48               [ 3]>            pha
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   99
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            cmp_flag 0
 1452 : c930             [ 2]>            cmp #(0|fao)&m8    ;expected flags + always on bits
                             >
@@ -6433,9 +6139,6 @@ ffff =                       ram_top = -1
                             >        endif
 147b : ca               [ 2]>            dex
                             >            trap_ne         ;wrong number of bytes
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  100
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 147c : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
                             >            set_a $ff-$6b,0
@@ -6498,9 +6201,6 @@ ffff =                       ram_top = -1
                             >
 14ac : e000             [ 2]>            cpx #0
                             >            trap_ne         ;x changed
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  101
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 14ae : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
                              
@@ -6563,9 +6263,6 @@ ffff =                       ram_top = -1
 14d6 : ea               [ 2]>            nop
 14d7 : ea               [ 2]>            nop
                             >            tst_a $aa-$7b,$ff
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  102
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 14d8 : 08               [ 3]>            php         ;save flags
 14d9 : c92f             [ 2]>            cmp #$aa-$7b     ;test result
                             >            trap_ne
@@ -6628,9 +6325,6 @@ ffff =                       ram_top = -1
 1502 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 1504 : 68               [ 4]>            pla         ;load status
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  103
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1505 : 48               [ 3]>            pha
                             >            cmp_flag 0
 1506 : c930             [ 2]>            cmp #(0|fao)&m8    ;expected flags + always on bits
@@ -6693,9 +6387,6 @@ ffff =                       ram_top = -1
                             >            iny
                             >        endif
 152f : ca               [ 2]>            dex
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  104
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            trap_ne         ;wrong number of bytes
 1530 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
@@ -6758,9 +6449,6 @@ ffff =                       ram_top = -1
 155e : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 1560 : e000             [ 2]>            cpx #0
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  105
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            trap_ne         ;x changed
 1562 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
@@ -6823,9 +6511,6 @@ ffff =                       ram_top = -1
 1589 : ab                   >            db  $ab          ;test nop integrity - flags on
 158a : ea               [ 2]>            nop
 158b : ea               [ 2]>            nop
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  106
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            tst_a $aa-$ab,$ff
 158c : 08               [ 3]>            php         ;save flags
 158d : c9ff             [ 2]>            cmp #$aa-$ab     ;test result
@@ -6888,9 +6573,6 @@ ffff =                       ram_top = -1
                             >            trap_ne
 15b6 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  107
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 15b8 : 68               [ 4]>            pla         ;load status
 15b9 : 48               [ 3]>            pha
                             >            cmp_flag 0
@@ -6953,9 +6635,6 @@ ffff =                       ram_top = -1
                             >            iny
                             >            iny
                             >        endif
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  108
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 15e3 : ca               [ 2]>            dex
                             >            trap_ne         ;wrong number of bytes
 15e4 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -7018,9 +6697,6 @@ ffff =                       ram_top = -1
                             >            trap_ne         ;y changed
 1612 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  109
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1614 : e000             [ 2]>            cpx #0
                             >            trap_ne         ;x changed
 1616 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -7083,9 +6759,6 @@ ffff =                       ram_top = -1
                             >
 163d : fb                   >            db  $fb          ;test nop integrity - flags on
 163e : ea               [ 2]>            nop
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  110
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 163f : ea               [ 2]>            nop
                             >            tst_a $aa-$fb,$ff
 1640 : 08               [ 3]>            php         ;save flags
@@ -7148,9 +6821,6 @@ ffff =                       ram_top = -1
                                  endif
                                  if  wdc_op = 0          ;NOPs not available on WDC 65C02 (WAI, STP)
                                      nop_test $cb,1
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  111
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                      nop_test $db,1
                                  endif
                                      next_test
@@ -7213,9 +6883,6 @@ ffff =                       ram_top = -1
                                      trap_ne
 1691 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  112
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1693 : e04f             [ 2]         cpx #('N'+1)
                                      trap_ne
 1695 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -7278,9 +6945,6 @@ ffff =                       ram_top = -1
                                      trap_pl
 16d5 : 10fe             [ 3]>        bpl *           ;failed plus (bit 7 clear)
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  113
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                      trap_cc
 16d7 : 90fe             [ 3]>        bcc *           ;failed carry clear
                              
@@ -7343,9 +7007,6 @@ ffff =                       ram_top = -1
 1717 : a942             [ 2]         lda #'B'
 1719 : a252             [ 2]         ldx #'R'
 171b : a04b             [ 2]         ldy #'K'
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  114
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 171d : 28               [ 4]         plp             ;N=0, V=0, Z=0, C=0
 171e : 00               [ 7]         brk
 171f : 88               [ 2]         dey             ;should not be executed
@@ -7408,9 +7069,6 @@ ffff =                       ram_top = -1
                                      trap_ne
 1754 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  115
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1756 : 68               [ 4]         pla             ;returned flags OK (unchanged)?
                                      cmp_flag $ff
 1757 : c9ff             [ 2]>            cmp #($ff|fao)&m8    ;expected flags + always on bits
@@ -7473,9 +7131,6 @@ ffff =                       ram_top = -1
 1788 : c900             [ 2]>            cmp #0     ;test result
                             >            trap_ne
 178a : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  116
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 178c : 68               [ 4]>            pla         ;load status
 178d : 48               [ 3]>            pha
@@ -7538,9 +7193,6 @@ ffff =                       ram_top = -1
 17ba : 48               [ 3]>            pha
                             >            cmp_flag $ff-zero
 17bb : c9fd             [ 2]>            cmp #($ff-zero|fao)&m8    ;expected flags + always on bits
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  117
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
                             >            trap_ne
 17bd : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -7603,9 +7255,6 @@ ffff =                       ram_top = -1
                             >            trap_ne
 17eb : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  118
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 17ed : 68               [ 4]>            pla         ;load status
 17ee : 48               [ 3]>            pha
                             >            cmp_flag 0
@@ -7668,9 +7317,6 @@ ffff =                       ram_top = -1
                                      trap_ne     ;sp push/pop mismatch
 181e : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  119
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                      next_test
 1820 : ad0202           [ 4]>            lda test_case   ;previous test
 1823 : c90c             [ 2]>            cmp #test_num
@@ -7733,9 +7379,6 @@ ffff =                       ram_top = -1
 185e : 68               [ 4]         pla         ;load status
                                      eor_flag 0
 185f : 4930             [ 2]>            eor #0|fao         ;invert expected flags + always on bits
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  120
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
 1861 : cd1602           [ 4]         cmp fLDx+1  ;test flags
                                      trap_ne
@@ -7798,9 +7441,6 @@ ffff =                       ram_top = -1
 189e : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
 18a0 : c066             [ 2]         cpy #$66
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  121
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                      trap_ne     ;y altered during test
 18a2 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
@@ -7863,9 +7503,6 @@ ffff =                       ram_top = -1
 18e7 : c982             [ 2]         cmp #$82    ;test result
                                      trap_ne
 18e9 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  122
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
 18eb : 68               [ 4]         pla         ;load status
                                      eor_flag lo~fnz ;mask bits not altered
@@ -7928,9 +7565,6 @@ ffff =                       ram_top = -1
 1927 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
 1929 : e099             [ 2]         cpx #$99
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  123
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                      trap_ne     ;x altered during test
 192b : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
@@ -7993,9 +7627,6 @@ ffff =                       ram_top = -1
                                      tst_a $55,$ff
 1975 : 08               [ 3]>            php         ;save flags
 1976 : c955             [ 2]>            cmp #$55     ;test result
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  124
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            trap_ne
 1978 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
@@ -8058,9 +7689,6 @@ ffff =                       ram_top = -1
 19b4 : ca               [ 2]         dex
 19b5 : 10f9             [ 3]         bpl tstz4
                                      
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  125
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 19b7 : a204             [ 2]         ldx #4      ;precharge test area
 19b9 : a907             [ 2]         lda #7
 19bb : 9d0502           [ 5] tstz5   sta abst,x
@@ -8123,9 +7751,6 @@ ffff =                       ram_top = -1
 1a06 : 9c0702           [ 4]         stz abst+2
 1a09 : 9c0802           [ 4]         stz abst+3
 1a0c : 9c0902           [ 4]         stz abst+4
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  126
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                      tst_a $aa,0
 1a0f : 08               [ 3]>            php         ;save flags
 1a10 : c9aa             [ 2]>            cmp #$aa     ;test result
@@ -8188,9 +7813,6 @@ ffff =                       ram_top = -1
 1a48 : b50c             [ 4] tstz12  lda zpt,x   ;verify zeros stored
                                      trap_ne     ;non zero after STZ zp
 1a4a : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  127
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
 1a4c : ca               [ 2]         dex
 1a4d : 10f9             [ 3]         bpl tstz12
@@ -8253,9 +7875,6 @@ ffff =                       ram_top = -1
 1a8b : a955             [ 2]>            lda #$55     ;precharge accu
 1a8d : 28               [ 4]>            plp
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  128
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1a8e : 9e0502           [ 5]         stz abst,x     
                                      tst_a $55,$ff
 1a91 : 08               [ 3]>            php         ;save flags
@@ -8318,9 +7937,6 @@ ffff =                       ram_top = -1
 1acc : ca               [ 2]         dex
 1acd : 10e8             [ 3]         bpl tstz26
 1acf : a204             [ 2]         ldx #4
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  129
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1ad1 : bd0502           [ 4] tstz24  lda abst,x   ;verify zeros stored
                                      trap_ne     ;non zero after STZ zp
 1ad4 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -8383,9 +7999,6 @@ ffff =                       ram_top = -1
 1b07 : a900             [ 2]>            lda #0             ;allow test to change I-flag (no mask)
                             >
 1b09 : 48               [ 3]>            pha         ;use stack to load status
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  130
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1b0a : a901             [ 2]>            lda #1     ;precharge accu
 1b0c : 28               [ 4]>            plp
                              
@@ -8448,9 +8061,6 @@ ffff =                       ram_top = -1
                             >            trap_ne
 1b3c : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  131
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1b3e : 68               [ 4]>            pla         ;load status
 1b3f : 48               [ 3]>            pha
                             >            cmp_flag fnv
@@ -8513,9 +8123,6 @@ ffff =                       ram_top = -1
                             >
 1b6d : 28               [ 4]>            plp         ;restore status
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  132
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1b6e : e8               [ 2]         inx
                                      set_a 1,$ff
                             >            load_flag $ff
@@ -8578,9 +8185,6 @@ ffff =                       ram_top = -1
 1b9d : 28               [ 4]>            plp
                              
 1b9e : 3c1002           [ 4]         bit abs1,x  ;00 - should set Z / clear  NV
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  133
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                      tst_a $ff,fz 
 1ba1 : 08               [ 3]>            php         ;save flags
 1ba2 : c9ff             [ 2]>            cmp #$ff     ;test result
@@ -8643,9 +8247,6 @@ ffff =                       ram_top = -1
 1bd3 : 48               [ 3]>            pha
                             >            cmp_flag fnz
 1bd4 : c9b2             [ 2]>            cmp #(fnz|fao)&m8    ;expected flags + always on bits
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  134
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
                             >            trap_ne
 1bd6 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -8708,9 +8309,6 @@ ffff =                       ram_top = -1
                                      set_a 1,$ff
                             >            load_flag $ff
 1c05 : a9ff             [ 2]>            lda #$ff             ;allow test to change I-flag (no mask)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  135
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 1c07 : 48               [ 3]>            pha         ;use stack to load status
 1c08 : a901             [ 2]>            lda #1     ;precharge accu
@@ -8773,9 +8371,6 @@ ffff =                       ram_top = -1
 1c3a : 08               [ 3]>            php         ;save flags
 1c3b : c9ff             [ 2]>            cmp #$ff     ;test result
                             >            trap_ne
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  136
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1c3d : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 1c3f : 68               [ 4]>            pla         ;load status
@@ -8838,9 +8433,6 @@ ffff =                       ram_top = -1
                             >            trap_ne
 1c6c : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  137
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1c6e : 28               [ 4]>            plp         ;restore status
                              
                              ; *** DEBUG INFO ***
@@ -8903,9 +8495,6 @@ ffff =                       ram_top = -1
                                      set_a 1,$ff
                             >            load_flag $ff
 1c99 : a9ff             [ 2]>            lda #$ff             ;allow test to change I-flag (no mask)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  138
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 1c9b : 48               [ 3]>            pha         ;use stack to load status
 1c9c : a901             [ 2]>            lda #1     ;precharge accu
@@ -8968,9 +8557,6 @@ ffff =                       ram_top = -1
 1ccb : 08               [ 3]>            php         ;save flags
 1ccc : c901             [ 2]>            cmp #1     ;test result
                             >            trap_ne
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  139
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1cce : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 1cd0 : 68               [ 4]>            pla         ;load status
@@ -9033,9 +8619,6 @@ ffff =                       ram_top = -1
 1d00 : a910             [ 2]>            lda #test_num   ;*** next tests' number
 1d02 : 8d0202           [ 4]>            sta test_case
                             >            ;check_ram       ;uncomment to find altered RAM after each test
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  140
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
                              
                              ; testing TRB, TSB - zp / abs
@@ -9098,9 +8681,6 @@ ffff =                       ram_top = -1
                                      
 1d0b : 98               [ 2] tbt1    tya
 1d0c : 250d             [ 3]         and zpt+1   ;set Z by anding the 2 operands
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  141
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1d0e : 08               [ 3]         php
 1d0f : 68               [ 4]         pla
 1d10 : 2902             [ 2]         and #fz     ;mask Z
@@ -9163,9 +8743,6 @@ ffff =                       ram_top = -1
                             >        trap_ne     ;accu was changed
 1d55 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  142
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1d57 : 68               [ 4]>        pla
 1d58 : 48               [ 3]>        pha
 1d59 : 0902             [ 2]>        ora #fz     ;mask Z
@@ -9228,9 +8805,6 @@ ffff =                       ram_top = -1
 1d93 : a900             [ 2]>            lda #0             ;allow test to change I-flag (no mask)
                             >
 1d95 : 48               [ 3]>        pha
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  143
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1d96 : a50d             [ 3]>        lda zpt+1
 1d98 : 28               [ 4]>        plp
 1d99 : 1c0502           [ 3]>        trb abst
@@ -9293,9 +8867,6 @@ ffff =                       ram_top = -1
 1dd6 : c50c             [ 3]>        cmp zpt
                             >        trap_ne     ;altered bits in memory wrong        
 1dd8 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  144
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
                              
                                      tsbt abst,$ff
@@ -9358,9 +8929,6 @@ ffff =                       ram_top = -1
                             >
 1e17 : 68               [ 4]>        pla
 1e18 : 2902             [ 2]>        and #fz
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  145
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1e1a : c50e             [ 3]>        cmp zpt+2
                             >        trap_ne     ;Z flag invalid
 1e1c : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -9423,9 +8991,6 @@ ffff =                       ram_top = -1
 1e5b : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
                                      next_test    
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  146
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1e5d : ad0202           [ 4]>            lda test_case   ;previous test
 1e60 : c910             [ 2]>            cmp #test_num
                             >            trap_ne         ;test is out of sequence
@@ -9488,9 +9053,6 @@ ffff =                       ram_top = -1
 1e74 : a9a5             [ 2]>            lda #$a5     ;precharge accu
 1e76 : 28               [ 4]>            plp
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  147
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1e77 : 070c             [ 5]>        rmb 0,zpt
                             >        tst_a $a5,0
 1e79 : 08               [ 3]>            php         ;save flags
@@ -9553,9 +9115,6 @@ ffff =                       ram_top = -1
 1eab : a900             [ 2]>            lda #0             ;allow test to change I-flag (no mask)
                             >
 1ead : 48               [ 3]>            pha         ;use stack to load status
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  148
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1eae : a9a5             [ 2]>            lda #$a5     ;precharge accu
 1eb0 : 28               [ 4]>            plp
                             >
@@ -9618,9 +9177,6 @@ ffff =                       ram_top = -1
 1ee3 : 850c             [ 3]>        sta zpt
                             >        set_a $a5,0
                             >            load_flag 0
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  149
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1ee5 : a900             [ 2]>            lda #0             ;allow test to change I-flag (no mask)
                             >
 1ee7 : 48               [ 3]>            pha         ;use stack to load status
@@ -9683,9 +9239,6 @@ ffff =                       ram_top = -1
                              
                                      rmbt 3
 1f1b : a9ff             [ 2]>        lda #$ff
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  150
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1f1d : 850c             [ 3]>        sta zpt
                             >        set_a $a5,0
                             >            load_flag 0
@@ -9748,9 +9301,6 @@ ffff =                       ram_top = -1
                             >        trap_ne     ;wrong bits set or cleared
 1f53 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  151
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
                                      rmbt 4
 1f55 : a9ff             [ 2]>        lda #$ff
@@ -9813,9 +9363,6 @@ ffff =                       ram_top = -1
 1f8a : 28               [ 4]>            plp         ;restore status
                             >
 1f8b : a50c             [ 3]>        lda zpt
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  152
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >        trap_ne     ;wrong bits set or cleared
 1f8d : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
@@ -9878,9 +9425,6 @@ ffff =                       ram_top = -1
                             >            trap_ne
 1fc2 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  153
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 1fc4 : 28               [ 4]>            plp         ;restore status
                             >
 1fc5 : a50c             [ 3]>        lda zpt
@@ -9943,9 +9487,6 @@ ffff =                       ram_top = -1
                             >            cmp_flag $ff
 1ffa : c9ff             [ 2]>            cmp #($ff|fao)&m8    ;expected flags + always on bits
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  154
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            trap_ne
 1ffc : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
@@ -10008,9 +9549,6 @@ ffff =                       ram_top = -1
                             >
 2032 : 68               [ 4]>            pla         ;load status
 2033 : 48               [ 3]>            pha
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  155
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            cmp_flag $ff
 2034 : c9ff             [ 2]>            cmp #($ff|fao)&m8    ;expected flags + always on bits
                             >
@@ -10073,9 +9611,6 @@ ffff =                       ram_top = -1
 2068 : c95a             [ 2]>            cmp #$5a     ;test result
                             >            trap_ne
 206a : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  156
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 206c : 68               [ 4]>            pla         ;load status
 206d : 48               [ 3]>            pha
@@ -10138,9 +9673,6 @@ ffff =                       ram_top = -1
                             >
 20a1 : 970c             [ 5]>        smb 1,zpt
                             >        tst_a $5a,$ff
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  157
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 20a3 : 08               [ 3]>            php         ;save flags
 20a4 : c95a             [ 2]>            cmp #$5a     ;test result
                             >            trap_ne
@@ -10203,9 +9735,6 @@ ffff =                       ram_top = -1
                             >
 20d9 : 48               [ 3]>            pha         ;use stack to load status
 20da : a95a             [ 2]>            lda #$5a     ;precharge accu
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  158
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 20dc : 28               [ 4]>            plp
                             >
 20dd : a70c             [ 5]>        smb 2,zpt
@@ -10268,9 +9797,6 @@ ffff =                       ram_top = -1
 2111 : 850c             [ 3]>        sta zpt
                             >        set_a $5a,$ff
                             >            load_flag $ff
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  159
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 2113 : a9ff             [ 2]>            lda #$ff             ;allow test to change I-flag (no mask)
                             >
 2115 : 48               [ 3]>            pha         ;use stack to load status
@@ -10333,9 +9859,6 @@ ffff =                       ram_top = -1
                             >        trap_ne     ;wrong bits set or cleared
 2149 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  160
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 214b : a900             [ 2]>        lda #0
 214d : 850c             [ 3]>        sta zpt
                             >        set_a $5a,$ff
@@ -10398,9 +9921,6 @@ ffff =                       ram_top = -1
 2180 : 28               [ 4]>            plp         ;restore status
                             >
 2181 : a50c             [ 3]>        lda zpt
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  161
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 2183 : c9ff             [ 2]>        cmp #$ff
                             >        trap_ne     ;wrong bits set or cleared
 2185 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -10463,9 +9983,6 @@ ffff =                       ram_top = -1
                             >
                             >            trap_ne
 21ba : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  162
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 21bc : 28               [ 4]>            plp         ;restore status
                             >
@@ -10528,9 +10045,6 @@ ffff =                       ram_top = -1
 21f2 : 68               [ 4]>            pla         ;load status
 21f3 : 48               [ 3]>            pha
                             >            cmp_flag 0
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  163
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 21f4 : c930             [ 2]>            cmp #(0|fao)&m8    ;expected flags + always on bits
                             >
                             >            trap_ne
@@ -10593,9 +10107,6 @@ ffff =                       ram_top = -1
 222a : ad0202           [ 4]>            lda test_case   ;previous test
 222d : c911             [ 2]>            cmp #test_num
                             >            trap_ne         ;test is out of sequence
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  164
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 222f : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
 0012 =                      >test_num = test_num + 1
@@ -10658,9 +10169,6 @@ ffff =                       ram_top = -1
                             >
 2261 : 28               [ 4]>            plp         ;restore status
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  165
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                      set_a $7e,0
                             >            load_flag 0
 2262 : a900             [ 2]>            lda #0             ;allow test to change I-flag (no mask)
@@ -10723,9 +10231,6 @@ ffff =                       ram_top = -1
                                      tst_a $7f,~fn
 2292 : 08               [ 3]>            php         ;save flags
 2293 : c97f             [ 2]>            cmp #$7f     ;test result
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  166
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >            trap_ne
 2295 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
@@ -10788,9 +10293,6 @@ ffff =                       ram_top = -1
 22c8 : 8d0202           [ 4]>            sta test_case
                             >            ;check_ram       ;uncomment to find altered RAM after each test
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  167
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
                              ; testing logical instructions - AND EOR ORA (zp)
 22cb : a242             [ 2]         ldx #$42    ;protect x & y
@@ -10853,9 +10355,6 @@ ffff =                       ram_top = -1
                             >
 230a : d95f02           [ 4]>            cmp absflo,y    ;test flags
                             >            trap_ne
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  168
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 230d : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
                              
@@ -10918,9 +10417,6 @@ ffff =                       ram_top = -1
 234e : 68               [ 4]>            pla         ;load status
                             >            eor_flag $ff-fnz
 234f : 497d             [ 2]>            eor #$ff-fnz|fao         ;invert expected flags + always on bits
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  169
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                             >
 2351 : d95f02           [ 4]>            cmp absflo,y    ;test flags
                             >            trap_ne
@@ -10983,9 +10479,6 @@ ffff =                       ram_top = -1
                             >            trap_ne     ;
 2393 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                             >
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  170
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 2395 : 68               [ 4]>            pla         ;load status
                             >            eor_flag $ff-fnz
 2396 : 497d             [ 2]>            eor #$ff-fnz|fao         ;invert expected flags + always on bits
@@ -11048,9 +10541,6 @@ ffff =                       ram_top = -1
 23dd : e60f             [ 5]         inc adrl        ;result +1
 23df : 08               [ 3]         php             ;save N & Z from low result
 23e0 : 08               [ 3]         php
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  171
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 23e1 : 68               [ 4]         pla             ;accu holds expected flags
 23e2 : 2982             [ 2]         and #$82        ;mask N & Z
 23e4 : 28               [ 4]         plp
@@ -11113,9 +10603,6 @@ ffff =                       ram_top = -1
 242b : a20e             [ 2]         ldx #ad2        ;for indexed test
 242d : a0ff             [ 2]         ldy #$ff        ;max range
 242f : a999             [ 2]         lda #$99        ;start with adding 99 to 99 with carry
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  172
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 2431 : 850d             [ 3]         sta ad1         ;operand 1 - accumulator
 2433 : 850e             [ 3]         sta ad2         ;operand 2 - memory or immediate
 2435 : 8d0502           [ 4]         sta ada2        ;non zp
@@ -11178,9 +10665,6 @@ ffff =                       ram_top = -1
 24a6 : c60e             [ 5]         dec ad2
 24a8 : c60e             [ 5]         dec ad2
 24aa : c60e             [ 5]         dec ad2
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  173
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 24ac : c60e             [ 5]         dec ad2
 24ae : e612             [ 5]         inc sb2         ;complemented decimal adjust for subtract (?9+6)
 24b0 : e612             [ 5]         inc sb2
@@ -11243,9 +10727,6 @@ ffff =                       ram_top = -1
                              ; -------------       
                                      success         ;if you get here everything went well
 24f1 : 4cf124           [ 3]>        jmp *           ;test passed, no errors
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  174
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
                              ; -------------       
                              ; S U C C E S S ************************************************       
@@ -11308,9 +10789,6 @@ ffff =                       ram_top = -1
 252f : a50d             [ 3]         lda ad1
 2531 : ed0602           [ 4]         sbc sba2        ;perform subtract
 2534 : 08               [ 3]         php          
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  175
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 2535 : c50f             [ 3]         cmp adrl        ;check result
                                      trap_ne         ;bad result
 2537 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -11373,9 +10851,6 @@ ffff =                       ram_top = -1
 2580 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
 2582 : 28               [ 4]         plp
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  176
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 2583 : 08               [ 3]         php             ;save carry for next add
 2584 : a50d             [ 3]         lda ad1
 2586 : f504             [ 4]         sbc sb2-ad2,x   ;perform subtract
@@ -11438,9 +10913,6 @@ ffff =                       ram_top = -1
 25cb : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
 25cd : 28               [ 4]         plp
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  177
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 25ce : 08               [ 3]         php             ;save carry for next add
 25cf : a50d             [ 3]         lda ad1
 25d1 : f90701           [ 4]         sbc sba2-$ff,y  ;perform subtract
@@ -11503,9 +10975,6 @@ ffff =                       ram_top = -1
 2614 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
 2616 : 28               [ 4]         plp
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  178
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 2617 : 08               [ 3]         php             ;save carry for next add
 2618 : a50d             [ 3]         lda ad1
 261a : f158             [ 5]         sbc (sbiy2),y   ;perform subtract
@@ -11568,9 +11037,6 @@ ffff =                       ram_top = -1
 265d : 10fe             [ 4]         bpl ckad1       ;no overflow occured - operand and result have same sign
 265f : 68               [ 4]         pla
 2660 : 0940             [ 2]         ora #$40        ;set V
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  179
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 2662 : 48               [ 3]         pha
 2663 : 68               [ 4] ckad1   pla
 2664 : 8511             [ 3]         sta adrf        ;save expected flags
@@ -11633,9 +11099,6 @@ ffff =                       ram_top = -1
                              
 269e : c949             [ 2]         cmp #'I'        ;registers loaded?
                                      trap_ne
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  180
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 26a0 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
 26a2 : e04e             [ 2]         cpx #'N'
@@ -11698,9 +11161,6 @@ ffff =                       ram_top = -1
                              
                                      trap_mi
 26de : 30fe             [ 3]>        bmi *           ;failed minus (bit 7 set)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  181
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              
                                      trap_eq 
 26e0 : f0fe             [ 3]>        beq *           ;failed equal (zero)
@@ -11763,9 +11223,6 @@ ffff =                       ram_top = -1
 2716 : 4c1627           [ 3]>        jmp *           ;failed anyway
                              
 2719 : 4c0004           [ 3]         jmp start       ;catastrophic error - cannot continue
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  182
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 271c :                       res_trap
                                      trap            ;unexpected RESET
 271c : 4c1c27           [ 3]>        jmp *           ;failed anyway
@@ -11828,9 +11285,6 @@ ffff =                       ram_top = -1
                                      trap_ne
 275a : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  183
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                                      load_flag $ff
 275c : a9ff             [ 2]>            lda #$ff             ;allow test to change I-flag (no mask)
                              
@@ -11893,9 +11347,6 @@ ffff =                       ram_top = -1
 279c : 48               [ 3]         pha      
 279d : a60b             [ 3]         ldx irq_x
 279f : e8               [ 2]         inx             ;return registers with modifications
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  184
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 27a0 : a50a             [ 3]         lda irq_a
 27a2 : 49aa             [ 2]         eor #$aa
 27a4 : 28               [ 4]         plp             ;N=0, V=0, Z=0, C=0 but original flags should be restored
@@ -11958,9 +11409,6 @@ ffff =                       ram_top = -1
                              ex_sbc_ sbc #0              ;execute immediate opcodes
                                      rts
                              abs1_   db  $c3,$82,$41,0   ;test patterns for LDx BIT ROL ROR ASL LSR
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  185
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
                              abs7f_  db  $7f             ;test pattern for compare
                              ;loads
                              fLDx_   db  fn,fn,0,fz      ;expected flags for load
@@ -12023,9 +11471,6 @@ ffff =                       ram_top = -1
                                      trap            ;jmp indexed indirect page cross bug
                                  else
                              ; JMP (abs,x) when $xxff and $xx00 are from same page
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page  186
---------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
-
 27ac : 00000000000000..              ds  lo(jxi_ret - * - 2)
 27cc : ea               [ 2]         nop
 27cd : ea               [ 2]         nop
@@ -12055,6 +11500,327 @@ fffe : 2427                          dw  irq_trap
                              
 fffa =                               end start
                              
+
+AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    2
+--------------------------------------------------------- test_65C02.asm ---------------------------------------------------------
+
+---------------------------------------------------------- Symbol Table ----------------------------------------------------------
+
+              Symbol   Value        Decimal
+
+               absAN : $0247            583
+              absANa : $0253            595
+               absEO : $024b            587
+              absEOa : $0257            599
+              absflo : $025f            607
+               absOR : $0243            579
+              absORa : $024f            591
+              absrlo : $025b            603
+                abst : $0205            517
+                abs1 : $0210            528
+               abs7f : $0214            532
+                ada2 : $0205            517
+                adfc : $000c             12
+               adiy2 : $0056             86
+                adi2 : $0052             82
+                adrf : $0011             17
+                adrh : $0010             16
+                adrl : $000f             15
+                 ad1 : $000d             13
+                 ad2 : $000e             14
+                bbcl : $0b98           2968
+                bbrc : <macro>
+                bbsc : <macro>
+                 bbt : <macro>
+                bra0 : $0709           1801
+                bra1 : $06a8           1704
+                bra2 : $0702           1794
+                bra3 : $06af           1711
+                bra4 : $06fb           1787
+                bra5 : $06b6           1718
+                bra6 : $0710           1808
+                brb0 : $06f3           1779
+                brb1 : $06f0           1776
+                brb2 : $06ec           1772
+                brb3 : $06e7           1767
+                brb4 : $06e1           1761
+                brb5 : $06f5           1781
+               break : $0010             16
+              break2 : $276e          10094
+                brf0 : $06c3           1731
+                brf1 : $06c8           1736
+                brf2 : $06cd           1741
+                brf3 : $06d2           1746
+                brf4 : $06d7           1751
+            brk_ret0 : $1720           5920
+            brk_ret1 : $1746           5958
+                 br1 : $066d           1645
+                 br2 : $0684           1668
+               carry : $0001              1
+           check_ram : <macro>
+              chkadd : $264e           9806
+              chkdad : $24f7           9463
+               ckad1 : $2663           9827
+            cmp_flag : <macro>
+        code_segment : $0400           1024   *
+            data_bss : $020a            522
+        data_bss_end : $0263            611
+        data_segment : $0200            512   *
+             decmode : $0008              8
+            eor_flag : <macro>
+             ex_adci : $020a            522
+             ex_sbci : $020d            525
+                fASL : $0229            553
+                 fai : $0034             52
+           fail10196 : $0733           1843
+           fail10231 : $07bf           1983
+           fail10266 : $084b           2123
+           fail10301 : $08d7           2263
+           fail10336 : $0963           2403
+           fail10371 : $09ef           2543
+           fail10406 : $0a7b           2683
+           fail10441 : $0b07           2823
+           fail20196 : $0751           1873
+           fail20231 : $07dd           2013
+           fail20266 : $0869           2153
+           fail20301 : $08f5           2293
+           fail20336 : $0981           2433
+           fail20371 : $0a0d           2573
+           fail20406 : $0a99           2713
+           fail20441 : $0b25           2853
+           fail30196 : $0779           1913
+           fail30231 : $0805           2053
+           fail30266 : $0891           2193
+           fail30301 : $091d           2333
+           fail30336 : $09a9           2473
+           fail30371 : $0a35           2613
+           fail30406 : $0ac1           2753
+           fail30441 : $0b4d           2893
+           fail40196 : $0797           1943
+           fail40231 : $0823           2083
+           fail40266 : $08af           2223
+           fail40301 : $093b           2363
+           fail40336 : $09c7           2503
+           fail40371 : $0a53           2643
+           fail40406 : $0adf           2783
+           fail40441 : $0b6b           2923
+                 fao : $0030             48
+                  fc : $0001              1
+                fINC : $023e            574
+                fLDx : $0215            533
+                fLSR : $0231            561
+                  fn : $0080            128
+                 fnc : $0081            129
+                 fnv : $00c0            192
+                 fnz : $0082            130
+                fnzc : $0083            131
+                fROL : $0229            553
+               fROLc : $022d            557
+                fROR : $0231            561
+               fRORc : $0235            565
+                  fv : $0040             64
+                 fvz : $0042             66
+                  fz : $0002              2
+                 fzc : $0003              3
+              I_flag : $0003              3   *
+               indAN : $003a             58
+               indEO : $0042             66
+               indOR : $004a             74
+                indt : $0030             48
+                ind1 : $0024             36
+              intdis : $0004              4
+                inwt : $0038             56
+                inw1 : $002e             46
+               irq_a : $000a             10
+            irq_trap : $2724          10020
+               irq_x : $000b             11
+                 ji1 : $1662           5730
+              ji_adr : $268b           9867
+               ji_px : $2882          10370
+              ji_ret : $1682           5762
+              ji_tab : $02fd            765
+                jxi1 : $16ae           5806
+             jxi_adr : $26c7           9927
+              jxi_px : $27ce          10190
+             jxi_ret : $16ce           5838
+             jxi_tab : $02f9            761
+              jxp_ok : $1708           5896
+              jxp_px : $1705           5893
+             jxp_tab : $0300            768
+    load_data_direct : $0001              1   *
+           load_flag : <macro>
+               minus : $0080            128
+                  m8 : $00ff            255
+                 m8i : $00fb            251
+           next_test : <macro>
+            nmi_trap : $2716          10006
+            nop_test : <macro>
+             ok10196 : $0736           1846
+             ok10231 : $07c2           1986
+             ok10266 : $084e           2126
+             ok10301 : $08da           2266
+             ok10336 : $0966           2406
+             ok10371 : $09f2           2546
+             ok10406 : $0a7e           2686
+             ok10441 : $0b0a           2826
+             ok20196 : $0754           1876
+             ok20231 : $07e0           2016
+             ok20266 : $086c           2156
+             ok20301 : $08f8           2296
+             ok20336 : $0984           2436
+             ok20371 : $0a10           2576
+             ok20406 : $0a9c           2716
+             ok20441 : $0b28           2856
+             ok30196 : $077c           1916
+             ok30231 : $0808           2056
+             ok30266 : $0894           2196
+             ok30301 : $0920           2336
+             ok30336 : $09ac           2476
+             ok30371 : $0a38           2616
+             ok30406 : $0ac4           2756
+             ok30441 : $0b50           2896
+             ok40196 : $079a           1946
+             ok40231 : $0826           2086
+             ok40266 : $08b2           2226
+             ok40301 : $093e           2366
+             ok40336 : $09ca           2506
+             ok40371 : $0a56           2646
+             ok40406 : $0ae2           2786
+             ok40441 : $0b6e           2926
+              overfl : $0040             64
+                pg_x : $0200            512
+         ROM_vectors : $0001              1   *
+                rASL : $0219            537
+           ram_chksm : $0203            515
+             ram_top : $ffff             -1   *
+              report : $0000              0   *
+              reserv : $0020             32
+            res_trap : $271c          10012
+                rINC : $0239            569
+         rkwl_wdc_op : $0001              1   *
+                rLSR : $0221            545
+                rmbt : <macro>
+                rROL : $0219            537
+               rROLc : $021d            541
+                rROR : $0221            545
+               rRORc : $0225            549
+                sba2 : $0206            518
+               sbiy2 : $0058             88
+                sbi2 : $0054             84
+                 sb2 : $0012             18
+               set_a : <macro>
+             set_abs : <macro>
+            set_absx : <macro>
+              set_ax : <macro>
+              set_ay : <macro>
+            set_stat : <macro>
+               set_x : <macro>
+               set_y : <macro>
+               set_z : <macro>
+              set_zx : <macro>
+            skip0480 : $0b9f           2975
+            skip0481 : $0ba4           2980
+            skip0482 : $0ba9           2985
+            skip0483 : $0bae           2990
+            skip0484 : $0bb3           2995
+            skip0485 : $0bb8           3000
+            skip0486 : $0bbd           3005
+            skip0487 : $0bc2           3010
+            skip0489 : $0bcd           3021
+            skip0490 : $0bd2           3026
+            skip0491 : $0bd7           3031
+            skip0492 : $0bdc           3036
+            skip0493 : $0be1           3041
+            skip0494 : $0be6           3046
+            skip0495 : $0beb           3051
+            skip0496 : $0bf0           3056
+            skip_nop : $0000              0   *
+                smbt : <macro>
+               start : $0400           1024
+             success : <macro>
+                tadd : $23d7           9175
+               tadd1 : $23e9           9193
+               tand1 : $22d7           8919
+               tand2 : $22f8           8952
+                tbt1 : $1d0b           7435
+                tbt2 : $1e54           7764
+                tbt3 : $1e51           7761
+                tdad : $244b           9291
+               tdad1 : $245d           9309
+               tdad2 : $246d           9325
+               tdad3 : $246f           9327
+               tdad4 : $2491           9361
+               tdad5 : $2496           9366
+               tdad6 : $24ba           9402
+               tdad7 : $24d7           9431
+               teor1 : $231e           8990
+               teor2 : $233f           9023
+           test_case : $0202            514
+             test_ji : $2691           9873
+            test_jxi : $26d5           9941
+            test_num : $0015             21   *
+               tora1 : $2365           9061
+               tora2 : $2386           9094
+                trap : <macro>
+             trap_cc : <macro>
+             trap_cs : <macro>
+             trap_eq : <macro>
+            trap_ind : $270e           9998
+             trap_mi : <macro>
+             trap_ne : <macro>
+             trap_pl : <macro>
+             trap_vc : <macro>
+             trap_vs : <macro>
+                trbt : <macro>
+                tsbt : <macro>
+              tstai1 : $18a8           6312
+              tstai2 : $1935           6453
+               tstz1 : $195d           6493
+              tstz11 : $1a27           6695
+              tstz12 : $1a48           6728
+              tstz13 : $1a53           6739
+              tstz14 : $1a74           6772
+              tstz15 : $1a2f           6703
+              tstz16 : $1a5b           6747
+               tstz2 : $1981           6529
+              tstz21 : $1a7f           6783
+              tstz22 : $1aa2           6818
+              tstz23 : $1aae           6830
+              tstz24 : $1ad1           6865
+              tstz25 : $1a88           6792
+              tstz26 : $1ab7           6839
+               tstz3 : $198c           6540
+               tstz4 : $19b0           6576
+               tstz5 : $19bb           6587
+               tstz6 : $19e5           6629
+               tstz7 : $19f1           6641
+               tstz8 : $1a1b           6683
+               tst_a : <macro>
+             tst_abs : <macro>
+            tst_absx : <macro>
+              tst_as : <macro>
+              tst_ax : <macro>
+              tst_ay : <macro>
+            tst_stat : <macro>
+               tst_x : <macro>
+               tst_y : <macro>
+               tst_z : <macro>
+              tst_zx : <macro>
+              wdc_op : $0001              1   *
+                zero : $0002              2
+           zero_page : $000a             10   *
+                zpAN : $001c             28
+                zpEO : $0020             32
+                zpOR : $0018             24
+                 zpt : $000c             12
+                 zp1 : $0013             19
+                zp7f : $0017             23
+              zp_bss : $0013             19
+          zp_bss_end : $005a             90
+          __65SC02__ : $0001              1
+
+266 labels used
+
 2882 lines read, no errors in pass 1.
 No errors in pass 2.
 Wrote binary from address $000a through $ffff.

@@ -52,6 +52,9 @@ int main() {
 
 	printf("running:\n");
 
+	for (int i = 0; i < 490; i++)
+		cpu_runInstruction();
+
 	// stops program execution when there was a jump/branch to the exact same position
 	// this is how the test program indicates an incorrect instruction
 	uint16_t prevProgramCounter = 0;
@@ -74,7 +77,7 @@ int main() {
 	extern size_t instructionCount;
 	extern size_t totalCycles;
 	printf("ended at $%04X\n", prevProgramCounter);
-	printf("test number: %d\n", bus_read(0x0200));
+	printf("test number: %d\n", bus_read(0x0202));
 	printf("ran %zi instruction(s) in %zi clockcycle(s)\n", instructionCount, totalCycles);
 	
 	rom_destroy(rom);

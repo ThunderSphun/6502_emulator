@@ -349,7 +349,6 @@ void cpu_printOpcode() {
 #ifdef WDC
 	case AM_STK:  printf("         "); break;
 #endif
-	case AM_REL:  printf("%c$%02X     ",  (int8_t) bus_read(registers.PC + 1) < 0 ? '-' : bus_read(registers.PC + 1) == 0 ? ' ' : '+', abs((int8_t) bus_read(registers.PC + 1))); break;
 	case AM_IMM:  printf("#$%02X     ",   bus_read(registers.PC + 1)); break;
 	case AM_ABS:  printf(" $%02X%02X   ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
 #ifdef WDC
@@ -366,6 +365,23 @@ void cpu_printOpcode() {
 	case AM_IND:  printf("($%02X%02X)  ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
 	case AM_INDX: printf("($%02X%02X,X)", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
 	case AM_INDY: printf("($%02X%02X),Y", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
+	case AM_REL: {
+#ifdef ROCKWEL
+			if ((bus_read(registers.PC) & 0x0F) == 0x0F) {
+				printf(" $%02X,%c$%02X",
+					bus_read(registers.PC + 1),
+					(int8_t) bus_read(registers.PC + 2) < 0 ? '-' :
+					bus_read(registers.PC + 2) == 0 ? ' ' : '+',
+					abs((int8_t) bus_read(registers.PC + 2)));
+				break;
+			}
+#endif
+			printf("%c$%02X     ",
+				(int8_t) bus_read(registers.PC + 1) < 0 ? '-' :
+				bus_read(registers.PC + 1) == 0 ? ' ' : '+',
+				abs((int8_t) bus_read(registers.PC + 1)));
+			break;
+		}
 	}
 	printf(")\n");
 #else
@@ -379,7 +395,6 @@ void cpu_printOpcode() {
 #ifdef WDC
 	case AM_STK:  break;
 #endif
-	case AM_REL:  printf(" %02X", bus_read(registers.PC + 1)); break;
 	case AM_IMM:  printf(" %02X", bus_read(registers.PC + 1)); break;
 	case AM_ABS:  printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
 #ifdef WDC
@@ -396,6 +411,14 @@ void cpu_printOpcode() {
 	case AM_IND:  printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
 	case AM_INDX: printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
 	case AM_INDY: printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
+	case AM_REL: {
+#ifdef ROCKWEL
+			if ((bus_read(registers.PC) & 0x0F) == 0x0F) {
+				printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
+			}
+#endif
+			printf(" %02X", bus_read(registers.PC + 1)); break;
+		}
 	}
 	printf("\n");
 #endif
@@ -522,6 +545,16 @@ void am_indy() {
 // this mode is only allowed for the branch instructions
 void am_rel() {
 	int8_t offset = bus_read(registers.PC++);
+#ifdef ROCKWEL
+	// the branch if bit is set/reset instructions also take a zero page offset
+	// which need to be read from the program.
+	// these instructions conveniently have the top nibble be all 1s
+	if ((currentOpcode & 0x0F) == 0x0F) {
+		operand = bus_read(offset);
+		offset = bus_read(registers.PC++);
+	}
+#endif
+	// TODO: move this to BRANCH, only take clockcycle if the branch is taken
 	if ((registers.PC & 0xFF00) != ((registers.PC + offset) & 0xFF00))
 		cycles++;
 	effectiveAddress = registers.PC + offset;
@@ -596,13 +629,11 @@ void am_xxx() {
 #ifdef ROCKWEL
 // some macro magic to get an easier time implementing the bit instructions
 // these instrutions originated in the Rockwel chips, and were later adapted by WDC
-#define BITS_EXPANSION(funcName) \
-void in_##funcName(uint8_t bit); \
+#define BITS_EXPANSION(funcName) void in_##funcName(uint8_t bit); \
 BIT_EXPANSION(funcName, 0) BIT_EXPANSION(funcName, 1) \
 BIT_EXPANSION(funcName, 2) BIT_EXPANSION(funcName, 3) BIT_EXPANSION(funcName, 4) \
 BIT_EXPANSION(funcName, 5) BIT_EXPANSION(funcName, 6) BIT_EXPANSION(funcName, 7)
-#define BIT_EXPANSION(funcName, bit) \
-void in_##funcName##bit() { in_##funcName(bit); }
+#define BIT_EXPANSION(funcName, bit) void in_##funcName##bit() { in_##funcName(bit); }
 #endif
 
 // ADd with Carry
@@ -638,10 +669,10 @@ void in_asl() {
 
 #ifdef ROCKWEL
 // Branch on Bit Reset
-// tests bit of accumulator, and branches if it is 0
+// tests bit of location in zero page, and branches if it is 0
 // a branch taken takes an extra clock cycle
 void in_bbr(uint8_t bit) {
-	BRANCH((registers.A & (1 << bit)) == 0);
+	BRANCH(!(operand & (1 << bit)));
 }
 
 BITS_EXPANSION(bbr)
@@ -649,10 +680,10 @@ BITS_EXPANSION(bbr)
 
 #ifdef ROCKWEL
 // Branch on Bit Set
-// tests bit of accumulator, and branches if it is 1
+// tests bit of location in zero page, and branches if it is 1
 // a branch taken takes an extra clock cycle
 void in_bbs(uint8_t bit) {
-	BRANCH((registers.A & (1 << bit)) == 1);
+	BRANCH((operand & (1 << bit)));
 }
 
 BITS_EXPANSION(bbs)
@@ -926,6 +957,7 @@ void in_lsr() {
 //   these differ slightly in operand size and/or cycle counts
 void in_nop() {
 #ifdef WDC
+	// TODO: implement cycle count
 	uint8_t nop2[] = {
 		0x02, 0x22, 0x42, 0x62, 0x82, 0xC2, 0xE2,	// 2 cycles
 		0x44,										// 3 cycles
