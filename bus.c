@@ -1,8 +1,10 @@
 #include "bus.h"
 
+#include "util.h"
+
 #include <stdio.h>
 
-// #define VERBOSE
+//#define VERBOSE
 
 typedef struct busAddr busAddr_t;
 
@@ -290,20 +292,6 @@ void bus_write(const uint16_t fullAddr, const uint8_t data) {
 	}
 }
 
-#ifdef __GNUC__
-static inline void printBin(uint16_t val) {
-	printf("%08b %08b", (val >> 8) & 0xFF, val & 0xFF);
-}
-#else
-static inline void printBin(uint16_t val) {
-	for (int i = 15; i >= 0; i--) {
-		printf("%c", (val & (1 << i)) ? '1' : '0');
-		if (i == 8)
-			printf(" ");
-	}
-}
-#endif
-
 void bus_print() {
 	if (!bus.initialized) {
 		printf("bus not initialized");
@@ -318,11 +306,11 @@ void bus_print() {
 
 		printf("\n");
 
-		printBin(current->start);
+		printf("%08s %08s\n", byteToBinStr(current->start >> 8), byteToBinStr(current->start & 0xFF));
 		printf("\t%04X", current->start);
 		if (current->start != current->stop) {
 			printf("\n........ ........\t....\t%s\tr%p w%p\n", component.name, component.readFunc, component.writeFunc);
-			printBin(current->stop);
+			printf("%08s %08s\n", byteToBinStr(current->start >> 8), byteToBinStr(current->start & 0xFF));
 			printf("\t%04X\n", current->stop);
 		} else
 			printf("\t%s\tr%p w%p\n", component.name, component.writeFunc, component.writeFunc);

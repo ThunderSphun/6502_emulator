@@ -1,6 +1,7 @@
 #include "cpu.h"
 
 #include "bus.h"
+#include "util.h"
 
 #include <stdio.h>
 
@@ -324,23 +325,11 @@ void cpu_runInstruction() {
 		cpu_clock();
 }
 
-#ifdef __GNUC__
-static inline void printBin(uint8_t val) {
-	printf("%08b", val);
-}
-#else
-static inline void printBin(uint8_t val) {
-	for (int i = 7; i >= 0; i--)
-		printf("%c", (val & (1 << i)) ? '1' : '0');
-}
-#endif
-
 void cpu_printRegisters() {
 	printf("=------=----=----=----=----------=----=\n");
 	printf("|  PC  |  A |  X |  Y | NV_BDIZC | SP |\n");
-	printf("| %04X | %02X | %02X | %02X | ", registers.PC, registers.A, registers.X, registers.Y);
-	printBin(registers.flags);
-	printf(" | %02X |\n", registers.SP);
+	printf("| %04X | %02X | %02X | %02X | %08s | %02X |\n",
+		registers.PC, registers.A, registers.X, registers.Y, byteToBinStr(registers.flags), registers.SP);
 	printf("=------=----=----=----=----------=----=\n");
 }
 

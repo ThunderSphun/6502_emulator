@@ -1,0 +1,13 @@
+#include "util.h"
+
+#include <string.h>
+
+const char* byteToBinStr(uint8_t byte) {
+	static char str[9] = { 0 };
+	str[0] = 0;
+
+	for (int i = 7; i >= 0; i--)
+		strcat_s(str, sizeof(str) / sizeof(str[0]), (byte & (1 << i)) ? "1" : "0");
+
+	return str;
+}
