@@ -771,6 +771,9 @@ void in_brk() {
 	registers.PC_LO = bus_read(0xFFFE);
 	registers.PC_HI = bus_read(0xFFFF);
 	registers.flags.I = true; // run normal interupt sequence
+#ifdef WDC
+	registers.flags.D = false;
+#endif
 }
 
 // Branch on oVerflow Clear
