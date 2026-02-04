@@ -328,7 +328,7 @@ void cpu_runInstruction() {
 void cpu_printRegisters() {
 	printf("=------=----=----=----=----------=----=\n");
 	printf("|  PC  |  A |  X |  Y | NV_BDIZC | SP |\n");
-	printf("| %04X | %02X | %02X | %02X | %08s | %02X |\n",
+	printf("| %04X | %02X | %02X | %02X | %8s | %02X |\n",
 		registers.PC, registers.A, registers.X, registers.Y, byteToBinStr(registers.flags), registers.SP);
 	printf("=------=----=----=----=----------=----=\n");
 }

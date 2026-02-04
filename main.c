@@ -3,7 +3,7 @@
 #include "ram.h"
 #include "cpu.h"
 
-// #define VERBOSE
+#define VERBOSE
 
 #include <stdio.h>
 
@@ -43,8 +43,10 @@ int main() {
 	component_t rom = rom_init(0x10000);
 	bus_add(&ram, 0x0000, 0xFFFF);
 	ram_randomize(&ram);
-	rom_loadFile(&rom, "test_65C02.bin", 0x000a);
-	ram_loadFile(&ram, "test_65C02.bin", 0x000a);
+	const char* binFile = "test_65C02.bin";
+	printf("%s\n", binFile);
+	rom_loadFile(&rom, binFile, 0x000a);
+	ram_loadFile(&ram, binFile, 0x000a);
 
 	cpu_reset();
 	uint16_t* programCounter = (uint16_t*) registers;

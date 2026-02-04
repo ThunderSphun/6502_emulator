@@ -306,11 +306,11 @@ void bus_print() {
 
 		printf("\n");
 
-		printf("%08s %08s\n", byteToBinStr(current->start >> 8), byteToBinStr(current->start & 0xFF));
+		printf("%8s %8s\n", byteToBinStr(current->start >> 8), byteToBinStr(current->start & 0xFF));
 		printf("\t%04X", current->start);
 		if (current->start != current->stop) {
 			printf("\n........ ........\t....\t%s\tr%p w%p\n", component.name, component.readFunc, component.writeFunc);
-			printf("%08s %08s\n", byteToBinStr(current->start >> 8), byteToBinStr(current->start & 0xFF));
+			printf("%8s %8s\n", byteToBinStr(current->start >> 8), byteToBinStr(current->start & 0xFF));
 			printf("\t%04X\n", current->stop);
 		} else
 			printf("\t%s\tr%p w%p\n", component.name, component.writeFunc, component.writeFunc);
