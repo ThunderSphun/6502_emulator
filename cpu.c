@@ -245,7 +245,7 @@ void cpu_irq() {
 
 	registers.flags.I = true;
 #ifdef WDC
-	registers.flags.D = 0;
+	registers.flags.D = false;
 #endif
 
 	cycles = 7;
@@ -257,12 +257,12 @@ void cpu_reset() {
 
 	registers.SP = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
 
-	registers.flags._ = 1;
-	registers.flags.B = 1;
+	registers.flags._ = true;
+	registers.flags.B = true;
 #ifdef WDC
-	registers.flags.D = 0;
+	registers.flags.D = false;
 #endif
-	registers.flags.I = 1;
+	registers.flags.I = true;
 
 	cycles = 7;
 
@@ -284,7 +284,7 @@ void cpu_nmi() {
 
 	registers.flags.I = true;
 #ifdef WDC
-	registers.flags.D = 0;
+	registers.flags.D = false;
 #endif
 
 	cycles = 7;
@@ -719,7 +719,7 @@ void in_beq() {
 // this instruction only alters flags register
 void in_bit() {
 	registers.flags.Z = (registers.A & operand) == 0;
-	registers.flags.byte &= 0x3F;
+	registers.flags.byte &= 0x3F; // set bits 6 and 7 to zero, to overwrite them instead of merging them
 	registers.flags.byte |= operand & 0xC0;
 }
 
@@ -763,7 +763,10 @@ void in_brk() {
 	registers.PC++;
 	PUSH(registers.PC_HI);
 	PUSH(registers.PC_LO);
-	PUSH(registers.flags.byte | 0x30); // set break bit + unused bit
+	union flags flags = registers.flags;
+	flags.B = true;
+	flags._ = true;
+	PUSH(flags.byte);
 
 	registers.PC_LO = bus_read(0xFFFE);
 	registers.PC_HI = bus_read(0xFFFF);
@@ -814,7 +817,7 @@ void in_cmp() {
 	registers.flags.Z = registers.A == operand;
 	registers.flags.C = registers.A >= operand;
 	if (registers.A == operand)
-		registers.flags.N = 0;
+		registers.flags.N = false;
 	else
 		registers.flags.N = (int8_t)(registers.A - operand) < 0;
 }
@@ -996,7 +999,10 @@ void in_pha() {
 // pushes flags register on stack
 // this instruction sets break flag and bit 5 (unused)
 void in_php() {
-	PUSH(registers.flags.byte | 0x30);
+	union flags flags = registers.flags;
+	flags.B = true;
+	flags._ = true;
+	PUSH(flags.byte);
 }
 
 #ifdef WDC
@@ -1024,7 +1030,11 @@ void in_pla() {
 // pulls flags register off stack
 // this instruction ignores break flag and bit 5 (unused)
 void in_plp() {
-	registers.flags.byte = PULL() & 0xCF;
+	union flags flags;
+	flags.byte = PULL();
+	flags.B = registers.flags.B;
+	flags._ = registers.flags._;
+	registers.flags = flags;
 }
 
 #ifdef WDC
@@ -1100,10 +1110,14 @@ void in_ror() {
 }
 
 // ReTurn from Interupt
-// pulls flags register from stack, ignoring break flag and bit 5 (ignored)
+// pulls flags register from stack, ignoring break flag and bit 5
 // then pulls PC from stack
 void in_rti() {
-	registers.flags.byte = PULL();
+	union flags flags;
+	flags.byte = PULL();
+	flags.B = registers.flags.B;
+	flags._ = registers.flags._;
+	registers.flags = flags;
 	registers.PC_LO = PULL();
 	registers.PC_HI = PULL();
 
