@@ -125,6 +125,20 @@ enum {
 	INSTRUCTION_COUNT
 };
 
+union flags {
+	struct {
+		bool C : 1; // carry
+		bool Z : 1; // zero
+		bool I : 1; // interupt
+		bool D : 1; // binary coded decimal (BDC)
+		bool B : 1; // break
+		bool _ : 1; // unused
+		bool V : 1; // overflow
+		bool N : 1; // negative
+	};
+	uint8_t byte;
+};
+
 struct regs { // struct name purely for debug purposes
 	union {
 		struct {
@@ -136,19 +150,7 @@ struct regs { // struct name purely for debug purposes
 	uint8_t A; // accumulator
 	uint8_t X;
 	uint8_t Y;
-	union {
-		struct {
-			bool C : 1; // carry
-			bool Z : 1; // zero
-			bool I : 1; // interupt
-			bool D : 1; // binary coded decimal (BDC)
-			bool B : 1; // break
-			bool _ : 1; // unused
-			bool V : 1; // overflow
-			bool N : 1; // negative
-		};
-		uint8_t flags;
-	};
+	union flags flags;
 	uint8_t SP; // stack pointer
 } registers;
 
@@ -187,7 +189,7 @@ size_t instructionCount = 0;
 
 #define BRANCH(condition) if (condition) {cycles++; registers.PC = effectiveAddress;} else cycles = cycles
 
-#define SET_FLAGS(data) registers.Z = (data) == 0; registers.N = (data) & 0x80
+#define SET_FLAGS(data) registers.flags.Z = (data) == 0; registers.flags.N = (data) & 0x80
 
 #ifndef ROCKWEL
 // in the original 6502, a read-modify-write instruction writes the original value back, before modifying it and storing it again
@@ -200,12 +202,12 @@ size_t instructionCount = 0;
 
 // TODO: somehow transform to macro
 static inline void add() {
-	uint16_t tmp = registers.A + operand + registers.C;
+	uint16_t tmp = registers.A + operand + registers.flags.C;
 
-	if (registers.D) {
+	if (registers.flags.D) {
 		if (opcodes[currentOpcode].instruction == IN_ADC) {
 			// carry from lower nibble
-			if (((registers.A & 0x0F) + (operand & 0x0F) + registers.C) > 0x09)
+			if (((registers.A & 0x0F) + (operand & 0x0F) + registers.flags.C) > 0x09)
 				tmp += 0x06;
 
 			// carry from upper nibble
@@ -213,7 +215,7 @@ static inline void add() {
 				tmp += 0x60;
 		} else {
 			// carry from lower nibble
-			if (((registers.A & 0x0F) + (operand & 0x0F) + registers.C) < 0x10)
+			if (((registers.A & 0x0F) + (operand & 0x0F) + registers.flags.C) < 0x10)
 				tmp -= 0x06;
 
 			// carry from upper nibble
@@ -222,28 +224,28 @@ static inline void add() {
 		}
 	}
 
-	registers.V = ((registers.A & 0x80) == (operand & 0x80)) && ((registers.A & 0x80) != (tmp & 0x80));
+	registers.flags.V = ((registers.A & 0x80) == (operand & 0x80)) && ((registers.A & 0x80) != (tmp & 0x80));
 
-	registers.C = tmp > 0xFF;
+	registers.flags.C = tmp > 0xFF;
 	registers.A = tmp & 0xFF;
 
 	SET_FLAGS(registers.A);
 }
 
 void cpu_irq() {
-	if (!registers.I)
+	if (!registers.flags.I)
 		return;
 
 	PUSH(registers.PC >> 8);
 	PUSH(registers.PC & 0xFF);
-	PUSH(registers.flags);
+	PUSH(registers.flags.byte);
 
 	registers.PC_LO = bus_read(0xFFFE);
 	registers.PC_HI = bus_read(0xFFFF);
 
-	registers.I = true;
+	registers.flags.I = true;
 #ifdef WDC
-	registers.D = 0;
+	registers.flags.D = 0;
 #endif
 
 	cycles = 7;
@@ -255,12 +257,12 @@ void cpu_reset() {
 
 	registers.SP = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
 
-	registers._ = 1;
-	registers.B = 1;
+	registers.flags._ = 1;
+	registers.flags.B = 1;
 #ifdef WDC
-	registers.D = 0;
+	registers.flags.D = 0;
 #endif
-	registers.I = 1;
+	registers.flags.I = 1;
 
 	cycles = 7;
 
@@ -275,14 +277,14 @@ void cpu_reset() {
 void cpu_nmi() {
 	PUSH(registers.PC >> 8);
 	PUSH(registers.PC & 0xFF);
-	PUSH(registers.flags);
+	PUSH(registers.flags.byte);
 
 	registers.PC_LO = bus_read(0xFFFA);
 	registers.PC_HI = bus_read(0xFFFB);
 
-	registers.I = true;
+	registers.flags.I = true;
 #ifdef WDC
-	registers.D = 0;
+	registers.flags.D = 0;
 #endif
 
 	cycles = 7;
@@ -329,7 +331,7 @@ void cpu_printRegisters() {
 	printf("=------=----=----=----=----------=----=\n");
 	printf("|  PC  |  A |  X |  Y | NV_BDIZC | SP |\n");
 	printf("| %04X | %02X | %02X | %02X | %8s | %02X |\n",
-		registers.PC, registers.A, registers.X, registers.Y, byteToBinStr(registers.flags), registers.SP);
+		registers.PC, registers.A, registers.X, registers.Y, byteToBinStr(registers.flags.byte), registers.SP);
 	printf("=------=----=----=----=----------=----=\n");
 }
 
@@ -655,7 +657,7 @@ void in_and() {
 // shifts bit 7 into carry flag
 void in_asl() {
 	RMW();
-	registers.C = operand & 0x80;
+	registers.flags.C = operand & 0x80;
 	operand <<= 1;
 	operand &= 0xFE; // ensure newly added bit is 0
 
@@ -693,21 +695,21 @@ BITS_EXPANSION(bbs)
 // branches when carry flag is unset
 // a branch taken takes an extra clock cycle
 void in_bcc() {
-	BRANCH(!registers.C);
+	BRANCH(!registers.flags.C);
 }
 
 // Branch Carry Set
 // branches when carry flag is set
 // a branch taken takes an extra clock cycle
 void in_bcs() {
-	BRANCH(registers.C);
+	BRANCH(registers.flags.C);
 }
 
 // Branch on EQual
 // branches when zero flag is set (two values are equal if A - B == 0)
 // a branch taken takes an extra clock cycle
 void in_beq() {
-	BRANCH(registers.Z);
+	BRANCH(registers.flags.Z);
 }
 
 // test BITs
@@ -716,30 +718,30 @@ void in_beq() {
 // bits 6 and 7 of operand are set as negative and overflow flags respectively
 // this instruction only alters flags register
 void in_bit() {
-	registers.Z = (registers.A & operand) == 0;
-	registers.flags &= 0x3F;
-	registers.flags |= operand & 0xC0;
+	registers.flags.Z = (registers.A & operand) == 0;
+	registers.flags.byte &= 0x3F;
+	registers.flags.byte |= operand & 0xC0;
 }
 
 // Branch on MInus
 // branches when negative flag is set
 // a branch taken takes an extra clock cycle
 void in_bmi() {
-	BRANCH(registers.N);
+	BRANCH(registers.flags.N);
 }
 
 // Branch on Not Equals
 // branches when zero flag is unset (two values are not equal if A - B != 0)
 // a branch taken takes an extra clock cycle
 void in_bne() {
-	BRANCH(!registers.Z);
+	BRANCH(!registers.flags.Z);
 }
 
 // Branch on PLus
 // branches when negative flag is unset
 // a branch taken takes an extra clock cycle
 void in_bpl() {
-	BRANCH(!registers.N);
+	BRANCH(!registers.flags.N);
 }
 
 #ifdef WDC
@@ -761,47 +763,47 @@ void in_brk() {
 	registers.PC++;
 	PUSH(registers.PC_HI);
 	PUSH(registers.PC_LO);
-	PUSH(registers.flags | 0x30); // set break bit + unused bit
+	PUSH(registers.flags.byte | 0x30); // set break bit + unused bit
 
 	registers.PC_LO = bus_read(0xFFFE);
 	registers.PC_HI = bus_read(0xFFFF);
-	registers.I = true; // run normal interupt sequence
+	registers.flags.I = true; // run normal interupt sequence
 }
 
 // Branch on oVerflow Clear
 // branches when overflow flag is unset
 // a branch taken takes an extra clock cycle
 void in_bvc() {
-	BRANCH(!registers.V);
+	BRANCH(!registers.flags.V);
 }
 
 // Branch on oVerflow Set
 // branches when overflow flag is set
 // a branch taken takes an extra clock cycle
 void in_bvs() {
-	BRANCH(registers.V);
+	BRANCH(registers.flags.V);
 }
 
 // CLear Carry flag
 void in_clc() {
-	registers.C = false;
+	registers.flags.C = false;
 }
 
 // CLear Decimal flag
 // makes the 6502 perform normal binary math
 void in_cld() {
-	registers.D = false;
+	registers.flags.D = false;
 }
 
 // CLear Interupt flag
 // this instruction enables interupts from the IRQ pin/function, as this pin is active low
 void in_cli() {
-	registers.I = false;
+	registers.flags.I = false;
 }
 
 // CLear oVerflow
 void in_clv() {
-	registers.V = false;
+	registers.flags.V = false;
 }
 
 // CoMPare with accumulator
@@ -809,12 +811,12 @@ void in_clv() {
 // then ignore the result from the subtraction
 // this instruction only alters flags register
 void in_cmp() {
-	registers.Z = registers.A == operand;
-	registers.C = registers.A >= operand;
+	registers.flags.Z = registers.A == operand;
+	registers.flags.C = registers.A >= operand;
 	if (registers.A == operand)
-		registers.N = 0;
+		registers.flags.N = 0;
 	else
-		registers.N = (int8_t)(registers.A - operand) < 0;
+		registers.flags.N = (int8_t)(registers.A - operand) < 0;
 }
 
 // CoMpare with X register
@@ -822,12 +824,12 @@ void in_cmp() {
 // then ignore the result from the subtraction
 // this instruction only alters flags register
 void in_cpx() {
-	registers.Z = registers.X == operand;
-	registers.C = registers.X >= operand;
+	registers.flags.Z = registers.X == operand;
+	registers.flags.C = registers.X >= operand;
 	if (registers.X == operand)
-		registers.N = 0;
+		registers.flags.N = 0;
 	else
-		registers.N = (int8_t)(registers.X - operand) < 0;
+		registers.flags.N = (int8_t)(registers.X - operand) < 0;
 }
 
 // CoMpare with Y register
@@ -835,12 +837,12 @@ void in_cpx() {
 // then ignore the result from the subtraction
 // this instruction only alters flags register
 void in_cpy() {
-	registers.Z = registers.Y == operand;
-	registers.C = registers.Y >= operand;
+	registers.flags.Z = registers.Y == operand;
+	registers.flags.C = registers.Y >= operand;
 	if (registers.Y == operand)
-		registers.N = 0;
+		registers.flags.N = 0;
 	else
-		registers.N = (int8_t)(registers.Y - operand) < 0;
+		registers.flags.N = (int8_t)(registers.Y - operand) < 0;
 }
 
 // DECrement operand
@@ -939,7 +941,7 @@ void in_ldy() {
 // shifts bit 0 into carry flag
 void in_lsr() {
 	RMW();
-	registers.C = operand & 0x01;
+	registers.flags.C = operand & 0x01;
 	operand >>= 1;
 	operand &= 0xEF; // ensure newly added bit is 0
 
@@ -994,7 +996,7 @@ void in_pha() {
 // pushes flags register on stack
 // this instruction sets break flag and bit 5 (unused)
 void in_php() {
-	PUSH(registers.flags | 0x30);
+	PUSH(registers.flags.byte | 0x30);
 }
 
 #ifdef WDC
@@ -1022,7 +1024,7 @@ void in_pla() {
 // pulls flags register off stack
 // this instruction ignores break flag and bit 5 (unused)
 void in_plp() {
-	registers.flags = PULL() & 0xCF;
+	registers.flags.byte = PULL() & 0xCF;
 }
 
 #ifdef WDC
@@ -1059,9 +1061,9 @@ BITS_EXPANSION(rmb)
 // shifts bit 7 into carry flag
 void in_rol() {
 	RMW();
-	bool oldCarry = registers.C;
+	bool oldCarry = registers.flags.C;
 
-	registers.C = operand & 0x80;
+	registers.flags.C = operand & 0x80;
 	operand <<= 1;
 	operand &= 0xFE;
 	operand |= oldCarry;
@@ -1082,9 +1084,9 @@ void in_rol() {
 //   this bug makes it so that carry flag would be unused during the instruction
 void in_ror() {
 	RMW();
-	bool oldCarry = registers.C;
+	bool oldCarry = registers.flags.C;
 
-	registers.C = operand & 0x01;
+	registers.flags.C = operand & 0x01;
 	operand >>= 1;
 	operand &= 0xEF;
 	operand |= oldCarry << 7;
@@ -1101,7 +1103,7 @@ void in_ror() {
 // pulls flags register from stack, ignoring break flag and bit 5 (ignored)
 // then pulls PC from stack
 void in_rti() {
-	registers.flags = PULL();
+	registers.flags.byte = PULL();
 	registers.PC_LO = PULL();
 	registers.PC_HI = PULL();
 
@@ -1126,19 +1128,19 @@ void in_sbc() {
 
 // SEt Carry flag
 void in_sec() {
-	registers.C = true;
+	registers.flags.C = true;
 }
 
 // SEt Decimal flag
 // makes the 6502 perform binary coded decimal math
 void in_sed() {
-	registers.D = true;
+	registers.flags.D = true;
 }
 
 // SEt Interupt flag
 // this instruction disables interupts from the IRQ pin/function, as this pin is active low
 void in_sei() {
-	registers.I = true;
+	registers.flags.I = true;
 }
 
 #ifdef ROCKWEL
