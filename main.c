@@ -54,7 +54,7 @@ int main() {
 
 	printf("running:\n");
 
-	for (int i = 0; i < 11250; i++)
+	for (int i = 0; i < 11300; i++)
 		cpu_runInstruction();
 
 	// stops program execution when there was a jump/branch to the exact same position
@@ -71,8 +71,8 @@ int main() {
 		cpu_runInstruction();
 
 #ifdef VERBOSE
-		//cpu_printRegisters();
-		//printf("\n");
+		cpu_printRegisters();
+		printf("\n");
 #endif
 	}
 

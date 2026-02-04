@@ -301,10 +301,8 @@ void cpu_clock() {
 	instructionCount++;
 
 	currentOpcode = bus_read(registers.PC++);
-
 	const struct opcode opcode = opcodes[currentOpcode];
 
-	// set cycles from instruction
 	cycles = opcode.cycleCount;
 
 	addressModes[opcode.addressMode].func();
@@ -855,6 +853,11 @@ void in_cpy() {
 void in_dec() {
 	RMW();
 	operand--;
+#ifdef WDC
+	if (opcodes[currentOpcode].addressMode == AM_ACC)
+		registers.A = operand;
+	else
+#endif
 	bus_write(effectiveAddress, operand);
 
 	SET_FLAGS(operand);
@@ -886,6 +889,11 @@ void in_eor() {
 void in_inc() {
 	RMW();
 	operand++;
+#ifdef WDC
+	if (opcodes[currentOpcode].addressMode == AM_ACC)
+		registers.A = operand;
+	else
+#endif
 	bus_write(effectiveAddress, operand);
 
 	SET_FLAGS(operand);
