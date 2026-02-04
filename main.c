@@ -43,14 +43,17 @@ int main() {
 	component_t rom = rom_init(0x10000);
 	bus_add(&ram, 0x0000, 0xFFFF);
 	ram_randomize(&ram);
-	rom_loadFile(&rom, "test_6502.bin", 0x000a);
-	ram_loadFile(&ram, "test_6502.bin", 0x000a);
+	rom_loadFile(&rom, "test_65C02.bin", 0x000a);
+	ram_loadFile(&ram, "test_65C02.bin", 0x000a);
 
 	cpu_reset();
 	uint16_t* programCounter = (uint16_t*) registers;
 	*programCounter = 0x0400;
 
 	printf("running:\n");
+
+	for (int i = 0; i < 490; i++)
+		cpu_runInstruction();
 
 	// stops program execution when there was a jump/branch to the exact same position
 	// this is how the test program indicates an incorrect instruction
@@ -66,15 +69,15 @@ int main() {
 		cpu_runInstruction();
 
 #ifdef VERBOSE
-		cpu_printRegisters();
-		printf("\n");
+		//cpu_printRegisters();
+		//printf("\n");
 #endif
 	}
 
 	extern size_t instructionCount;
 	extern size_t totalCycles;
 	printf("ended at $%04X\n", prevProgramCounter);
-	printf("test number: %d\n", bus_read(0x0200));
+	printf("test number: %d\n", bus_read(0x0202));
 	printf("ran %zi instruction(s) in %zi clockcycle(s)\n", instructionCount, totalCycles);
 
 	rom_destroy(rom);
