@@ -2295,6 +2295,8 @@ tdad7   cpx #ad2
         success         ;if you get here everything went well
 ; -------------       
 ; S U C C E S S ************************************************       
+        lda #0;
+        trap_eq
         jmp start       ;run again      
 
 ; core subroutine of the decimal add/subtract test
