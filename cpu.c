@@ -718,8 +718,14 @@ void in_beq() {
 // this instruction only alters flags register
 void in_bit() {
 	registers.flags.Z = (registers.A & operand) == 0;
+#ifdef WDC
+	if (opcodes[currentOpcode].addressMode != AM_IMM) {
+#endif
 	registers.flags.byte &= 0x3F; // set bits 6 and 7 to zero, to overwrite them instead of merging them
 	registers.flags.byte |= operand & 0xC0;
+#ifdef WDC
+	}
+#endif
 }
 
 // Branch on MInus
