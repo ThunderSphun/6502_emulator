@@ -54,7 +54,7 @@ int main() {
 
 	printf("running:\n");
 
-	for (int i = 0; i < 11300; i++)
+	for (int i = 0; i < 11450; i++)
 		cpu_runInstruction();
 
 	// stops program execution when there was a jump/branch to the exact same position
