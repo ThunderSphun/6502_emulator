@@ -3,7 +3,7 @@
 #include "ram.h"
 #include "cpu.h"
 
-//#define VERBOSE
+#define VERBOSE
 
 #include <stdio.h>
 
@@ -43,7 +43,7 @@ int main() {
 	component_t rom = rom_init(0x10000);
 	bus_add(&ram, 0x0000, 0xFFFF);
 	ram_randomize(&ram);
-	const char* binFile = "test_65C02.bin";
+	const char* binFile = "test_interupt.bin";
 	printf("%s\n", binFile);
 	rom_loadFile(&rom, binFile, 0x000a);
 	ram_loadFile(&ram, binFile, 0x000a);
@@ -53,9 +53,6 @@ int main() {
 	*programCounter = 0x0400;
 
 	printf("running:\n");
-
-	for (size_t i = 0; i < 12137400; i++)
-		cpu_runInstruction();
 
 	// stops program execution when there was a jump/branch to the exact same position
 	// this is how the test program indicates an incorrect instruction
@@ -79,7 +76,7 @@ int main() {
 	extern size_t instructionCount;
 	extern size_t totalCycles;
 	printf("ended at $%04X\n", prevProgramCounter);
-	printf("test number: %d\n", bus_read(0x0202));
+	printf("test number: %d\n", bus_read(0x0200));
 	printf("ran %zi instruction(s) in %zi clockcycle(s)\n", instructionCount, totalCycles);
 
 	rom_destroy(rom);

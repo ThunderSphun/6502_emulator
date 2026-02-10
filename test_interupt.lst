@@ -63,9 +63,6 @@ AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood       
                              ;loading directly is preferred but may not be supported by your platform
                              ;0 produces only consecutive object code, 1 is not suitable for a binary image
 0001 =                       load_data_direct = 1
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    2
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
                              
                              ;NMI & IRQ are tested with a feedback register
                              ;emulators diag register - set i_drive = 0 for a latch (74HC573)
@@ -128,9 +125,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
                                      bne *           ;failed not equal (non zero)
                                      endm
                              ; please observe that during the test the stack gets invalidated
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    3
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
                              ; therefore a RTS inside the success macro is not possible
                              success macro
                                      jmp *           ;test passed, no errors
@@ -193,9 +187,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
                                          lda #\1
                                          pha         ;use stack to load status
                                          plp
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    4
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
                                          endm
                              
                                  if load_data_direct = 1
@@ -258,9 +249,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
                              I_set   macro  ibit     ;ibit = interrupt bit
                                      lda I_port      ;turn on interrupt by bit
                                      and #I_filter-(1<<\1)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    5
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
                                      plp             ;set flags
                                      pha             ;save to verify
                                      php
@@ -323,9 +311,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
                                      lda I_port      ;turn on interrupt by bit
                                      if ibit > 7     ;set both NMI & IRQ
                                        and #I_filter-(1<<IRQ_bit|1<<NMI_bit)
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    6
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
                                      else
                                        and #I_filter-(1<<\1)
                                      endif
@@ -388,9 +373,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
                                      sta I_port      ;interrupt next instruction plus outbound delay
                                      endm
                              I_clr   macro  ibit     ;ibit = interrupt bit
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    7
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
                                      lda I_port      ;turn off interrupt by bit
                                      and #I_filter-(1<<ibit)
                                      sta I_port
@@ -453,9 +435,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
                                    else
 043d : 4dfe01           [ 4]         eor lst_f       ;turn off unchanged bits
 0440 : 29cb             [ 2]         and #m8-fai     ;mask untested other flags
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    8
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
                                      trap_ne         ;other flags (N,V,Z,C,D) changed
 0442 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
@@ -518,9 +497,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
 0483 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
 0485 : a2ff             [ 2]         ldx #$ff        ;reset stack pointer
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    9
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
 0487 : 9a               [ 2]         txs
                              ; repeat with reversed registers
 0488 : a2b6             [ 2]         ldx #$ff-'I'
@@ -583,9 +559,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
 04c9 : a902             [ 2]         lda #2          ;set expected interrupt source IRQ
 04cb : 8d0302           [ 4]         sta I_src
                                      push_stat $ff-intdis
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   10
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
 04ce : a9fb             [ 2]>            lda #$ff-intdis
 04d0 : 48               [ 3]>            pha         ;use stack to load status
                              
@@ -648,9 +621,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
 0504 : ea               [ 2]         nop             ;allow 6 cycles for interrupt to trip
 0505 : ea               [ 2]         nop
 0506 : ea               [ 2]         nop
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   11
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
 0507 : ad0302           [ 4]         lda I_src
                                      trap_ne         ;IRQ timeout
 050a : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
@@ -713,9 +683,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
                                      trap_ne         ;returned SP
 0542 : d0fe             [ 3]>        bne *           ;failed not equal (non zero)
                              
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   12
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
 0544 : 68               [ 4]         pla             ;flags
 0545 : 4dfe01           [ 4]         eor lst_f
 0548 : 297d             [ 2]         and #$ff-fnz    ;ignore flags changed by dey
@@ -778,9 +745,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
                              
 058c : a2ff             [ 2]         ldx #$ff        ;reset stack pointer
 058e : 9a               [ 2]         txs
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   13
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
                              ; retest for set flags seen in IRQ vector
 058f : a901             [ 2]         lda #1          ;set expected interrupt source BRK
 0591 : 8d0302           [ 4]         sta I_src
@@ -843,9 +807,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
                                      lda I_src       ;test IRQ done?
                                      trap_ne
                                      ldx #$ff        ;purge stack
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   14
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
                                      txs
                              
                                      ldx #0          ;now overlap IRQ & BRK
@@ -908,9 +869,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
                                    endif
 05e0 : a2ff             [ 2]         ldx #$ff        ;reset stack pointer
 05e2 : 9a               [ 2]         txs
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   15
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
                              ; test all other registers
 05e3 : a24e             [ 2]         ldx #'N'
 05e5 : a04d             [ 2]         ldy #'M'
@@ -973,9 +931,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
 0626 : a0b2             [ 2]         ldy #$ff-'M'
 0628 : a904             [ 2]         lda #4          ;set expected interrupt source NMI
 062a : 8d0302           [ 4]         sta I_src
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   16
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
                                      push_stat $ff-intdis
 062d : a9fb             [ 2]>            lda #$ff-intdis
 062f : 48               [ 3]>            pha         ;use stack to load status
@@ -1038,9 +993,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
                                      I_set NMI_bit
 066d : adfcbf           [ 4]>        lda I_port      ;turn on interrupt by bit
 0670 : 297f             [ 2]>        and #I_filter
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   17
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
                             >        if NMI_bit > 7     ;set both NMI & IRQ
                             >          ora #(1<<IRQ_bit|1<<NMI_bit)
                             >        else
@@ -1103,9 +1055,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
 06a7 : 8dfcbf           [ 4]>        sta I_port      ;interrupt next instruction plus outbound delay
                              
 06aa : e8               [ 2]         inx
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   18
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
 06ab : e8               [ 2]         inx
 06ac : e8               [ 2]         inx
 06ad : ad0302           [ 4]         lda I_src       ;test NMI done?
@@ -1168,9 +1117,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
                              
                              
                              ; S U C C E S S ************************************************       
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   19
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
                              ; -------------       
                                      success         ;if you get here everything went well
 06f5 : 4cf506           [ 3]>        jmp *           ;test passed, no errors
@@ -1233,9 +1179,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
 0720 : cb                   >        db  $cb         ;WAI opcode
                              
 0721 : 88               [ 2]         dey
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   20
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
 0722 : 88               [ 2]         dey
 0723 : 88               [ 2]         dey
 0724 : ad0302           [ 4]         lda I_src
@@ -1298,9 +1241,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
                              
 074c : 68               [ 4]         pla             ;test I-flag was set
 074d : 48               [ 3]         pha
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   21
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
 074e : 2904             [ 2]         and #intdis
                                      trap_eq         ;I-flag not set
 0750 : f0fe             [ 3]>        beq *           ;failed equal (zero)
@@ -1363,9 +1303,6 @@ bffc =                       I_port      = $bffc     ;feedback port address
 0797 : 49c3             [ 2]         eor #m8-fai-decmode
 0799 : 48               [ 3]         pha        
 079a : ba               [ 2]         tsx
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   22
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
 079b : bd0201           [ 4]         lda $102,x      ;test break on stack
 079e : 2910             [ 2]         and #break
 07a0 : d0fe             [ 4]         bne brk_trap
@@ -1428,12 +1365,107 @@ fffe : 7d07                          dw  irq_trap
                                  endif
                                  
 fffa =                               end start
-AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page   23
-------------------------------------------------------- test_interupt.asm --------------------------------------------------------
-
                                      
                                  
+
+AS65 Assembler for R6502 [1.42].  Copyright 1994-2007, Frank A. Kingswood                                                Page    2
+------------------------------------------------------- test_interupt.asm --------------------------------------------------------
+
+---------------------------------------------------------- Symbol Table ----------------------------------------------------------
+
+              Symbol   Value        Decimal
+
+               break : $0010             16
+           brk_count : $0202            514
+            brk_trap : $07c3           1987
+               carry : $0001              1
+        code_segment : $0400           1024   *
+             D_clear : $0000              0   *
+            data_bss : $0204            516
+        data_segment : $0200            512   *
+             decmode : $0008              8
+                 fai : $0034             52
+                 fao : $0030             48
+                  fc : $0001              1
+                  fn : $0080            128
+                 fnc : $0081            129
+                 fnv : $00c0            192
+                 fnz : $0082            130
+                fnzc : $0083            131
+                  fv : $0040             64
+                 fvz : $0042             66
+                  fz : $0002              2
+                 fzc : $0003              3
+             IRQ_bit : $0000              0   *
+               I_clr : <macro>
+               I_ddr : $0000              0   *
+             I_drive : $0001              1   *
+            I_filter : $007f            127   *
+              I_port : $bffc          49148   *
+               I_set : <macro>
+               I_src : $0203            515
+              intdis : $0004              4
+               irq_a : $000a             10
+           irq_count : $0201            513
+               irq_f : $000c             12
+            irq_trap : $077d           1917
+               irq_x : $000b             11
+    load_data_direct : $0001              1   *
+               lst_a : $01ff            511
+               lst_f : $01fe            510
+               minus : $0080            128
+                  m8 : $00ff            255
+                 m8i : $00fb            251
+             NMI_bit : $0001              1   *
+               nmi_a : $000d             13
+           nmi_count : $0200            512
+               nmi_f : $000f             15
+            nmi_trap : $0739           1849
+               nmi_x : $000e             14
+              overfl : $0040             64
+           push_stat : <macro>
+              report : $0000              0   *
+              reserv : $0020             32
+            res_trap : $0778           1912
+            set_stat : <macro>
+               start : $0400           1024
+                 stp : <macro>
+             success : <macro>
+                trap : <macro>
+             trap_eq : <macro>
+             trap_ne : <macro>
+                 wai : <macro>
+                zero : $0002              2
+           zero_page : $000a             10   *
+                 zpt : $000a             10
+              zp_bss : $0010             16
+          __65SC02__ : $0001              1
+
+55 labels used
+
 1025 lines read, no errors in pass 1.
+-------------------------------------------- Memory Usage Map ('x'=used, '-'=unused) ---------------------------------------------
+
+0000 : ----------xxxxxx ---------------- ---------------- ---------------- 
+0200 : xxxx------------ ---------------- ---------------- ---------------- 
+0400 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+0440 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+0480 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+04c0 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+0500 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+0540 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+0580 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+05c0 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+0600 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+0640 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+0680 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+06c0 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+0700 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+0740 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+0780 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx 
+07c0 : xxxxxxxxxxxxxxxx xxxxxxxxxxxxxx-- ---------------- ---------------- 
+ffc0 : ---------------- ---------------- ---------------- ----------xxxxxx 
+
 No errors in pass 2.
 Wrote binary from address $000a through $ffff.
 Total size 65526 bytes.
