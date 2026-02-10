@@ -17,12 +17,12 @@ uint8_t ram_read(const component_t* const component, const addr_t addr) {
 		return 0;
 	}
 
-	if (getRam(component)->size < addr.relative) {
+	if (getRam(component)->size < addr.full) {
 		printf("outside of ram range\n");
 		return 0;
 	}
 
-	return getRam(component)->data[addr.relative];
+	return getRam(component)->data[addr.full];
 }
 
 void ram_write(const component_t* const component, const addr_t addr, const uint8_t data) {
@@ -31,12 +31,12 @@ void ram_write(const component_t* const component, const addr_t addr, const uint
 		return;
 	}
 
-	if (getRam(component)->size < addr.relative) {
+	if (getRam(component)->size < addr.full) {
 		printf("outside of ram range\n");
 		return;
 	}
 
-	getRam(component)->data[addr.relative] = data;
+	getRam(component)->data[addr.full] = data;
 }
 
 component_t ram_init(const size_t size) {

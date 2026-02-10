@@ -129,7 +129,7 @@ union flags {
 	struct {
 		bool C : 1; // carry
 		bool Z : 1; // zero
-		bool I : 1; // interupt
+		bool I : 1; // interupt disabled
 		bool D : 1; // binary coded decimal (BDC)
 		bool B : 1; // break
 		bool _ : 1; // unused
@@ -233,7 +233,7 @@ static inline void add() {
 }
 
 void cpu_irq() {
-	if (!registers.flags.I)
+	if (registers.flags.I)
 		return;
 
 	PUSH(registers.PC >> 8);

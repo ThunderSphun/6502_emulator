@@ -36,12 +36,30 @@ static inline void printStackPage() {
 	printBusRange(0x0100, 0x01FF);
 }
 
+uint8_t irqTest_readFunc(const component_t* const component, const addr_t addr) {
+	return *(uint8_t*) component->component_data;
+}
+
+void irqTest_writeFunc(const component_t* const component, const addr_t addr, const uint8_t data) {
+	if (data & (1 << 0))
+		cpu_irq();
+	if (data & (1 << 1))
+		cpu_nmi();
+	*(uint8_t*)component->component_data = data;
+}
+
 int main() {
 	bus_init();
 
 	component_t ram = ram_init(0x10000);
 	component_t rom = rom_init(0x10000);
+
+	uint8_t irqData = 0;
+
+	component_t irqTest = (component_t){ &irqData, "irq test", irqTest_readFunc, irqTest_writeFunc};
+
 	bus_add(&ram, 0x0000, 0xFFFF);
+	bus_add(&irqTest, 0xbffc, 0xbffc);
 	ram_randomize(&ram);
 	const char* binFile = "test_interupt.bin";
 	printf("%s\n", binFile);
