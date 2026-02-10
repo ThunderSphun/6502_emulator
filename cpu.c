@@ -1236,7 +1236,8 @@ void in_tay() {
 // clears bits set in accumulator at operand
 // sets zero flag if any bits were changed, otherwise it gets cleared
 void in_trb() {
-	NO_IMPL();
+	registers.flags.Z = (registers.A & operand) == 0;
+	bus_write(effectiveAddress, operand & ~registers.A);
 }
 #endif
 
@@ -1245,7 +1246,8 @@ void in_trb() {
 // sets bits set in accumulator at operand
 // sets zero flag if any bits were changed, otherwise it gets cleared
 void in_tsb() {
-	NO_IMPL();
+	registers.flags.Z = (registers.A & operand) == 0;
+	bus_write(effectiveAddress, operand | registers.A);
 }
 #endif
 
