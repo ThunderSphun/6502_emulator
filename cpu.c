@@ -1077,8 +1077,7 @@ void in_ply() {
 // Reset Memory Bit
 // sets bit at operand to 0
 void in_rmb(uint8_t bit) {
-	(void) bit;
-	NO_IMPL();
+	bus_write(effectiveAddress, operand & ~(1 << bit));
 }
 
 BITS_EXPANSION(rmb)
@@ -1179,8 +1178,7 @@ void in_sei() {
 // Set Memory Bit
 // sets bit at operand to 1
 void in_smb(uint8_t bit) {
-	(void) bit;
-	NO_IMPL();
+	bus_write(effectiveAddress, operand | (1 << bit));
 }
 
 BITS_EXPANSION(smb)

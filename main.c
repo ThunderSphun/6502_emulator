@@ -3,7 +3,7 @@
 #include "ram.h"
 #include "cpu.h"
 
-#define VERBOSE
+//#define VERBOSE
 
 #include <stdio.h>
 
@@ -54,7 +54,7 @@ int main() {
 
 	printf("running:\n");
 
-	for (int i = 0; i < 12750; i++)
+	for (size_t i = 0; i < 12137400; i++)
 		cpu_runInstruction();
 
 	// stops program execution when there was a jump/branch to the exact same position
