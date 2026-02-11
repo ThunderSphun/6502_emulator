@@ -37,10 +37,12 @@ static inline void printStackPage() {
 }
 
 uint8_t irqTest_readFunc(const component_t* const component, const addr_t addr) {
+	(void) addr;
 	return *(uint8_t*) component->component_data;
 }
 
 void irqTest_writeFunc(const component_t* const component, const addr_t addr, const uint8_t data) {
+	(void) addr;
 	if (data & (1 << 0))
 		cpu_irq();
 	if (data & (1 << 1))
