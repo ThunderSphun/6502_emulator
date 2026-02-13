@@ -338,12 +338,16 @@ void cpu_printRegisters() {
 }
 
 void cpu_printOpcode() {
+	uint8_t data[3] = { bus_read(registers.PC), bus_read(registers.PC + 1), bus_read(registers.PC + 2) };
 #ifdef VERBOSE
-	struct opcode opcode = opcodes[bus_read(registers.PC)];
+	struct opcode opcode = opcodes[data[0]];
 
-	printf("$%04X: %-*s %-4s(", registers.PC, INSTRUCTION_NAME_LENGTH, instructions[opcode.instruction].name, addressModes[opcode.addressMode].name);
+	printf("$%04X: %-*s %-4s(%-*s ",
+		registers.PC,
+		INSTRUCTION_NAME_LENGTH, instructions[opcode.instruction].name,
+		addressModes[opcode.addressMode].name,
+		INSTRUCTION_NAME_LENGTH, instructions[opcode.instruction].name);
 
-	printf("%-*s ", INSTRUCTION_NAME_LENGTH, instructions[opcode.instruction].name);
 	switch (opcode.addressMode) {
 #ifndef WDC
 	case AM_XXX:  printf("         "); break;
@@ -353,44 +357,37 @@ void cpu_printOpcode() {
 #ifdef WDC
 	case AM_STK:  printf("         "); break;
 #endif
-	case AM_IMM:  printf("#$%02X     ",   bus_read(registers.PC + 1)); break;
-	case AM_ABS:  printf(" $%02X%02X   ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
+	case AM_IMM:  printf("#$%02X     ",   data[1]); break;
+	case AM_ABS:  printf(" $%02X%02X   ", data[1], data[2]); break;
 #ifdef WDC
-	case AM_ABSI: printf("($%02X%02X,X)", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
+	case AM_ABSI: printf("($%02X%02X,X)", data[1], data[2]); break;
 #endif
-	case AM_ABSX: printf(" $%02X%02X,X ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
-	case AM_ABSY: printf(" $%02X%02X,Y ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
-	case AM_ZPG:  printf(" $%02X     ",   bus_read(registers.PC + 1)); break;
+	case AM_ABSX: printf(" $%02X%02X,X ", data[1], data[2]); break;
+	case AM_ABSY: printf(" $%02X%02X,Y ", data[1], data[2]); break;
+	case AM_ZPG:  printf(" $%02X     ",   data[1]); break;
 #ifdef WDC
-	case AM_ZPGI: printf("($%02X)    ",   bus_read(registers.PC + 1)); break;
+	case AM_ZPGI: printf("($%02X)    ",   data[1]); break;
 #endif
-	case AM_ZPGX: printf(" $%02X,X   ",   bus_read(registers.PC + 1)); break;
-	case AM_ZPGY: printf(" $%02X,Y   ",   bus_read(registers.PC + 1)); break;
-	case AM_IND:  printf("($%02X%02X)  ", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
-	case AM_INDX: printf("($%02X%02X,X)", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
-	case AM_INDY: printf("($%02X%02X),Y", bus_read(registers.PC + 2), bus_read(registers.PC + 1)); break;
+	case AM_ZPGX: printf(" $%02X,X   ",   data[1]); break;
+	case AM_ZPGY: printf(" $%02X,Y   ",   data[1]); break;
+	case AM_IND:  printf("($%02X%02X)  ", data[1], data[2]); break;
+	case AM_INDX: printf("($%02X%02X,X)", data[1], data[2]); break;
+	case AM_INDY: printf("($%02X%02X),Y", data[1], data[2]); break;
 	case AM_REL: {
 #ifdef ROCKWEL
-			if ((bus_read(registers.PC) & 0x0F) == 0x0F) {
-				printf(" $%02X,%c$%02X",
-					bus_read(registers.PC + 1),
-					(int8_t) bus_read(registers.PC + 2) < 0 ? '-' :
-					bus_read(registers.PC + 2) == 0 ? ' ' : '+',
-					abs((int8_t) bus_read(registers.PC + 2)));
+			if ((data[0] & 0x0F) == 0x0F) {
+				printf(" $%02X,%c$%02X", data[2], (int8_t) data[1] < 0 ? '-' : data[1] == 0 ? ' ' : '+', abs((int8_t) data[1]));
 				break;
 			}
 #endif
-			printf("%c$%02X     ",
-				(int8_t) bus_read(registers.PC + 1) < 0 ? '-' :
-				bus_read(registers.PC + 1) == 0 ? ' ' : '+',
-				abs((int8_t) bus_read(registers.PC + 1)));
+			printf("%c$%02X     ", (int8_t) data[1] < 0 ? '-' : data[1] == 0 ? ' ' : '+', abs((int8_t) data[1]));
 			break;
 		}
 	}
 	printf(")\n");
 #else
-	printf("$%04X: %02X", registers.PC, bus_read(registers.PC));
-	switch (opcodes[bus_read(registers.PC)].addressMode) {
+	printf("$%04X: %02X", registers.PC, data[0]);
+	switch (opcodes[data[0]].addressMode) {
 #ifndef WDC
 	case AM_XXX:  break;
 #endif
@@ -399,30 +396,31 @@ void cpu_printOpcode() {
 #ifdef WDC
 	case AM_STK:  break;
 #endif
-	case AM_IMM:  printf(" %02X", bus_read(registers.PC + 1)); break;
-	case AM_ABS:  printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
+	case AM_IMM:  printf(" %02X",      data[1]); break;
+	case AM_ABS:  printf(" %02X %02X", data[1], data[2]); break;
 #ifdef WDC
-	case AM_ABSI: printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
+	case AM_ABSI: printf(" %02X %02X", data[1], data[2]); break;
 #endif
-	case AM_ABSX: printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
-	case AM_ABSY: printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
-	case AM_ZPG:  printf(" %02X", bus_read(registers.PC + 1)); break;
+	case AM_ABSX: printf(" %02X %02X", data[1], data[2]); break;
+	case AM_ABSY: printf(" %02X %02X", data[1], data[2]); break;
+	case AM_ZPG:  printf(" %02X",      data[1]); break;
 #ifdef WDC
-	case AM_ZPGI: printf(" %02X", bus_read(registers.PC + 1)); break;
+	case AM_ZPGI: printf(" %02X",      data[1]); break;
 #endif
-	case AM_ZPGX: printf(" %02X", bus_read(registers.PC + 1)); break;
-	case AM_ZPGY: printf(" %02X", bus_read(registers.PC + 1)); break;
-	case AM_IND:  printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
-	case AM_INDX: printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
-	case AM_INDY: printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
+	case AM_ZPGX: printf(" %02X",      data[1]); break;
+	case AM_ZPGY: printf(" %02X",      data[1]); break;
+	case AM_IND:  printf(" %02X %02X", data[1], data[2]); break;
+	case AM_INDX: printf(" %02X %02X", data[1], data[2]); break;
+	case AM_INDY: printf(" %02X %02X", data[1], data[2]); break;
 	case AM_REL: {
 #ifdef ROCKWEL
-			if ((bus_read(registers.PC) & 0x0F) == 0x0F) {
-				printf(" %02X %02X", bus_read(registers.PC + 1), bus_read(registers.PC + 2)); break;
-			}
-#endif
-			printf(" %02X", bus_read(registers.PC + 1)); break;
+		if ((data[0] & 0x0F) == 0x0F) {
+			printf(" %02X %02X", data[1], data[2]);
+			break;
 		}
+#endif
+		printf(" %02X", data[1]); break;
+	}
 	}
 	printf("\n");
 #endif
