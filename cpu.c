@@ -236,6 +236,10 @@ void cpu_irq() {
 	if (registers.flags.I)
 		return;
 
+#ifdef VERBOSE
+	printf("entering IRQ\n");
+#endif
+
 	PUSH(registers.PC_HI);
 	PUSH(registers.PC_LO);
 	union flags flags = registers.flags;
@@ -254,6 +258,10 @@ void cpu_irq() {
 }
 
 void cpu_reset() {
+#ifdef VERBOSE
+	printf("resetting\n");
+#endif
+
 	registers.PC_LO = bus_read(0xFFFC);
 	registers.PC_HI = bus_read(0xFFFD);
 
@@ -277,6 +285,10 @@ void cpu_reset() {
 }
 
 void cpu_nmi() {
+#ifdef VERBOSE
+	printf("entering NMI\n");
+#endif
+
 	PUSH(registers.PC_HI);
 	PUSH(registers.PC_LO);
 	union flags flags = registers.flags;
@@ -358,21 +370,21 @@ void cpu_printOpcode() {
 	case AM_STK:  printf("         "); break;
 #endif
 	case AM_IMM:  printf("#$%02X     ",   data[1]); break;
-	case AM_ABS:  printf(" $%02X%02X   ", data[1], data[2]); break;
+	case AM_ABS:  printf(" $%02X%02X   ", data[2], data[1]); break;
 #ifdef WDC
-	case AM_ABSI: printf("($%02X%02X,X)", data[1], data[2]); break;
+	case AM_ABSI: printf("($%02X%02X,X)", data[2], data[1]); break;
 #endif
-	case AM_ABSX: printf(" $%02X%02X,X ", data[1], data[2]); break;
-	case AM_ABSY: printf(" $%02X%02X,Y ", data[1], data[2]); break;
+	case AM_ABSX: printf(" $%02X%02X,X ", data[2], data[1]); break;
+	case AM_ABSY: printf(" $%02X%02X,Y ", data[2], data[1]); break;
 	case AM_ZPG:  printf(" $%02X     ",   data[1]); break;
 #ifdef WDC
 	case AM_ZPGI: printf("($%02X)    ",   data[1]); break;
 #endif
 	case AM_ZPGX: printf(" $%02X,X   ",   data[1]); break;
 	case AM_ZPGY: printf(" $%02X,Y   ",   data[1]); break;
-	case AM_IND:  printf("($%02X%02X)  ", data[1], data[2]); break;
-	case AM_INDX: printf("($%02X%02X,X)", data[1], data[2]); break;
-	case AM_INDY: printf("($%02X%02X),Y", data[1], data[2]); break;
+	case AM_IND:  printf("($%02X%02X)  ", data[2], data[1]); break;
+	case AM_INDX: printf("($%02X%02X,X)", data[2], data[1]); break;
+	case AM_INDY: printf("($%02X%02X),Y", data[2], data[1]); break;
 	case AM_REL: {
 #ifdef ROCKWEL
 			if ((data[0] & 0x0F) == 0x0F) {
@@ -397,21 +409,21 @@ void cpu_printOpcode() {
 	case AM_STK:  break;
 #endif
 	case AM_IMM:  printf(" %02X",      data[1]); break;
-	case AM_ABS:  printf(" %02X %02X", data[1], data[2]); break;
+	case AM_ABS:  printf(" %02X %02X", data[2], data[1]); break;
 #ifdef WDC
-	case AM_ABSI: printf(" %02X %02X", data[1], data[2]); break;
+	case AM_ABSI: printf(" %02X %02X", data[2], data[1]); break;
 #endif
-	case AM_ABSX: printf(" %02X %02X", data[1], data[2]); break;
-	case AM_ABSY: printf(" %02X %02X", data[1], data[2]); break;
+	case AM_ABSX: printf(" %02X %02X", data[2], data[1]); break;
+	case AM_ABSY: printf(" %02X %02X", data[2], data[1]); break;
 	case AM_ZPG:  printf(" %02X",      data[1]); break;
 #ifdef WDC
 	case AM_ZPGI: printf(" %02X",      data[1]); break;
 #endif
 	case AM_ZPGX: printf(" %02X",      data[1]); break;
 	case AM_ZPGY: printf(" %02X",      data[1]); break;
-	case AM_IND:  printf(" %02X %02X", data[1], data[2]); break;
-	case AM_INDX: printf(" %02X %02X", data[1], data[2]); break;
-	case AM_INDY: printf(" %02X %02X", data[1], data[2]); break;
+	case AM_IND:  printf(" %02X %02X", data[2], data[1]); break;
+	case AM_INDX: printf(" %02X %02X", data[2], data[1]); break;
+	case AM_INDY: printf(" %02X %02X", data[2], data[1]); break;
 	case AM_REL: {
 #ifdef ROCKWEL
 		if ((data[0] & 0x0F) == 0x0F) {

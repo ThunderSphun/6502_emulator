@@ -74,9 +74,19 @@ int main() {
 
 	printf("running:\n");
 
-	for (int i = 0; i < 230; i++) {
+	for (int i = 0; i < 222; i++)
 		cpu_runInstruction();
-	}
+
+	for (int i = 0x0100; i <= 0x01FF; i++)
+		bus_write(i, 0);
+
+	bus_write(0x000A, 0);
+	bus_write(0x000B, 0);
+	bus_write(0x000C, 0);
+
+	bus_write(0x0203, 0);
+
+	system("cls");
 
 	// stops program execution when there was a jump/branch to the exact same position
 	// this is how the test program indicates an incorrect instruction
@@ -92,6 +102,24 @@ int main() {
 		cpu_runInstruction();
 
 #ifdef VERBOSE
+		printf(
+			"irq_a  ($000A): %02X\nirq_x  ($000B): %02X\nirq_f  ($000C): %02X\n"
+			"I_src  ($0203): %02X\nI_port ($BFFC): %02X\n",
+			bus_read(0x000A), bus_read(0x000B), bus_read(0x000C),
+			bus_read(0x0203), irqData);
+		printf("SP: %02X ", registers[6]);
+		for (int i = 0xF0; i <= 0xFF; i++) {
+			if (i == registers[6])
+				printf("vv ");
+			else
+				printf("   ");
+
+			if (i == 0xF7)
+				printf(" ");
+		}
+		printf("\n");
+		printBusRange(0x01F0, 0x01FF);
+
 		cpu_printRegisters();
 		printf("\n");
 #endif
