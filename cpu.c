@@ -236,8 +236,8 @@ void cpu_irq() {
 	if (registers.flags.I)
 		return;
 
-	PUSH(registers.PC >> 8);
-	PUSH(registers.PC & 0xFF);
+	PUSH(registers.PC_HI);
+	PUSH(registers.PC_LO);
 	union flags flags = registers.flags;
 	flags.B = false;
 	PUSH(flags.byte);
@@ -277,8 +277,8 @@ void cpu_reset() {
 }
 
 void cpu_nmi() {
-	PUSH(registers.PC >> 8);
-	PUSH(registers.PC & 0xFF);
+	PUSH(registers.PC_HI);
+	PUSH(registers.PC_LO);
 	union flags flags = registers.flags;
 	flags.B = false;
 	PUSH(flags.byte);

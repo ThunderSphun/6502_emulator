@@ -15,7 +15,7 @@ void printBusRange(const uint16_t start, const uint16_t stop) {
 		return;
 	}
 	for (size_t i = start & 0xFFF0; i <= stop; i += 0x0010) {
-		if (i % 0x0100 == 0)
+		if (i % 0x0100 == 0 && i != start)
 			printf("\n");
 
 		printf("$%04X: ", (uint16_t) i);
@@ -32,7 +32,7 @@ void printBusRange(const uint16_t start, const uint16_t stop) {
 }
 
 static inline void printStackPage() {
-	printf("SP: %02X", registers[6]); // stack pointer
+	printf("SP: %02X\n", registers[6]); // stack pointer
 	printBusRange(0x0100, 0x01FF);
 }
 
@@ -73,6 +73,10 @@ int main() {
 	*programCounter = 0x0400;
 
 	printf("running:\n");
+
+	for (int i = 0; i < 230; i++) {
+		cpu_runInstruction();
+	}
 
 	// stops program execution when there was a jump/branch to the exact same position
 	// this is how the test program indicates an incorrect instruction
