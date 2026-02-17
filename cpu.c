@@ -129,7 +129,7 @@ union flags {
 	struct {
 		bool C : 1; // carry
 		bool Z : 1; // zero
-		bool I : 1; // interupt disabled
+		bool I : 1; // interrupt disabled
 		bool D : 1; // binary coded decimal (BDC)
 		bool B : 1; // break
 		bool _ : 1; // unused
@@ -820,7 +820,7 @@ void in_bra() {
 #endif
 
 // BReaK
-// forces an interupt to occur
+// forces an interrupt to occur
 // this starts the IRQ sequence with break flag set
 // the return address is PC + 2, making the byte following this instruction being skipped
 // this byte can be used as a break mark
@@ -835,7 +835,7 @@ void in_brk() {
 
 	registers.PC_LO = bus_read(0xFFFE);
 	registers.PC_HI = bus_read(0xFFFF);
-	registers.flags.I = true; // run normal interupt sequence
+	registers.flags.I = true; // run normal interrupt sequence
 #ifdef WDC
 	registers.flags.D = false;
 #endif
@@ -866,8 +866,8 @@ void in_cld() {
 	registers.flags.D = false;
 }
 
-// CLear Interupt flag
-// this instruction enables interupts from the IRQ pin/function, as this pin is active low
+// CLear interrupt flag
+// this instruction enables interrupts from the IRQ pin/function, as this pin is active low
 void in_cli() {
 	registers.flags.I = false;
 }
@@ -1186,7 +1186,7 @@ void in_ror() {
 		bus_write(effectiveAddress, operand);
 }
 
-// ReTurn from Interupt
+// ReTurn from interrupt
 // pulls flags register from stack, ignoring break flag and bit 5
 // then pulls PC from stack
 void in_rti() {
@@ -1228,8 +1228,8 @@ void in_sed() {
 	registers.flags.D = true;
 }
 
-// SEt Interupt flag
-// this instruction disables interupts from the IRQ pin/function, as this pin is active low
+// SEt interrupt flag
+// this instruction disables interrupts from the IRQ pin/function, as this pin is active low
 void in_sei() {
 	registers.flags.I = true;
 }
@@ -1336,7 +1336,7 @@ void in_tya() {
 }
 
 #ifdef WDC
-// WAit for Interupt
+// WAit for interrupt
 // stops the clock from affecting the 65c02
 // the 65c02 is faster to respond to the IRQ/NMI pins/functions
 void in_wai() {

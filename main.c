@@ -76,7 +76,7 @@ int main() {
 		bus_destroy();
 		return -1;
 	}
-	const char* binFile = "test_interupt_65C02.bin";
+	const char* binFile = "test_interrupt_65C02.bin";
 	printf("%s\n", binFile);
 	if (!rom_loadFile(&rom, binFile, 0x000a)) {
 		rom_destroy(rom);
