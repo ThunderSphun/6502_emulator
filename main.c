@@ -60,13 +60,38 @@ int main() {
 
 	component_t irqTest = (component_t){ &irqData, "irq test", irqTest_readFunc, irqTest_writeFunc};
 
-	bus_add(&ram, 0x0000, 0xFFFF);
-	bus_add(&irqTest, 0xbffc, 0xbffc);
-	ram_randomize(&ram);
-	const char* binFile = "test_interupt.bin";
+	if (!bus_add(&ram, 0x0000, 0xFFFF)) {
+		rom_destroy(rom);
+		ram_destroy(ram);
+		bus_destroy();
+		return -1;
+	}
+	if (!bus_add(&irqTest, 0xbffc, 0xbffc)) {
+		rom_destroy(rom);
+		ram_destroy(ram);
+		bus_destroy();
+		return -1;
+	}
+	if (!ram_randomize(&ram)) {
+		rom_destroy(rom);
+		ram_destroy(ram);
+		bus_destroy();
+		return -1;
+	}
+	const char* binFile = "test_interupt_6502.bin";
 	printf("%s\n", binFile);
-	rom_loadFile(&rom, binFile, 0x000a);
-	ram_loadFile(&ram, binFile, 0x000a);
+	if (!rom_loadFile(&rom, binFile, 0x000a)) {
+		rom_destroy(rom);
+		ram_destroy(ram);
+		bus_destroy();
+		return -1;
+	}
+	if (!ram_loadFile(&ram, binFile, 0x000a)) {
+		rom_destroy(rom);
+		ram_destroy(ram);
+		bus_destroy();
+		return -1;
+	}
 
 	cpu_reset();
 	uint16_t* programCounter = (uint16_t*) registers;

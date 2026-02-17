@@ -96,8 +96,10 @@ bool ram_loadFile(const component_t* const component, const char* fileName, cons
 		return false;
 
 	FILE* file = fopen(fileName, "rb");
-	if (!file)
+	if (!file) {
+		printf("could not open file %s\n", fileName);
 		return false;
+	}
 
 	fseek(file, 0, SEEK_END);
 	size_t fileSize = (size_t) ftell(file);
