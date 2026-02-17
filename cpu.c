@@ -1254,7 +1254,7 @@ void in_sta() {
 // stops the clock from affecting the 65c02
 // the 65c02 is faster to respond to the reset pin/function
 void in_stp() {
-	NO_IMPL();
+	signals.STP = true;
 }
 #endif
 
@@ -1340,7 +1340,7 @@ void in_tya() {
 // stops the clock from affecting the 65c02
 // the 65c02 is faster to respond to the IRQ/NMI pins/functions
 void in_wai() {
-	NO_IMPL();
+	signals.WAI = true;
 }
 #endif
 

@@ -36,6 +36,8 @@ static inline void printStackPage() {
 	printBusRange(0x0100, 0x01FF);
 }
 
+uint8_t irqData = 0;
+
 uint8_t irqTest_readFunc(const component_t* const component, const addr_t addr) {
 	(void) addr;
 	return *(uint8_t*) component->component_data;
@@ -48,13 +50,50 @@ void irqTest_writeFunc(const component_t* const component, const addr_t addr, co
 	*(uint8_t*)component->component_data = data;
 }
 
+void handleInput() {
+	extern uint8_t signals;
+	while (signals & 0xC0) {
+		printf("r: cpu_reset toggle\ni: cpu_irq toggle\nn: cpu_nmi toggle\nC: cpu_clock single\nI: cpu_runInstruction once\nEnter option: ");
+		char c = getchar();
+		switch (c) {
+		case 'r': { cpu_reset(!(signals & 0x02)); break; }
+		case 'i': { cpu_irq  (!(signals & 0x01)); break; }
+		case 'n': { cpu_nmi  (!(signals & 0x04)); break; }
+
+		case 'C': { cpu_clock(); break; }
+		case 'I': { cpu_runInstruction(); break; }
+		}
+
+#ifdef VERBOSE
+		printf(
+			"irq_a  ($000A): %02X\nirq_x  ($000B): %02X\nirq_f  ($000C): %02X\n"
+			"I_src  ($0203): %02X\nI_port ($BFFC): %02X\n",
+			bus_read(0x000A), bus_read(0x000B), bus_read(0x000C),
+			bus_read(0x0203), irqData);
+		printf("SP: %02X ", registers[6]);
+		for (int i = 0xF0; i <= 0xFF; i++) {
+			if (i == registers[6])
+				printf("vv ");
+			else
+				printf("   ");
+
+			if (i == 0xF7)
+				printf(" ");
+		}
+		printf("\n");
+		printBusRange(0x01F0, 0x01FF);
+
+		cpu_printRegisters();
+		printf("\n");
+#endif
+	}
+}
+
 int main() {
 	bus_init();
 
 	component_t ram = ram_init(0x10000);
 	component_t rom = rom_init(0x10000);
-
-	uint8_t irqData = 0;
 
 	component_t irqTest = (component_t){ &irqData, "irq test", irqTest_readFunc, irqTest_writeFunc};
 
@@ -95,17 +134,15 @@ int main() {
 	cpu_clock();
 	cpu_reset(false);
 	uint16_t* programCounter = (uint16_t*) registers;
-	*programCounter = 0x0400;
+	*programCounter = 0x0753;
 
 	printf("running:\n");
-
-	for (int i = 0; i < 580; i++)
-		cpu_runInstruction();
 
 	// stops program execution when there was a jump/branch to the exact same position
 	// this is how the test program indicates an incorrect instruction
 	uint16_t prevProgramCounter = 0;
 	extern bool ranUnimplementedInstruction;
+	extern uint8_t signals;
 	while (*programCounter != prevProgramCounter && !ranUnimplementedInstruction) {
 		prevProgramCounter = *programCounter;
 
@@ -114,6 +151,13 @@ int main() {
 #endif
 
 		cpu_runInstruction();
+
+		if (signals & 0xC0) {
+#ifdef VERBOSE
+			printf("WAI is%sset, STP is %s set\n", signals & 0x40 ? " " : " not ", signals & 0x80 ? " " : " not ");
+#endif
+			handleInput();
+		}
 
 #ifdef VERBOSE
 		printf(
