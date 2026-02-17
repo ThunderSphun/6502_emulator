@@ -156,12 +156,16 @@ struct regs { // struct name purely for debug purposes
 
 struct signalState {
 	bool irq		: 1;
-	bool prev_irq	: 1;
 	bool reset		: 1;
-	bool prev_reset	: 1;
 	bool nmi		: 1;
+	bool prev_irq	: 1;
+	bool prev_reset	: 1;
 	bool prev_nmi	: 1;
-} signals;
+#ifdef WDC
+	bool WAI		: 1;
+	bool STP		: 1;
+#endif
+} signals = { 0 };
 
 struct opcode {
 	const uint8_t instruction;
@@ -183,7 +187,7 @@ struct instruction {
 	void (*const func)();
 } instructions[INSTRUCTION_COUNT];
 
-uint8_t cycles = 0;
+int8_t cycles = 0;
 size_t totalCycles = 0;
 
 uint8_t currentOpcode = 0;
@@ -241,6 +245,79 @@ static inline void add() {
 	SET_FLAGS(registers.A);
 }
 
+void handleVector(uint16_t vector) {
+	PUSH(registers.PC_HI);
+	PUSH(registers.PC_LO);
+	union flags flags = registers.flags;
+	flags.B = false;
+	PUSH(flags.byte);
+
+	registers.PC_LO = bus_read(vector + 0);
+	registers.PC_HI = bus_read(vector + 1);
+
+	registers.flags.I = true;
+#ifdef WDC
+	registers.flags.D = false;
+#endif
+
+	cycles = 7;
+}
+
+void handleCpuControl() {
+	if (signals.reset) {
+#ifdef VERBOSE
+		printf("resetting\n");
+#endif
+
+		handleVector(0xFFFC);
+
+		registers.SP = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
+
+		registers.flags._ = true;
+		registers.flags.B = true;
+
+		// reset internal state
+		currentOpcode = 0;
+		operand = 0;
+		effectiveAddress = 0;
+		instructionCount = 0;
+		totalCycles = 0;
+	} else if (signals.nmi && !signals.prev_nmi) {
+#ifdef VERBOSE
+		printf("entering NMI\n");
+#endif
+
+		handleVector(0xFFFA);
+	} else if (signals.irq && !registers.flags.I) {
+#ifdef VERBOSE
+		printf("entering IRQ\n");
+#endif
+
+		handleVector(0xFFFE);
+	}
+
+	signals.prev_irq = signals.irq;
+	signals.prev_reset = signals.reset;
+	signals.prev_nmi = signals.nmi;
+}
+
+void handleOpcode() {
+	if (cycles > 0)
+		return;
+
+	instructionCount++;
+
+	currentOpcode = bus_read(registers.PC++);
+	const struct opcode opcode = opcodes[currentOpcode];
+
+	cycles = opcode.cycleCount;
+
+	addressModes[opcode.addressMode].func();
+	instructions[opcode.instruction].func();
+
+	totalCycles += cycles;
+}
+
 void cpu_irq(bool active) {
 #ifdef VERBOSE
 	printf("irq line %s\n", active ? "high" : "low");
@@ -267,109 +344,33 @@ void cpu_nmi(bool active) {
 // afterwards runs entire instruction in a single clockcycle
 // if a cycle needs to be consumed, this function returns early and consumes a single cycle
 void cpu_clock() {
-	if (cycles-- != 0)
-		return;
-
-	if (signals.irq && !registers.flags.I) {
-#ifdef VERBOSE
-		printf("entering IRQ\n");
-#endif
-
-		PUSH(registers.PC_HI);
-		PUSH(registers.PC_LO);
-		union flags flags = registers.flags;
-		flags.B = false;
-		PUSH(flags.byte);
-
-		registers.PC_LO = bus_read(0xFFFE);
-		registers.PC_HI = bus_read(0xFFFF);
-
-		registers.flags.I = true;
-#ifdef WDC
-		registers.flags.D = false;
-#endif
-
-		cycles = 7;
-
-		signals.prev_irq = signals.irq;
-
+	// clockcycle logic gets performed when remaining clock cycles is 0
+	if (cycles > 0) {
+		cycles--;
 		return;
 	}
 
-	signals.prev_irq = signals.irq;
-
-	if (signals.reset) {
-#ifdef VERBOSE
-		printf("resetting\n");
-#endif
-
-		registers.PC_LO = bus_read(0xFFFC);
-		registers.PC_HI = bus_read(0xFFFD);
-
-		registers.SP = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
-
-		registers.flags._ = true;
-		registers.flags.B = true;
 #ifdef WDC
-		registers.flags.D = false;
-#endif
-		registers.flags.I = true;
-
-		cycles = 7;
-
-		// reset internal state
-		currentOpcode = 0;
-		operand = 0;
-		effectiveAddress = 0;
-		instructionCount = 0;
-		totalCycles = 0;
-
-		signals.prev_reset = signals.reset;
-
-		return;
+	if (signals.STP) {
+		if (signals.reset)
+			signals.STP = false;
+		else
+			return;
 	}
-
-	signals.prev_reset = signals.reset;
-
-	if (signals.nmi && !signals.prev_nmi) {
-#ifdef VERBOSE
-		printf("entering NMI\n");
 #endif
 
-		PUSH(registers.PC_HI);
-		PUSH(registers.PC_LO);
-		union flags flags = registers.flags;
-		flags.B = false;
-		PUSH(flags.byte);
-
-		registers.PC_LO = bus_read(0xFFFA);
-		registers.PC_HI = bus_read(0xFFFB);
-
-		registers.flags.I = true;
 #ifdef WDC
-		registers.flags.D = false;
+	if (signals.WAI) {
+		if ((signals.irq) ||
+			(signals.nmi && !signals.prev_nmi))
+			signals.WAI = false;
+		else
+			return;
+	}
 #endif
 
-		cycles = 7;
-
-		signals.prev_nmi = signals.nmi;
-
-		return;
-	}
-
-	signals.prev_nmi = signals.nmi;
-
-	instructionCount++;
-
-	currentOpcode = bus_read(registers.PC++);
-	const struct opcode opcode = opcodes[currentOpcode];
-
-	cycles = opcode.cycleCount;
-
-	addressModes[opcode.addressMode].func();
-	instructions[opcode.instruction].func();
-
-	totalCycles += cycles;
+	handleCpuControl();
+	handleOpcode();
 }
 
 // runs instruction and all clockcycles required
