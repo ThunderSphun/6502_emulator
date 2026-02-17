@@ -154,6 +154,15 @@ struct regs { // struct name purely for debug purposes
 	uint8_t SP; // stack pointer
 } registers;
 
+struct signalState {
+	bool irq		: 1;
+	bool prev_irq	: 1;
+	bool reset		: 1;
+	bool prev_reset	: 1;
+	bool nmi		: 1;
+	bool prev_nmi	: 1;
+} signals;
+
 struct opcode {
 	const uint8_t instruction;
 	const uint8_t addressMode;
@@ -232,78 +241,25 @@ static inline void add() {
 	SET_FLAGS(registers.A);
 }
 
-void cpu_irq() {
-	if (registers.flags.I)
-		return;
-
+void cpu_irq(bool active) {
 #ifdef VERBOSE
-	printf("entering IRQ\n");
+	printf("irq line %s\n", active ? "high" : "low");
 #endif
-
-	PUSH(registers.PC_HI);
-	PUSH(registers.PC_LO);
-	union flags flags = registers.flags;
-	flags.B = false;
-	PUSH(flags.byte);
-
-	registers.PC_LO = bus_read(0xFFFE);
-	registers.PC_HI = bus_read(0xFFFF);
-
-	registers.flags.I = true;
-#ifdef WDC
-	registers.flags.D = false;
-#endif
-
-	cycles = 7;
+	signals.irq = active;
 }
 
-void cpu_reset() {
+void cpu_reset(bool active) {
 #ifdef VERBOSE
-	printf("resetting\n");
+	printf("reset line %s\n", active ? "high" : "low");
 #endif
-
-	registers.PC_LO = bus_read(0xFFFC);
-	registers.PC_HI = bus_read(0xFFFD);
-
-	registers.SP = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
-
-	registers.flags._ = true;
-	registers.flags.B = true;
-#ifdef WDC
-	registers.flags.D = false;
-#endif
-	registers.flags.I = true;
-
-	cycles = 7;
-
-	// reset internal state
-	currentOpcode = 0;
-	operand = 0;
-	effectiveAddress = 0;
-	instructionCount = 0;
-	totalCycles = 0;
+	signals.reset = active;
 }
 
-void cpu_nmi() {
+void cpu_nmi(bool active) {
 #ifdef VERBOSE
-	printf("entering NMI\n");
+	printf("nmi line %s\n", active ? "high" : "low");
 #endif
-
-	PUSH(registers.PC_HI);
-	PUSH(registers.PC_LO);
-	union flags flags = registers.flags;
-	flags.B = false;
-	PUSH(flags.byte);
-
-	registers.PC_LO = bus_read(0xFFFA);
-	registers.PC_HI = bus_read(0xFFFB);
-
-	registers.flags.I = true;
-#ifdef WDC
-	registers.flags.D = false;
-#endif
-
-	cycles = 7;
+	signals.nmi = active;
 }
 
 // run single instruction
@@ -313,6 +269,95 @@ void cpu_nmi() {
 void cpu_clock() {
 	if (cycles-- != 0)
 		return;
+
+	if (signals.irq && !registers.flags.I) {
+#ifdef VERBOSE
+		printf("entering IRQ\n");
+#endif
+
+		PUSH(registers.PC_HI);
+		PUSH(registers.PC_LO);
+		union flags flags = registers.flags;
+		flags.B = false;
+		PUSH(flags.byte);
+
+		registers.PC_LO = bus_read(0xFFFE);
+		registers.PC_HI = bus_read(0xFFFF);
+
+		registers.flags.I = true;
+#ifdef WDC
+		registers.flags.D = false;
+#endif
+
+		cycles = 7;
+
+		signals.prev_irq = signals.irq;
+
+		return;
+	}
+
+	signals.prev_irq = signals.irq;
+
+	if (signals.reset) {
+#ifdef VERBOSE
+		printf("resetting\n");
+#endif
+
+		registers.PC_LO = bus_read(0xFFFC);
+		registers.PC_HI = bus_read(0xFFFD);
+
+		registers.SP = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
+
+		registers.flags._ = true;
+		registers.flags.B = true;
+#ifdef WDC
+		registers.flags.D = false;
+#endif
+		registers.flags.I = true;
+
+		cycles = 7;
+
+		// reset internal state
+		currentOpcode = 0;
+		operand = 0;
+		effectiveAddress = 0;
+		instructionCount = 0;
+		totalCycles = 0;
+
+		signals.prev_reset = signals.reset;
+
+		return;
+	}
+
+	signals.prev_reset = signals.reset;
+
+	if (signals.nmi && !signals.prev_nmi) {
+#ifdef VERBOSE
+		printf("entering NMI\n");
+#endif
+
+		PUSH(registers.PC_HI);
+		PUSH(registers.PC_LO);
+		union flags flags = registers.flags;
+		flags.B = false;
+		PUSH(flags.byte);
+
+		registers.PC_LO = bus_read(0xFFFA);
+		registers.PC_HI = bus_read(0xFFFB);
+
+		registers.flags.I = true;
+#ifdef WDC
+		registers.flags.D = false;
+#endif
+
+		cycles = 7;
+
+		signals.prev_nmi = signals.nmi;
+
+		return;
+	}
+
+	signals.prev_nmi = signals.nmi;
 
 	instructionCount++;
 

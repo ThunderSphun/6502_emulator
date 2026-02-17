@@ -43,10 +43,8 @@ uint8_t irqTest_readFunc(const component_t* const component, const addr_t addr) 
 
 void irqTest_writeFunc(const component_t* const component, const addr_t addr, const uint8_t data) {
 	(void) addr;
-	if (data & (1 << 0))
-		cpu_irq();
-	if (data & (1 << 1))
-		cpu_nmi();
+	cpu_irq(data & (1 << 0));
+	cpu_nmi(data & (1 << 1));
 	*(uint8_t*)component->component_data = data;
 }
 
@@ -78,7 +76,7 @@ int main() {
 		bus_destroy();
 		return -1;
 	}
-	const char* binFile = "test_interupt_6502.bin";
+	const char* binFile = "test_interupt_65C02.bin";
 	printf("%s\n", binFile);
 	if (!rom_loadFile(&rom, binFile, 0x000a)) {
 		rom_destroy(rom);
@@ -93,25 +91,16 @@ int main() {
 		return -1;
 	}
 
-	cpu_reset();
+	cpu_reset(true);
+	cpu_clock();
+	cpu_reset(false);
 	uint16_t* programCounter = (uint16_t*) registers;
 	*programCounter = 0x0400;
 
 	printf("running:\n");
 
-	for (int i = 0; i < 222; i++)
+	for (int i = 0; i < 580; i++)
 		cpu_runInstruction();
-
-	for (int i = 0x0100; i <= 0x01FF; i++)
-		bus_write(i, 0);
-
-	bus_write(0x000A, 0);
-	bus_write(0x000B, 0);
-	bus_write(0x000C, 0);
-
-	bus_write(0x0203, 0);
-
-	system("cls");
 
 	// stops program execution when there was a jump/branch to the exact same position
 	// this is how the test program indicates an incorrect instruction
