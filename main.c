@@ -1,6 +1,5 @@
 #include "bus.h"
-#include "rom.h"
-#include "ram.h"
+#include "memory.h"
 #include "cpu.h"
 
 #define VERBOSE
@@ -92,40 +91,40 @@ void handleInput() {
 int main() {
 	bus_init();
 
-	component_t ram = ram_init(0x10000);
-	component_t rom = rom_init(0x10000);
+	component_t ram = memory_init(0x10000, true);
+	component_t rom = memory_init(0x10000, false);
 
 	component_t irqTest = (component_t){ &irqData, "irq test", irqTest_readFunc, irqTest_writeFunc};
 
 	if (!bus_add(&ram, 0x0000, 0xFFFF)) {
-		rom_destroy(rom);
-		ram_destroy(ram);
+		memory_destroy(rom);
+		memory_destroy(ram);
 		bus_destroy();
 		return -1;
 	}
 	if (!bus_add(&irqTest, 0xbffc, 0xbffc)) {
-		rom_destroy(rom);
-		ram_destroy(ram);
+		memory_destroy(rom);
+		memory_destroy(ram);
 		bus_destroy();
 		return -1;
 	}
-	if (!ram_randomize(&ram)) {
-		rom_destroy(rom);
-		ram_destroy(ram);
+	if (!memory_randomize(&ram)) {
+		memory_destroy(rom);
+		memory_destroy(ram);
 		bus_destroy();
 		return -1;
 	}
 	const char* binFile = "test_interrupt_65C02.bin";
 	printf("%s\n", binFile);
-	if (!rom_loadFile(&rom, binFile, 0x000a)) {
-		rom_destroy(rom);
-		ram_destroy(ram);
+	if (!memory_loadFile(&rom, binFile, 0x000a)) {
+		memory_destroy(rom);
+		memory_destroy(ram);
 		bus_destroy();
 		return -1;
 	}
-	if (!ram_loadFile(&ram, binFile, 0x000a)) {
-		rom_destroy(rom);
-		ram_destroy(ram);
+	if (!memory_loadFile(&ram, binFile, 0x000a)) {
+		memory_destroy(rom);
+		memory_destroy(ram);
 		bus_destroy();
 		return -1;
 	}
@@ -189,8 +188,8 @@ int main() {
 	printf("test number: %d\n", bus_read(0x0200));
 	printf("ran %zi instruction(s) in %zi clockcycle(s)\n", instructionCount, totalCycles);
 
-	rom_destroy(rom);
-	ram_destroy(ram);
+	memory_destroy(rom);
+	memory_destroy(ram);
 	bus_destroy();
 
 	return 0;
