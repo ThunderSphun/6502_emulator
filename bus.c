@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// #define VERBOSE
+//#define VERBOSE
 
 typedef struct {
 	uint16_t begin;
@@ -21,6 +21,7 @@ static struct {
 } bus = { 0 };
 
 #ifdef VERBOSE
+
 static uint8_t read(const device_t* const device, const addr_t address) {
 	(void) device; (void) address;
 	printf("READ:\ndevice: %p\naddress: {%04X, %04X}\nEND READ\n", device, address.full, address.relative);
@@ -43,14 +44,25 @@ static void place(const device_t* const device, const addr_t address, const uint
 	printf("PLACE:\ndevice: %p\naddress: {%04X, %04X}\nvalue: %02X\nEND WRITE\n", device, address.full, address.relative, data);
 }
 
+#ifdef _MSC_VER
+static device_t nullDevice;
+#else
 static device_t nullDevice = (device_t) {
 	.name = "null",
-	.readFunc = read, getFunc = get,
+	.readFunc = read, .getFunc = get,
 	.writeFunc = write, .placeFunc = place,
 };
+#endif
+
+#else // VERBOSE
+
+#ifdef _MSC_VER
+static device_t nullDevice;
 #else
 static device_t nullDevice = (device_t) { .name = "null" };
 #endif
+
+#endif // VERBOSE
 
 #define SEARCH(addr) bsearch(&addr, bus.regions, bus.size, sizeof(region_t), region_search)
 static int region_search(const void* addr, const void* region) {
@@ -63,6 +75,21 @@ static int region_search(const void* addr, const void* region) {
 }
 
 bool bus_init() {
+#ifdef _MSC_VER
+	{
+		device_t tmpDevice = (device_t) {
+#ifdef VERBOSE
+			.name = "null",
+			.readFunc = read, .getFunc = get,
+			.writeFunc = write, .placeFunc = place,
+#else
+			.name = "null",
+#endif
+		};
+		memcpy(&nullDevice, &tmpDevice, sizeof(device_t));
+	}
+#endif
+
 	if (bus.regions)
 		return false;
 
@@ -114,7 +141,7 @@ bool bus_add(const device_t* const device, const uint16_t begin, const uint16_t 
 
 #ifdef VERBOSE
 #define PRINT_REGION() \
-		printf("region %li/%li {begin: %04X, end: %04X, base: %04X} ", \
+		printf("region %zi/%zi {begin: %04X, end: %04X, base: %04X} ", \
 			i + 1, bus.size, region->begin, region->end, region->base);
 #endif
 
@@ -289,7 +316,6 @@ void bus_write(const uint16_t fullAddr, const uint8_t data) {
 		printf("couldn't find region\n");
 #endif
 }
-
 
 void bus_place(const uint16_t fullAddr, const uint8_t data) {
 #ifdef VERBOSE
