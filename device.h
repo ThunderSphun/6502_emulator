@@ -15,6 +15,8 @@ typedef void (*deviceWrite)(const device_t* const device, const addr_t addr, con
 struct device {
 	const void* const device_data;
 	const char* const name;
-	const deviceRead readFunc;
-	const deviceWrite writeFunc;
+	const deviceRead readFunc; // read with notify
+	const deviceRead getFunc; // read without notify
+	const deviceWrite writeFunc; // write with notify
+	const deviceWrite placeFunc; // write without notify
 };

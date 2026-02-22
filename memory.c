@@ -48,7 +48,10 @@ device_t memory_init(const size_t size, bool canWrite) {
 	}
 	memory->size = size;
 
-	return (device_t) { memory, "memory", memory_read, canWrite ? memory_write : NULL };
+	if (canWrite)
+		return (device_t) { .device_data = memory, .name = "memory", .readFunc =  memory_read, .writeFunc = memory_write };
+	else
+		return (device_t) { .device_data = memory, .name = "memory", .readFunc =  memory_read };
 }
 
 bool memory_destroy(device_t device) {

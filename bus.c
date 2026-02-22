@@ -21,20 +21,35 @@ static struct {
 } bus = { 0 };
 
 #ifdef VERBOSE
-static uint8_t read(const device_t* device, addr_t address) {
+static uint8_t read(const device_t* const device, const addr_t address) {
 	(void) device; (void) address;
 	printf("READ:\ndevice: %p\naddress: {%04X, %04X}\nEND READ\n", device, address.full, address.relative);
 	return 0x55;
 }
 
-static void write(const device_t* device, addr_t address, uint8_t data) {
+static uint8_t get(const device_t* const device, const addr_t address) {
+	(void) device; (void) address;
+	printf("GET:\ndevice: %p\naddress: {%04X, %04X}\nEND READ\n", device, address.full, address.relative);
+	return 0xAA;
+}
+
+static void write(const device_t* const device, const addr_t address, const uint8_t data) {
 	(void) device; (void) address; (void) data;
 	printf("WRITE:\ndevice: %p\naddress: {%04X, %04X}\nvalue: %02X\nEND WRITE\n", device, address.full, address.relative, data);
 }
 
-static device_t nullDevice = (device_t) { .name = "null", .readFunc = read, .writeFunc = write };
+static void place(const device_t* const device, const addr_t address, const uint8_t data) {
+	(void) device; (void) address; (void) data;
+	printf("PLACE:\ndevice: %p\naddress: {%04X, %04X}\nvalue: %02X\nEND WRITE\n", device, address.full, address.relative, data);
+}
+
+static device_t nullDevice = (device_t) {
+	.name = "null",
+	.readFunc = read, getFunc = get,
+	.writeFunc = write, .placeFunc = place,
+};
 #else
-static device_t nullDevice = (device_t) {.name = "null" };
+static device_t nullDevice = (device_t) { .name = "null" };
 #endif
 
 #define SEARCH(addr) bsearch(&addr, bus.regions, bus.size, sizeof(region_t), region_search)
@@ -200,6 +215,52 @@ uint8_t bus_read(const uint16_t fullAddr) {
 	return 0;
 }
 
+uint8_t bus_get(const uint16_t fullAddr) {
+#ifdef VERBOSE
+	printf("searching for region to get at %04X\n", fullAddr);
+#endif
+
+	region_t* result = SEARCH(fullAddr);
+	if (result) {
+#ifdef VERBOSE
+		printf("found region %p\n", result);
+#endif
+		addr_t addr = (addr_t) {fullAddr, result->base + (fullAddr - result->begin)};
+		if (result->device->getFunc) {
+			uint8_t getVal = result->device->getFunc(result->device, addr);
+
+#ifdef VERBOSE
+			printf("gotten value %02X\n", getVal);
+#endif
+			return getVal;
+		}
+
+		if (result->device->readFunc) {
+#ifdef VERBOSE
+		printf("region cannot be gotten\n");
+#endif
+
+			uint8_t readVal = result->device->readFunc(result->device, addr);
+
+#ifdef VERBOSE
+			printf("read value %02X\n", readVal);
+#endif
+			return readVal;
+		}
+
+#ifdef VERBOSE
+		printf("region cannot be read either\n");
+#endif
+
+		return 0;
+	}
+
+#ifdef VERBOSE
+	printf("couldn't find region\n");
+#endif
+	return 0;
+}
+
 void bus_write(const uint16_t fullAddr, const uint8_t data) {
 #ifdef VERBOSE
 	printf("searching for region to write at %04X\n", fullAddr);
@@ -227,6 +288,53 @@ void bus_write(const uint16_t fullAddr, const uint8_t data) {
 #ifdef VERBOSE
 		printf("couldn't find region\n");
 #endif
+}
+
+
+void bus_place(const uint16_t fullAddr, const uint8_t data) {
+#ifdef VERBOSE
+	printf("searching for region to place at %04X\n", fullAddr);
+#endif
+
+	region_t* result = SEARCH(fullAddr);
+	if (result) {
+#ifdef VERBOSE
+		printf("found region %p\n", result);
+#endif
+		addr_t addr = (addr_t) {fullAddr, result->base + (fullAddr - result->begin)};
+		if (result->device->placeFunc) {
+			result->device->placeFunc(result->device, addr, data);
+
+#ifdef VERBOSE
+			printf("placed value\n");
+#endif
+			return;
+		}
+
+		if (result->device->writeFunc) {
+#ifdef VERBOSE
+		printf("region cannot be placed\n");
+#endif
+
+			result->device->writeFunc(result->device, addr, data);
+
+#ifdef VERBOSE
+			printf("writen value\n");
+#endif
+			return;
+		}
+
+#ifdef VERBOSE
+		printf("region cannot be written either\n");
+#endif
+
+		return;
+	}
+
+#ifdef VERBOSE
+	printf("couldn't find region\n");
+#endif
+	return;
 }
 
 void bus_print() {
