@@ -15,12 +15,12 @@ uint8_t memory_read(const device_t* const device, const addr_t addr) {
 		return 0;
 	}
 
-	if (GET_DATA(device)->size < addr.full) {
+	if (GET_DATA(device)->size < addr.relative) {
 		printf("outside of ram range\n");
 		return 0;
 	}
 
-	return GET_DATA(device)->data[addr.full];
+	return GET_DATA(device)->data[addr.relative];
 }
 
 void memory_write(const device_t* const device, const addr_t addr, const uint8_t data) {
@@ -29,12 +29,12 @@ void memory_write(const device_t* const device, const addr_t addr, const uint8_t
 		return;
 	}
 
-	if (GET_DATA(device)->size < addr.full) {
+	if (GET_DATA(device)->size < addr.relative) {
 		printf("outside of ram range\n");
 		return;
 	}
 
-	GET_DATA(device)->data[addr.full] = data;
+	GET_DATA(device)->data[addr.relative] = data;
 }
 
 device_t memory_init(const size_t size, bool canWrite) {

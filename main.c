@@ -132,7 +132,7 @@ int main() {
 		bus_destroy();
 		return -1;
 	}
-	const char* binFile = "test_65C02.bin";
+	const char* binFile = "test_6502.bin";
 	printf("%s\n", binFile);
 	if (!memory_loadFile(&rom, binFile, 0x000a)) {
 		memory_destroy(rom);
@@ -162,9 +162,7 @@ int main() {
 	while (*programCounter != prevProgramCounter && !ranUnimplementedInstruction) {
 		prevProgramCounter = *programCounter;
 
-#ifdef VERBOSE
-		cpu_printOpcode();
-#endif
+		// cpu_printOpcode();
 
 		cpu_runInstruction();
 	}
