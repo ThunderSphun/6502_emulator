@@ -37,16 +37,16 @@ static inline void printStackPage() {
 
 uint8_t irqData = 0;
 
-uint8_t irqTest_readFunc(const component_t* const component, const addr_t addr) {
+uint8_t irqTest_readFunc(const device_t* const device, const addr_t addr) {
 	(void) addr;
-	return *(uint8_t*) component->component_data;
+	return *(uint8_t*) device->device_data;
 }
 
-void irqTest_writeFunc(const component_t* const component, const addr_t addr, const uint8_t data) {
+void irqTest_writeFunc(const device_t* const device, const addr_t addr, const uint8_t data) {
 	(void) addr;
 	cpu_irq(data & (1 << 0));
 	cpu_nmi(data & (1 << 1));
-	*(uint8_t*)component->component_data = data;
+	*(uint8_t*)device->device_data = data;
 }
 
 void handleInput() {
@@ -88,13 +88,81 @@ void handleInput() {
 	}
 }
 
+uint8_t testRead(const device_t* const device, const addr_t addr) {
+	(void) device;
+	(void) addr;
+	printf("testRead\n");
+	return 0xff;
+}
+
+void testWrite(const device_t* const device, const addr_t addr, const uint8_t data) {
+	(void) device;
+	(void) addr;
+	printf("testWrite %02X\n", data);
+}
+
 int main() {
 	bus_init();
+	bus_print();
+	printf("\n");
 
-	component_t ram = memory_init(0x10000, true);
-	component_t rom = memory_init(0x10000, false);
+	device_t devices[] = {
+		{ .name="device 0", .readFunc = NULL,     .writeFunc = testWrite },
+		{ .name="device 1", .readFunc = testRead, .writeFunc = testWrite },
+		{ .name="device 2", .readFunc = testRead, .writeFunc = NULL      },
+		{ .name="device 3", .readFunc = testRead, .writeFunc = testWrite },
+		{ .name="device 4", .readFunc = testRead, .writeFunc = testWrite },
+		{ .name="device 5", .readFunc = testRead, .writeFunc = testWrite },
+	};
 
-	component_t irqTest = (component_t){ &irqData, "irq test", irqTest_readFunc, irqTest_writeFunc};
+	bus_read(0x0000);
+	bus_read(0xffff);
+	bus_read(0x8000);
+	bus_write(0x0000, 0xaa);
+	bus_write(0xffff, 0xaa);
+	bus_write(0x8000, 0xaa);
+
+	bus_add(devices + 0, 0x4000, 0xffff);
+	bus_print();
+	printf("\n");
+
+	bus_read(0x0000);
+	bus_read(0xffff);
+	bus_read(0x8000);
+	bus_write(0x0000, 0xaa);
+	bus_write(0xffff, 0xaa);
+	bus_write(0x8000, 0xaa);
+
+	bus_add(devices + 1, 0x7000, 0x8fff);
+	bus_print();
+	printf("\n");
+
+	bus_read(0x0000);
+	bus_read(0xffff);
+	bus_read(0x8000);
+	bus_write(0x0000, 0xaa);
+	bus_write(0xffff, 0xaa);
+	bus_write(0x8000, 0xaa);
+
+	bus_add(devices + 2, 0x0000, 0x000f);
+	bus_print();
+	printf("\n");
+
+	bus_read(0x0000);
+	bus_read(0xffff);
+	bus_read(0x8000);
+	bus_write(0x0000, 0xaa);
+	bus_write(0xffff, 0xaa);
+	bus_write(0x8000, 0xaa);
+
+	bus_destroy();
+
+	return 0;
+
+	device_t ram = memory_init(0x10000, true);
+	device_t rom = memory_init(0x10000, false);
+
+	device_t irqTest = (device_t){ &irqData, "irq test", irqTest_readFunc, irqTest_writeFunc};
 
 	if (!bus_add(&ram, 0x0000, 0xFFFF)) {
 		memory_destroy(rom);
@@ -114,7 +182,7 @@ int main() {
 		bus_destroy();
 		return -1;
 	}
-	const char* binFile = "test_interrupt_65C02.bin";
+	const char* binFile = "test_6502.bin";
 	printf("%s\n", binFile);
 	if (!memory_loadFile(&rom, binFile, 0x000a)) {
 		memory_destroy(rom);
@@ -133,7 +201,7 @@ int main() {
 	cpu_clock();
 	cpu_reset(false);
 	uint16_t* programCounter = (uint16_t*) registers;
-	*programCounter = 0x0753;
+	*programCounter = 0x0400;
 
 	printf("running:\n");
 

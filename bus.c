@@ -3,316 +3,255 @@
 #include "util.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-//#define VERBOSE
+// #define VERBOSE
 
-typedef struct busAddr busAddr_t;
+typedef struct {
+	uint16_t begin;
+	uint16_t end;
+	uint16_t base;
+	const device_t* device;
+} region_t;
 
-static struct bus {
-	busAddr_t* addresses;
+static struct {
+	region_t* regions;
 	size_t size;
-	bool initialized;
 } bus = { 0 };
 
-struct busAddr {
-	uint16_t start;
-	uint16_t stop;
-	const component_t* component;
-};
+#ifdef VERBOSE
+static uint8_t read(const device_t* device, addr_t address) {
+	(void) device; (void) address;
+	printf("READ:\ndevice: %p\naddress: {%04X, %04X}\nEND READ\n", device, address.full, address.relative);
+	return 0x55;
+}
+
+static void write(const device_t* device, addr_t address, uint8_t data) {
+	(void) device; (void) address; (void) data;
+	printf("WRITE:\ndevice: %p\naddress: {%04X, %04X}\nvalue: %02X\nEND WRITE\n", device, address.full, address.relative, data);
+}
+
+static device_t nullDevice = (device_t) { .name = "null", .readFunc = read, .writeFunc = write };
+#else
+static device_t nullDevice = (device_t) {.name = "null" };
+#endif
+
+#define SEARCH(addr) bsearch(&addr, bus.regions, bus.size, sizeof(region_t), region_search)
+static int region_search(const void* addr, const void* region) {
+	if (*(uint16_t*) addr < ((region_t*) region)->begin)
+		return -1;
+	if (*(uint16_t*) addr > ((region_t*) region)->end)
+		return 1;
+
+	return 0;
+}
 
 bool bus_init() {
-	if (bus.initialized)
+	if (bus.regions)
 		return false;
 
-	bus.addresses = malloc(sizeof(busAddr_t));
-	if (bus.addresses == NULL)
+	bus.regions = malloc(sizeof(region_t));
+	if (bus.regions == NULL)
 		return false;
 	bus.size = 1;
 
-	bus.addresses->start = 0x0000;
-	bus.addresses->stop = 0xFFFF;
-	bus.addresses->component = NULL;
+	bus.regions[0] = (region_t) { .begin = 0x0000, .end = 0xFFFF, .base = 0x0000, .device = &nullDevice };
 
-	bus.initialized = true;
 	return true;
 }
 
 bool bus_destroy() {
-	if (!bus.initialized)
+	if (!bus.regions)
 		return false;
 
-	free(bus.addresses);
-	bus.addresses = NULL;
-	bus.initialized = false;
+	free(bus.regions);
+	bus.regions = NULL;
 
 	return true;
 }
 
-bool bus_add(const component_t* const component, const uint16_t start, const uint16_t stop) {
-	if (!bus.initialized)
+bool bus_add(const device_t* const device, const uint16_t begin, const uint16_t end) {
+	if (!bus.regions)
 		return false;
 
-	if (start > stop)
-		return bus_add(component, stop, start);
+	if (begin > end)
+		return bus_add(device, end, begin);
 
+	if (device == NULL)
+		return bus_add(&nullDevice, begin, end);
+
+	region_t* newRegions = malloc(sizeof(region_t) * (bus.size + 2));
+	if (newRegions == NULL) {
 #ifdef VERBOSE
-	printf("adding component %p for range %04X-%04X\n", component, start, stop);
+		printf("malloc for bus_add failed\n");
 #endif
-
-	// if start is 0x0000 and end is 0xFFFF
-	// optimize by removing the entire list, and adding a new single entry
-	if (start == 0x0000 && stop == 0xFFFF) {
-		busAddr_t* newList = malloc(sizeof(busAddr_t));
-		if (newList == NULL) {
-#ifdef VERBOSE
-			printf("couldn't be added, malloc returned null\n");
-#endif
-			return false;
-		}
-
-#ifdef VERBOSE
-		printf("replaced entire range\n");
-#endif
-
-		newList->start = 0x0000;
-		newList->stop = 0xFFFF;
-		newList->component = component;
-
-		free(bus.addresses);
-		bus.addresses = newList;
-		bus.size = 1;
-		return true;
+		return false;
 	}
 
-	busAddr_t* startAddr = NULL;
-	busAddr_t* stopAddr = NULL;
+#ifdef VERBOSE
+	printf("adding a new device at range [%04X, %04X]\n", begin, end);
+#endif
 
+	size_t newSize = 0;
 	for (size_t i = 0; i < bus.size; i++) {
-		busAddr_t* const current = bus.addresses + i;
-
-		if (start >= current->start && start <= current->stop)
-			startAddr = current;
-
-		if (stop >= current->start && stop <= current->stop)
-			stopAddr = current;
-	}
-
-	if (startAddr == NULL || stopAddr == NULL)	// shouldn't be possible, bus should always at least have a range of 0x0000-0xFFFF
-		return false;							// keep this for a sanity check
-
-	if (startAddr > stopAddr)	// if hit it would indicate that either stop is before end
-		return false;			//   (which shouldn't be possible with earlier check)
-								// or the bus is not in order
-								//   (which shouldn't be possible either with proper use of this function)
-								// keep this for a sanity check
-
-	const bool addBefore = start != startAddr->start;
-	const bool addAfter = stop != stopAddr->stop;
-	const size_t startIndex = startAddr - bus.addresses;
-	const size_t stopIndex = stopAddr - bus.addresses;
-	const size_t distance = stopAddr - startAddr;
-
-	if (distance == 0) {
-		// early return for simple change
-		if (!addBefore && !addAfter) {
-			startAddr->component = component;
+		region_t* region = bus.regions + i;
 
 #ifdef VERBOSE
-			printf("replaced component with identical range\n");
+#define PRINT_REGION() \
+		printf("region %li/%li {begin: %04X, end: %04X, base: %04X} ", \
+			i + 1, bus.size, region->begin, region->end, region->base);
 #endif
 
-			return true;
+if (end < region->begin || begin > region->end) {
+#ifdef VERBOSE
+			PRINT_REGION();
+			printf("can be kept the same\n");
+#endif
+			newRegions[newSize++] = *region;
+			continue;
 		}
 
-		// allocate new memory
-		{
-			busAddr_t* const newList = realloc(bus.addresses, sizeof(busAddr_t) * (bus.size + addBefore + addAfter));
-			if (newList == NULL) {
+		if (begin > region->begin) {
 #ifdef VERBOSE
-				printf("couldn't be added, realloc returned null\n");
+			PRINT_REGION();
+			printf("needs a new region before\n");
 #endif
-				return false;
-			}
-
-			bus.addresses = newList;
+			newRegions[newSize] = *region;
+			newRegions[newSize].end = begin - 1;
+			newSize++;
 		}
 
-		// reset startAddr ptr because data might have moved
-		startAddr = bus.addresses + startIndex + addBefore;
-		memmove(startAddr + addAfter, startAddr - addBefore, sizeof(busAddr_t) * (bus.size - startIndex));
-
 #ifdef VERBOSE
-		printf("split single range into %i ranges\n", addBefore + addAfter + 1);
+			PRINT_REGION();
+			printf("adds a new region\n");
 #endif
 
-		// update altered bus ranges
-		startAddr->start = start;
-		startAddr->stop = stop;
-		startAddr->component = component;
-		if (addBefore)
-			(startAddr - 1)->stop = start - 1;
-		if (addAfter)
-			(startAddr + 1)->start = stop + 1;
+		newRegions[newSize++] = (region_t) {
+			.begin = begin,
+			.base = 0,
+			.end = end,
+			.device = device,
+		};
 
-		bus.size += addBefore + addAfter;
-
-		return true;
-	}
-	if (distance == 1) {
-		if (addBefore ^ addAfter) {
-			// if distance between start and end is 1 AND either one BUT NOT both need to be split
-			// optimize by altering size of start and end
-			// including changing the functions of the one which was aligned to an edge
-			if (addBefore) {
-				startAddr->stop = start - 1;
-
-				stopAddr->start = start;
-				startAddr->component = component;
-			}
-			if (addAfter) {
-				stopAddr->start = stop + 1;
-
-				startAddr->stop = stop;
-				startAddr->component = component;
-			}
-
+		if (end < region->end) {
 #ifdef VERBOSE
-			printf("shifted ranges around to fit new component\n");
+			PRINT_REGION();
+			printf("needs a new region after\n");
 #endif
-
-			return true;
+			newRegions[newSize] = *region;
+			newRegions[newSize].begin = end + 1;
+			newRegions[newSize].base += newRegions[newSize].begin - region->begin;
+			newSize++;
 		}
-	}
-	if (distance == 2) {
-		if (addBefore && addAfter) {
-			// if distance between start and end is 2 AND they both need to be split
-			// optimize by altering size of start, end and the one between
-			// including changing the functions of the center one
-			busAddr_t* center = startAddr + 1;
-
-			startAddr->stop = start - 1;
-
-			center->start = start;
-			center->stop = stop;
-			startAddr->component = component;
-
-			stopAddr->start = stop + 1;
 
 #ifdef VERBOSE
-			printf("shifted ranges around to fit new component\n");
+#undef PRINT_REGION
 #endif
-
-			return true;
-		}
 	}
 
-	const size_t newSize = bus.size + (addBefore + addAfter) - (stopIndex - startIndex);
-	const size_t newIndex = startIndex + addBefore;
-	busAddr_t* newList = malloc(newSize * sizeof(busAddr_t));
+	size_t write = 0;
+	for (size_t read = 1; read < newSize; read++) {
+		region_t* prev = newRegions + write;
+		region_t* curr = newRegions + read;
 
-	if (newList == NULL) {
-#ifdef VERBOSE
-		printf("couldn't be added, malloc returned null\n");
-#endif
-		return false;
+		if (prev->device == curr->device)
+			prev->end = curr->end;
+		else
+			newRegions[++write] = *curr;
 	}
 
-	if (startIndex != 0 || addBefore)
-		memmove(
-			newList,
-			bus.addresses,
-			(startIndex + addBefore) * sizeof(busAddr_t)
-		);
-	if (stopIndex != bus.size - 1 || addAfter)
-		memmove(
-			newList + startIndex + 1 + addBefore,
-			stopAddr + 1 - addAfter,
-			(bus.size - stopIndex - 1 + addAfter) * sizeof(busAddr_t)
-		);
+	region_t* shrunkRegions = realloc(newRegions, sizeof(region_t) * (write + 1));
 
-	newList[newIndex].start = start;
-	newList[newIndex].stop = stop;
-	newList[newIndex].component = component;
-	if (newIndex != 0)
-		newList[newIndex - 1].stop = start - 1;
-	if (newIndex != newSize - 1)
-		newList[newIndex + 1].start = stop + 1;
-
-	free(bus.addresses);
-	bus.addresses = newList;
-	bus.size = newSize;
-
-#ifdef VERBOSE
-	printf("added component\n");
-#endif
+	free(bus.regions);
+	bus.regions = shrunkRegions ? shrunkRegions : newRegions;
+	bus.size = write + 1;
 
 	return true;
 }
 
 uint8_t bus_read(const uint16_t fullAddr) {
-	for (size_t i = 0; i < bus.size; i++) {
-		const busAddr_t* current = bus.addresses + i;
+#ifdef VERBOSE
+	printf("searching for region to read at %04X\n", fullAddr);
+#endif
 
-		if (fullAddr >= current->start && fullAddr <= current->stop) {
-			if (current->component && current->component->readFunc) {
-				uint8_t read = current->component->readFunc(current->component, (addr_t) { fullAddr, fullAddr - current->start });
+	region_t* result = SEARCH(fullAddr);
+	if (result) {
 #ifdef VERBOSE
-				printf("READ $%04X: found component at %zi, read value: %02X\n", fullAddr, i, read);
+		printf("found region %p\n", result);
 #endif
-				return read;
-			}
+		if (result->device->readFunc) {
+			uint8_t readVal = result->device->readFunc(result->device, (addr_t) {fullAddr, result->base + (fullAddr - result->begin)});
+
 #ifdef VERBOSE
-			printf("READ $%04X: found component at %zi, but address can't be read\n", fullAddr, i);
+			printf("read value %02X\n", readVal);
 #endif
-			return 0;
+			return readVal;
 		}
+#ifdef VERBOSE
+		printf("region cannot be read\n");
+#endif
+		return 0;
 	}
 
-	// shouldn't be possible, bus should always at least have a range of 0x0000-0xFFFF
+#ifdef VERBOSE
+	printf("couldn't find region\n");
+#endif
 	return 0;
 }
 
 void bus_write(const uint16_t fullAddr, const uint8_t data) {
-	for (size_t i = 0; i < bus.size; i++) {
-		const busAddr_t* current = bus.addresses + i;
-
-		if (fullAddr >= current->start && fullAddr <= current->stop) {
-			if (current->component && current->component->writeFunc) {
-				current->component->writeFunc(current->component, (addr_t) { fullAddr, fullAddr - current->start }, data);
 #ifdef VERBOSE
-				printf("WRITE $%04X: found component at %zi, writen value: %02X\n", fullAddr, i, data);
+	printf("searching for region to write at %04X\n", fullAddr);
 #endif
-				return;
-			}
+
+	region_t* result = SEARCH(fullAddr);
+	if (result) {
 #ifdef VERBOSE
-			printf("WRITE $%04X: found component at %zi, but address can't be writen\n", fullAddr, i);
+		printf("found region %p\n", result);
+#endif
+		if (result->device->writeFunc) {
+			result->device->writeFunc(result->device, (addr_t) {fullAddr, result->base + (fullAddr - result->begin)}, data);
+#ifdef VERBOSE
+			printf("written value\n");
 #endif
 			return;
 		}
+
+#ifdef VERBOSE
+		printf("region cannot be written to\n");
+#endif
+		return;
 	}
+
+#ifdef VERBOSE
+		printf("couldn't find region\n");
+#endif
 }
 
 void bus_print() {
-	if (!bus.initialized) {
+	if (!bus.regions) {
 		printf("bus not initialized");
 		return;
 	}
 
 	printf("bus size: %zu", bus.size);
 	for (size_t i = 0; i < bus.size; i++) {
-		const busAddr_t* current = bus.addresses + i;
+		const region_t* current = bus.regions + i;
 
-		const component_t component = current->component ? *current->component : (component_t) { 0 };
+		const device_t device = *current->device;
 
 		printf("\n");
 
-		printf("%8s %8s\n", byteToBinStr(current->start >> 8), byteToBinStr(current->start & 0xFF));
-		printf("\t%04X", current->start);
-		if (current->start != current->stop) {
-			printf("\n........ ........\t....\t%s\tr%p w%p\n", component.name, component.readFunc, component.writeFunc);
-			printf("%8s %8s\n", byteToBinStr(current->start >> 8), byteToBinStr(current->start & 0xFF));
-			printf("\t%04X\n", current->stop);
+		printf("%8s ", byteToBinStr(current->begin >> 8));
+		printf("%8s", byteToBinStr(current->begin & 0xFF));
+		printf("\t%04X", current->begin);
+		if (current->begin != current->end) {
+			printf("\n........ ........\t....\t%s\tr%p w%p\n", device.name, device.readFunc, device.writeFunc);
+			printf("%8s ", byteToBinStr(current->end >> 8));
+			printf("%8s", byteToBinStr(current->end & 0xFF));
+			printf("\t%04X\n", current->end);
 		} else
-			printf("\t%s\tr%p w%p\n", component.name, component.writeFunc, component.writeFunc);
+			printf("\t%s\tr%p w%p\n", device.name, device.readFunc, device.writeFunc);
 	}
 }
