@@ -37,21 +37,21 @@ static inline void printStackPage() {
 
 uint8_t irqData = 0;
 
-uint8_t irqTest_readFunc(const device_t* const device, const addr_t addr) {
+uint8_t irqTest_readFunc(device_t* const device, addr_t addr) {
 	(void) addr;
 	return *(uint8_t*) device->device_data;
 }
 
-void irqTest_writeFunc(const device_t* const device, const addr_t addr, const uint8_t data) {
+void irqTest_placeFunc(device_t* const device, addr_t addr, const uint8_t data) {
 	(void) addr;
-	cpu_irq(data & (1 << 0));
-	cpu_nmi(data & (1 << 1));
 	*(uint8_t*)device->device_data = data;
 }
 
-void irqTest_placeFunc(const device_t* const device, const addr_t addr, const uint8_t data) {
-	(void) addr;
-	*(uint8_t*)device->device_data = data;
+void irqTest_writeFunc(device_t* const device, addr_t addr, const uint8_t data) {
+	irqTest_placeFunc(device, addr, data);
+
+	cpu_irq(data & (1 << 0));
+	cpu_nmi(data & (1 << 1));
 }
 
 void handleInput() {
@@ -93,14 +93,14 @@ void handleInput() {
 	}
 }
 
-uint8_t testRead(const device_t* const device, const addr_t addr) {
+uint8_t testRead(device_t* const device, addr_t addr) {
 	(void) device;
 	(void) addr;
 	printf("testRead\n");
 	return 0xff;
 }
 
-void testWrite(const device_t* const device, const addr_t addr, const uint8_t data) {
+void testWrite(device_t* const device, addr_t addr, const uint8_t data) {
 	(void) device;
 	(void) addr;
 	printf("testWrite %02X\n", data);

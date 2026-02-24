@@ -12,7 +12,7 @@ typedef struct {
 	uint16_t begin;
 	uint16_t end;
 	uint16_t base;
-	const device_t* device;
+	device_t* device;
 } region_t;
 
 static struct {
@@ -22,30 +22,30 @@ static struct {
 
 #ifdef VERBOSE
 
-static uint8_t read(const device_t* const device, const addr_t address) {
+static uint8_t read(device_t* const device, addr_t address) {
 	(void) device; (void) address;
 	printf("READ:\ndevice: %p\naddress: {%04X, %04X}\nEND READ\n", device, address.full, address.relative);
 	return 0x55;
 }
 
-static uint8_t get(const device_t* const device, const addr_t address) {
+static uint8_t get(device_t* const device, addr_t address) {
 	(void) device; (void) address;
 	printf("GET:\ndevice: %p\naddress: {%04X, %04X}\nEND READ\n", device, address.full, address.relative);
 	return 0xAA;
 }
 
-static void write(const device_t* const device, const addr_t address, const uint8_t data) {
+static void write(device_t* const device, addr_t address, const uint8_t data) {
 	(void) device; (void) address; (void) data;
 	printf("WRITE:\ndevice: %p\naddress: {%04X, %04X}\nvalue: %02X\nEND WRITE\n", device, address.full, address.relative, data);
 }
 
-static void place(const device_t* const device, const addr_t address, const uint8_t data) {
+static void place(device_t* const device, addr_t address, const uint8_t data) {
 	(void) device; (void) address; (void) data;
 	printf("PLACE:\ndevice: %p\naddress: {%04X, %04X}\nvalue: %02X\nEND WRITE\n", device, address.full, address.relative, data);
 }
 
 #ifdef _MSC_VER
-static device_t nullDevice;
+static struct device nullDevice = { 0 };
 #else
 static device_t nullDevice = (device_t) {
 	.name = "null",
@@ -57,7 +57,7 @@ static device_t nullDevice = (device_t) {
 #else // VERBOSE
 
 #ifdef _MSC_VER
-static device_t nullDevice;
+static struct device nullDevice = { 0 };
 #else
 static device_t nullDevice = (device_t) { .name = "null" };
 #endif
@@ -76,14 +76,13 @@ static int region_search(const void* addr, const void* region) {
 
 bool bus_init() {
 #ifdef _MSC_VER
-	{
+	// msvc doesn't support static initialization of pointers, so we do a manual copy here
+	if (nullDevice.name == NULL) {
 		device_t tmpDevice = (device_t) {
-#ifdef VERBOSE
 			.name = "null",
+#ifdef VERBOSE
 			.readFunc = read, .getFunc = get,
 			.writeFunc = write, .placeFunc = place,
-#else
-			.name = "null",
 #endif
 		};
 		memcpy(&nullDevice, &tmpDevice, sizeof(device_t));
@@ -113,7 +112,7 @@ bool bus_destroy() {
 	return true;
 }
 
-bool bus_add(const device_t* const device, const uint16_t begin, const uint16_t end) {
+bool bus_add(device_t* const device, const uint16_t begin, const uint16_t end) {
 	if (!bus.regions)
 		return false;
 
@@ -373,7 +372,7 @@ void bus_print() {
 	for (size_t i = 0; i < bus.size; i++) {
 		const region_t* current = bus.regions + i;
 
-		const device_t device = *current->device;
+		device_t device = *current->device;
 
 		printf("\n");
 

@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-const char* byteToBinStr(uint8_t byte) {
+const char* byteToBinStr(const uint8_t byte) {
 	static char str[9] = { 0 };
 	str[0] = 0;
 

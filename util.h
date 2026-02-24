@@ -2,4 +2,4 @@
 
 #include <stdint.h>
 
-const char* byteToBinStr(uint8_t byte);
+const char* byteToBinStr(const uint8_t byte);
