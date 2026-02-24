@@ -3,6 +3,7 @@
 #include "bus.h"
 #include "util.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #define VERBOSE
@@ -20,13 +21,6 @@
 #define INSTRUCTION_NAME_LENGTH 3
 #endif // ROCKWEL
 #endif // VERBOSE
-
-bool ranUnimplementedInstruction = false;
-#ifdef VERBOSE
-#define NO_IMPL() printf("instruction %-*s is not implemented\n", INSTRUCTION_NAME_LENGTH, instructions[opcodes[currentOpcode].instruction].name); ranUnimplementedInstruction = true
-#else
-#define NO_IMPL() printf("instruction %s is not implemented\n", __func__); ranUnimplementedInstruction = true
-#endif
 
 // addressing modes
 enum {
@@ -196,24 +190,30 @@ uint16_t effectiveAddress = 0;
 
 size_t instructionCount = 0;
 
-#define PUSH(data) bus_write(0x0100 | registers.SP--, (data))
+bool ranUnimplementedInstruction = false;
 
+#ifdef VERBOSE
+#define NO_IMPL() printf("instruction %-*s is not implemented\n", INSTRUCTION_NAME_LENGTH, instructions[opcodes[currentOpcode].instruction].name); ranUnimplementedInstruction = true
+#else
+#define NO_IMPL() printf("instruction %s is not implemented\n", __func__); ranUnimplementedInstruction = true
+#endif
+
+#define PUSH(data) bus_write(0x0100 | registers.SP--, (data))
 #define PULL() bus_read(0x0100 | ++registers.SP)
 
-#define BRANCH(condition) if (condition) {cycles++; registers.PC = effectiveAddress;} else cycles = cycles
+#define BRANCH(condition) if (condition) {cycles++; registers.PC = effectiveAddress;} else cycles = cycles // allow semicolon after macro call
 
 #define SET_FLAGS(data) registers.flags.Z = (data) == 0; registers.flags.N = (data) & 0x80
 
-#ifndef ROCKWEL
 // in the original 6502, a read-modify-write instruction writes the original value back, before modifying it and storing it again
 // this would cause write sensitive hardware to response twice
+// later versions 'fixed' this by reading twice
+#ifndef ROCKWEL
 #define RMW() if (opcodes[currentOpcode].addressMode != AM_ACC) bus_write(effectiveAddress, operand)
 #else
-// later versions 'fixed' this by reading twice
 #define RMW() if (opcodes[currentOpcode].addressMode != AM_ACC) bus_read(effectiveAddress)
 #endif
 
-// TODO: somehow transform to macro
 static inline void add() {
 	uint16_t tmp = registers.A + operand + registers.flags.C;
 
@@ -237,6 +237,7 @@ static inline void add() {
 		}
 	}
 
+	// TODO add WDC correct flags with bcd
 	registers.flags.V = ((registers.A & 0x80) == (operand & 0x80)) && ((registers.A & 0x80) != (tmp & 0x80));
 
 	registers.flags.C = tmp > 0xFF;
@@ -245,7 +246,7 @@ static inline void add() {
 	SET_FLAGS(registers.A);
 }
 
-void handleVector(uint16_t vector) {
+void handleControlInput(uint16_t vector) {
 	PUSH(registers.PC_HI);
 	PUSH(registers.PC_LO);
 	union flags flags = registers.flags;
@@ -269,7 +270,7 @@ void handleCpuControl() {
 		printf("resetting\n");
 #endif
 
-		handleVector(0xFFFC);
+		handleControlInput(0xFFFC);
 
 		registers.SP = (uint8_t) ((rand() / (float) RAND_MAX) * 0xFF);
 
@@ -287,13 +288,13 @@ void handleCpuControl() {
 		printf("entering NMI\n");
 #endif
 
-		handleVector(0xFFFA);
+		handleControlInput(0xFFFA);
 	} else if (signals.irq && !registers.flags.I) {
 #ifdef VERBOSE
 		printf("entering IRQ\n");
 #endif
 
-		handleVector(0xFFFE);
+		handleControlInput(0xFFFE);
 	}
 
 	signals.prev_irq = signals.irq;
@@ -318,21 +319,21 @@ void handleOpcode() {
 	totalCycles += cycles;
 }
 
-void cpu_irq(bool active) {
+void cpu_irq(const bool active) {
 #ifdef VERBOSE
 	printf("irq line %s\n", active ? "high" : "low");
 #endif
 	signals.irq = active;
 }
 
-void cpu_reset(bool active) {
+void cpu_reset(const bool active) {
 #ifdef VERBOSE
 	printf("reset line %s\n", active ? "high" : "low");
 #endif
 	signals.reset = active;
 }
 
-void cpu_nmi(bool active) {
+void cpu_nmi(const bool active) {
 #ifdef VERBOSE
 	printf("nmi line %s\n", active ? "high" : "low");
 #endif
@@ -732,7 +733,7 @@ void in_asl() {
 // Branch on Bit Reset
 // tests bit of location in zero page, and branches if it is 0
 // a branch taken takes an extra clock cycle
-void in_bbr(uint8_t bit) {
+static inline void in_bbr(uint8_t bit) {
 	BRANCH(!(operand & (1 << bit)));
 }
 
@@ -743,7 +744,7 @@ BITS_EXPANSION(bbr)
 // Branch on Bit Set
 // tests bit of location in zero page, and branches if it is 1
 // a branch taken takes an extra clock cycle
-void in_bbs(uint8_t bit) {
+static inline void in_bbs(uint8_t bit) {
 	BRANCH((operand & (1 << bit)));
 }
 
@@ -1040,7 +1041,6 @@ void in_lsr() {
 //   these differ slightly in operand size and/or cycle counts
 void in_nop() {
 #ifdef WDC
-	// TODO: implement cycle count
 	uint8_t nop2[] = {
 		0x02, 0x22, 0x42, 0x62, 0x82, 0xC2, 0xE2,	// 2 cycles
 		0x44,										// 3 cycles
@@ -1108,8 +1108,7 @@ void in_pla() {
 // pulls flags register off stack
 // this instruction ignores break flag and bit 5 (unused)
 void in_plp() {
-	union flags flags;
-	flags.byte = PULL();
+	union flags flags = { .byte = PULL() };
 	flags.B = registers.flags.B;
 	flags._ = registers.flags._;
 	registers.flags = flags;
@@ -1136,7 +1135,7 @@ void in_ply() {
 #ifdef ROCKWEL
 // Reset Memory Bit
 // sets bit at operand to 0
-void in_rmb(uint8_t bit) {
+static inline void in_rmb(uint8_t bit) {
 	bus_write(effectiveAddress, operand & ~(1 << bit));
 }
 
@@ -1190,8 +1189,7 @@ void in_ror() {
 // pulls flags register from stack, ignoring break flag and bit 5
 // then pulls PC from stack
 void in_rti() {
-	union flags flags;
-	flags.byte = PULL();
+	union flags flags = { .byte = PULL() };
 	flags.B = registers.flags.B;
 	flags._ = registers.flags._;
 	registers.flags = flags;
@@ -1237,7 +1235,7 @@ void in_sei() {
 #ifdef ROCKWEL
 // Set Memory Bit
 // sets bit at operand to 1
-void in_smb(uint8_t bit) {
+static inline void in_smb(uint8_t bit) {
 	bus_write(effectiveAddress, operand | (1 << bit));
 }
 
