@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define VERBOSE
+// #define VERBOSE
 
 #ifdef WDC
 // Western Design Center included the bit branch/bit set instructions from the rockwel chips
