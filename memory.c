@@ -11,7 +11,7 @@ struct memory {
 
 #define GET_DATA(device) ((struct memory*) (device->device_data))
 
-uint8_t memory_read(device_t* const device, addr_t addr) {
+uint8_t memory_read(deviceRef_t device, addr_t addr) {
 	if (GET_DATA(device) == NULL) {
 		printf("ram is not initialized\n");
 		return 0;
@@ -25,7 +25,7 @@ uint8_t memory_read(device_t* const device, addr_t addr) {
 	return GET_DATA(device)->data[addr.relative];
 }
 
-void memory_write(device_t* const device, addr_t addr, const uint8_t data) {
+void memory_write(deviceRef_t device, addr_t addr, const uint8_t data) {
 	if (GET_DATA(device) == NULL) {
 		printf("ram is not initialized\n");
 		return;
@@ -39,7 +39,7 @@ void memory_write(device_t* const device, addr_t addr, const uint8_t data) {
 	GET_DATA(device)->data[addr.relative] = data;
 }
 
-device_t memory_init(const size_t size, bool canWrite) {
+device_t memory_init(const size_t size, const bool canWrite) {
 	struct memory* memory = malloc(sizeof(struct memory));
 	if (memory == NULL)
 		return (device_t) { 0 };
@@ -66,7 +66,7 @@ bool memory_destroy(device_t device) {
 	return true;
 }
 
-bool memory_randomize(device_t* const device) {
+bool memory_randomize(deviceRef_t device) {
 	if (GET_DATA(device) == NULL)
 		return false;
 
@@ -76,7 +76,7 @@ bool memory_randomize(device_t* const device) {
 	return true;
 }
 
-bool memory_set(device_t* const device, const uint16_t addr, const size_t size, const uint8_t* data) {
+bool memory_set(deviceRef_t device, const uint16_t addr, const size_t size, const uint8_t* data) {
 	if (GET_DATA(device) == NULL)
 		return false;
 
@@ -91,7 +91,7 @@ bool memory_set(device_t* const device, const uint16_t addr, const size_t size, 
 	return true;
 }
 
-bool memory_loadFile(device_t* const device, const char* fileName, const uint16_t addr) {
+bool memory_loadFile(deviceRef_t device, const char* fileName, const uint16_t addr) {
 	if (GET_DATA(device) == NULL)
 		return false;
 

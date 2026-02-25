@@ -6,13 +6,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-//#define VERBOSE
+// #define VERBOSE
 
 typedef struct {
 	uint16_t begin;
 	uint16_t end;
 	uint16_t base;
-	device_t* device;
+	deviceRef_t device;
 } region_t;
 
 static struct {
@@ -22,30 +22,30 @@ static struct {
 
 #ifdef VERBOSE
 
-static uint8_t read(device_t* const device, addr_t address) {
+static uint8_t read(deviceRef_t device, addr_t address) {
 	(void) device; (void) address;
 	printf("READ:\ndevice: %p\naddress: {%04X, %04X}\nEND READ\n", device, address.full, address.relative);
 	return 0x55;
 }
 
-static uint8_t get(device_t* const device, addr_t address) {
+static uint8_t get(deviceRef_t device, addr_t address) {
 	(void) device; (void) address;
 	printf("GET:\ndevice: %p\naddress: {%04X, %04X}\nEND READ\n", device, address.full, address.relative);
 	return 0xAA;
 }
 
-static void write(device_t* const device, addr_t address, const uint8_t data) {
+static void write(deviceRef_t device, addr_t address, const uint8_t data) {
 	(void) device; (void) address; (void) data;
 	printf("WRITE:\ndevice: %p\naddress: {%04X, %04X}\nvalue: %02X\nEND WRITE\n", device, address.full, address.relative, data);
 }
 
-static void place(device_t* const device, addr_t address, const uint8_t data) {
+static void place(deviceRef_t device, addr_t address, const uint8_t data) {
 	(void) device; (void) address; (void) data;
 	printf("PLACE:\ndevice: %p\naddress: {%04X, %04X}\nvalue: %02X\nEND WRITE\n", device, address.full, address.relative, data);
 }
 
 #ifdef _MSC_VER
-static struct device nullDevice = { 0 };
+static device_t nullDevice = { 0 };
 #else
 static device_t nullDevice = (device_t) {
 	.name = "null",
@@ -57,7 +57,7 @@ static device_t nullDevice = (device_t) {
 #else // VERBOSE
 
 #ifdef _MSC_VER
-static struct device nullDevice = { 0 };
+static device_t nullDevice = { 0 };
 #else
 static device_t nullDevice = (device_t) { .name = "null" };
 #endif
@@ -112,7 +112,7 @@ bool bus_destroy() {
 	return true;
 }
 
-bool bus_add(device_t* const device, const uint16_t begin, const uint16_t end) {
+bool bus_add(const device_t* device, const uint16_t begin, const uint16_t end) {
 	if (!bus.regions)
 		return false;
 

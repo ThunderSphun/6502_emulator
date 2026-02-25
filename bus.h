@@ -11,7 +11,7 @@ bool bus_destroy();
 /// if a device already exists at that place, it will be hidden for the overlapping address range
 /// if a device is fully overwritten the bus has forgotten about this device.
 /// IT IS NOT DELETED BY THE BUS, THE BUS ONLY KEEPS A POINTER TO THE DEVICE
-bool bus_add(device_t* const device, const uint16_t begin, const uint16_t end);
+bool bus_add(deviceRef_t device, const uint16_t begin, const uint16_t end);
 
 /// functions to interact with the bus
 /// read and get are used to get data from a device at that address

@@ -2,15 +2,16 @@
 
 #include <stdint.h>
 
-typedef struct device const device_t;
+typedef struct device device_t;
+typedef const device_t* deviceRef_t;
 
 typedef struct {
 	uint16_t full;
 	uint16_t relative;
-} const addr_t;
+} addr_t;
 
-typedef uint8_t (*deviceRead)(device_t* const device, addr_t addr);
-typedef void (*deviceWrite)(device_t* const device, addr_t addr, const uint8_t data);
+typedef uint8_t (*deviceRead)(deviceRef_t device, const addr_t addr);
+typedef void (*deviceWrite)(deviceRef_t device, const addr_t addr, const uint8_t data);
 
 /// a device to be placed on the bus
 /// a device can be anything connected to the bus, and provides a flexible interface
@@ -24,9 +25,9 @@ typedef void (*deviceWrite)(device_t* const device, addr_t addr, const uint8_t d
 /// placeFunc should be NULL if it shouldn't have place functionality OR it is the same as writeFunc
 struct device {
 	void* const device_data;
-	char* const name;
-	deviceRead readFunc;
-	deviceRead getFunc;
-	deviceWrite writeFunc;
-	deviceWrite placeFunc;
+	const char* const name;
+	const deviceRead readFunc;
+	const deviceRead getFunc;
+	const deviceWrite writeFunc;
+	const deviceWrite placeFunc;
 };
