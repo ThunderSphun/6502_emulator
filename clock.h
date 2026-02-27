@@ -1,9 +1,9 @@
 #pragma once
 
-#include <stddef.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 extern bool clock_running;
 
 void clock_reset();
-void clock_run(long targetFrequency);
+void clock_run(uint64_t targetFrequency);

@@ -1,9 +1,6 @@
 #include "bus.h"
 #include "memory.h"
-#include "cpu.h"
 #include "clock.h"
-
-#include <stdio.h>
 
 int main() {
 	bus_init();
@@ -28,7 +25,7 @@ int main() {
 	}
 
 	clock_reset();
-	clock_run(1000);
+	clock_run(1000000);
 
 	memory_destroy(ram);
 	bus_destroy();
